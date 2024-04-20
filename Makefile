@@ -3,3 +3,6 @@ build:
 
 start:
 	docker run -p 3000:3000 --rm --name tax-account-new tax-account-new
+
+migrate-dev:
+	npx prisma migrate dev
