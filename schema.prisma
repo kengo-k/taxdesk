@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model journals {
+  id             Int      @id @default(autoincrement())
+  nendo          String   @db.VarChar(4)
+  date           String   @db.VarChar(8)
+  karikata_cd    String   @db.VarChar(5)
+  karikata_value Int
+  kasikata_cd    String   @db.VarChar(5)
+  kasikata_value Int
+  note           String?
+  checked        String   @db.VarChar
+  created_at     DateTime @db.Timestamp(6)
+  updated_at     DateTime @db.Timestamp(6)
+
+  @@index([nendo, checked, date], map: "journals_checked_index")
+  @@index([nendo, karikata_cd, kasikata_cd, date], map: "journals_code_index")
+  @@index([nendo, date], map: "journals_default_index")
+}
+
+model kamoku_bunrui_masters {
+  id                 Int      @id @default(autoincrement())
+  kamoku_bunrui_cd   String   @db.VarChar(1)
+  kamoku_bunrui_name String   @db.VarChar(8)
+  kamoku_bunrui_type String   @db.VarChar(1)
+  kurikoshi_flg      String   @db.VarChar(1)
+  created_at         DateTime @db.Timestamp(6)
+  updated_at         DateTime @db.Timestamp(6)
+}
+
+model kamoku_masters {
+  id                Int      @id @default(autoincrement())
+  kamoku_cd         String   @db.VarChar(2)
+  kamoku_full_name  String
+  kamoku_ryaku_name String
+  kamoku_kana_name  String
+  kamoku_bunrui_cd  String   @db.VarChar(1)
+  description       String?
+  created_at        DateTime @db.Timestamp(6)
+  updated_at        DateTime @db.Timestamp(6)
+}
+
+model nendo_masters {
+  id         Int      @id @default(autoincrement())
+  nendo      String   @db.VarChar(4)
+  start_date String   @db.VarChar(8)
+  end_date   String   @db.VarChar(8)
+  fixed      String   @db.VarChar(1)
+  created_at DateTime @db.Timestamp(6)
+  updated_at DateTime @db.Timestamp(6)
+}
+
+model saimoku_masters {
+  id                 Int      @id @default(autoincrement())
+  kamoku_cd          String   @db.VarChar(2)
+  saimoku_cd         String   @db.VarChar(3)
+  saimoku_full_name  String
+  saimoku_ryaku_name String
+  saimoku_kana_name  String
+  description        String?
+  created_at         DateTime @db.Timestamp(6)
+  updated_at         DateTime @db.Timestamp(6)
+}
