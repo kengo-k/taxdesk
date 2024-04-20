@@ -1,16 +1,20 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface CounterState {
-  value: number
-}
-
-const initialState: CounterState = {
-  value: 0,
-}
+export const fetchMessage = createAsyncThunk(
+  'counter/fetchMessage',
+  async () => {
+    const response = await fetch('/api/hello')
+    const data = await response.json()
+    return data.message
+  }
+)
 
 export const counterSlice = createSlice({
   name: 'counter',
-  initialState,
+  initialState: {
+    value: 0,
+    message: '',
+  },
   reducers: {
     increment: (state) => {
       state.value += 1
@@ -21,6 +25,11 @@ export const counterSlice = createSlice({
     incrementByAmount: (state, action: PayloadAction<number>) => {
       state.value += action.payload
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchMessage.fulfilled, (state, action) => {
+      state.message = action.payload
+    })
   },
 })
 

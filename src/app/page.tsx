@@ -1,20 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { decrement, increment } from '@/store/counterSlice'
-import { RootState } from '@/store'
+import { decrement, fetchMessage, increment } from '@/store/counterSlice'
+import { AppDispatch, RootState } from '@/store'
 
 export default function Home() {
   const count = useSelector((state: RootState) => state.counter.value)
-  const dispatch = useDispatch()
-  const [message, setMessage] = useState('')
+  const message = useSelector((state: RootState) => state.counter.message)
+  const dispatch = useDispatch<AppDispatch>()
 
   useEffect(() => {
-    fetch('/api/hello')
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-  }, [])
+    dispatch(fetchMessage())
+  }, [dispatch])
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
