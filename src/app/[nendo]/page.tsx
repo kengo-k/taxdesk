@@ -1,11 +1,11 @@
 interface PageProps {
   params: {
-    nendo: string;
-  };
+    nendo: string
+  }
 }
 
 export default function ItemPage({ params }: PageProps) {
-  const { nendo } = params;
+  const { nendo } = params
 
   // itemId を使用して必要な処理を行う
 
@@ -14,5 +14,5 @@ export default function ItemPage({ params }: PageProps) {
       <h1>nendo: {nendo}</h1>
       {/* ページの内容 */}
     </div>
-  );
+  )
 }
