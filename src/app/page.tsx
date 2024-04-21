@@ -4,12 +4,13 @@ import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
 import { decrement, increment } from "@/store/counterSlice";
-import { loadMasters } from "@/store/master";
+import master, { loadMasters } from "@/store/master";
 import { AppDispatch, RootState } from "@/store";
 
 export default function Home() {
   const count = useSelector((state: RootState) => state.counter.value);
   const message = useSelector((state: RootState) => state.counter.message);
+  const masters = useSelector((state: RootState) => state.masters);
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
@@ -19,6 +20,11 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <h1 className="text-4xl font-bold mb-4">{message}</h1>
+      <select>
+        {masters.nendo_list.map((nendo: any) => {
+          return <option key={nendo.id}>{nendo.nendo}</option>;
+        })}
+      </select>
       <div className="flex items-center space-x-4">
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
