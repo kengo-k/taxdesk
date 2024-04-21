@@ -1,5 +1,13 @@
-import { NextResponse } from 'next/server'
+import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+
+const prisma = new PrismaClient();
 
 export async function GET() {
-  return NextResponse.json({ message: 'Hello from Next.js API!' })
+  const nendo_list = await prisma.nendo_masters.findMany({
+    orderBy: {
+      nendo: "desc",
+    },
+  });
+  return NextResponse.json({ nendo_list });
 }
