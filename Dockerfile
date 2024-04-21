@@ -1,11 +1,12 @@
 FROM node:21.7.3-bullseye
 
-WORKDIR /workspace
+WORKDIR /app
 
 COPY . .
-RUN npm ci
-RUN npm run build
+
+RUN \
+  npm ci && \
+  apt-get update && \
+  apt-get install -y postgresql-client
 
 EXPOSE 3000
-
-CMD ["npm", "start"]
