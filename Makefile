@@ -1,8 +1,11 @@
 build:
-	docker build -t tax-account-new .
+	docker compose build --no-cache
 
-start:
-	docker run -p 3000:3000 --rm --name tax-account-new tax-account-new
+up:
+	docker compose up -d
 
-migrate-dev:
-	npx prisma migrate dev
+shell:
+	docker exec -it tax-account-new-web-1 bash
+
+clean:
+	docker rm -f $$(docker ps -aq)
