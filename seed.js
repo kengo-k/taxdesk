@@ -1,38 +1,39 @@
-const fs = require("fs");
-const path = require("path");
-const dotenv = require("dotenv");
-const { execSync } = require("child_process");
+const fs = require('fs')
+const path = require('path')
+const { execSync } = require('child_process')
 
-dotenv.config();
+const dotenv = require('dotenv')
+
+dotenv.config()
 
 function main() {
-  const executeStatement = createClient();
+  const executeStatement = createClient()
 
-  const files = fs.readdirSync("seed");
+  const files = fs.readdirSync('seed')
   files.forEach((f) => {
-    const table = path.basename(f, ".csv");
-    let fullpath = path.resolve(`seed/${f}`);
-    executeStatement(`truncate table ${table}`);
+    const table = path.basename(f, '.csv')
+    let fullpath = path.resolve(`seed/${f}`)
+    executeStatement(`truncate table ${table}`)
     executeStatement(
       `\\copy ${table} FROM '${fullpath}' DELIMITER ',' CSV HEADER`
-    );
-  });
+    )
+  })
 }
 
 function createClient() {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL
 
-  const pattern = /^postgresql:\/\/(.+):(.+)@(.+):(\d+)\/(.+?)(?:\?.*)?$/;
-  const matches = url.match(pattern);
+  const pattern = /^postgresql:\/\/(.+):(.+)@(.+):(\d+)\/(.+?)(?:\?.*)?$/
+  const matches = url.match(pattern)
 
   if (matches) {
-    const [, user, password, host, port, db] = matches;
-    console.log("user:", user);
-    console.log("password:", password);
-    console.log("host:", host);
-    console.log("port:", port);
-    console.log("database:", db);
-    process.env.PGPASSWORD = password;
+    const [, user, password, host, port, db] = matches
+    console.log('user:', user)
+    console.log('password:', password)
+    console.log('host:', host)
+    console.log('port:', port)
+    console.log('database:', db)
+    process.env.PGPASSWORD = password
     return function (statement) {
       execSync(`
         psql \
@@ -40,11 +41,11 @@ function createClient() {
           -d ${db} \
           -h ${host} \
           -p ${port} \
-          -c "${statement}"`);
-    };
+          -c "${statement}"`)
+    }
   }
 
-  throw new Error();
+  throw new Error()
 }
 
-main();
+main()
