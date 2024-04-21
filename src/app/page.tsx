@@ -1,18 +1,19 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { decrement, fetchMessage, increment } from '@/store/counterSlice'
-import { AppDispatch, RootState } from '@/store'
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+
+import { decrement, fetchMessage, increment } from "@/store/counterSlice";
+import { AppDispatch, RootState } from "@/store";
 
 export default function Home() {
-  const count = useSelector((state: RootState) => state.counter.value)
-  const message = useSelector((state: RootState) => state.counter.message)
-  const dispatch = useDispatch<AppDispatch>()
+  const count = useSelector((state: RootState) => state.counter.value);
+  const message = useSelector((state: RootState) => state.counter.message);
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    dispatch(fetchMessage())
-  }, [dispatch])
+    dispatch(fetchMessage());
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
@@ -33,5 +34,5 @@ export default function Home() {
         </button>
       </div>
     </div>
-  )
+  );
 }
