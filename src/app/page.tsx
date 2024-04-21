@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 
-import { decrement, fetchMessage, increment } from "@/store/counterSlice";
+import { decrement, increment } from "@/store/counterSlice";
+import { loadMasters } from "@/store/master";
 import { AppDispatch, RootState } from "@/store";
 
 export default function Home() {
@@ -12,7 +13,7 @@ export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
-    dispatch(fetchMessage());
+    dispatch(loadMasters());
   }, [dispatch]);
 
   return (
