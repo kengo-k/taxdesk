@@ -1,0 +1,47 @@
+---
+- hosts: servers
+  vars:
+    repo_url: https://github.com/kengo-k/tax-account-new
+    dest_path: /app
+    db_user: user
+    db_password: password
+    db_name: db
+    node_version: 14.17.0
+  tasks:
+    - name: Execute inline command using shell module
+      shell: |
+        git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1
+        echo ". \"$HOME/.asdf/asdf.sh\"" > ~/.bashrc
+
+    - name: Clone source code from Git repository
+      git:
+        repo: '{{ repo_url }}'
+        dest: '{{ dest_path }}'
+
+    - name: Install PostgreSQL
+      apt:
+        name: postgresql
+        state: present
+
+    - name: Install psycopg2
+      apt:
+        name: python3-psycopg2
+        state: present
+
+    - name: Create PostgreSQL user
+      become: yes
+      become_user: postgres
+      postgresql_user:
+        name: '{{ db_user }}'
+        password: '{{ db_password }}'
+      vars:
+        ansible_remote_tmp: /tmp/.ansible
+
+    - name: Create PostgreSQL database
+      become: yes
+      become_user: postgres
+      postgresql_db:
+        name: '{{ db_name }}'
+        owner: '{{ db_user }}'
+      vars:
+        ansible_remote_tmp: /tmp/.ansible
