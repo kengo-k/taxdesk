@@ -1,11 +1,11 @@
 version: '3'
+
 services:
   web:
     build:
       context: .
     depends_on:
       - db
-    tty: true
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
@@ -18,7 +18,7 @@ services:
       "
 
   db:
-    image: postgres
+    image: postgres:16.2
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
