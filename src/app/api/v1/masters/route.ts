@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { getDefault } from "@/constants/cache";
+
+const cache = getDefault();
 const prisma = new PrismaClient();
 
 export async function GET() {
@@ -19,5 +22,13 @@ export async function GET() {
       saimoku_cd: "asc",
     },
   });
-  return NextResponse.json({ nendo_list, kamoku_list, saimoku_list });
+  return NextResponse.json(
+    { nendo_list, kamoku_list, saimoku_list },
+    {
+      status: 200,
+      headers: cache.headers,
+    }
+  );
 }
+
+export const revalidate = cache.revalidate;
