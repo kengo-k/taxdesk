@@ -1,3 +1,4 @@
+import { kamoku_masters, nendo_masters, saimoku_masters } from "@prisma/client";
 import {
   createAsyncThunk,
   createSlice,
@@ -15,9 +16,9 @@ export const masterSlice = createSlice({
   name: "masters",
   initialState: {
     data: {
-      nendo_list: [] as any,
-      kamoku_list: [] as any,
-      saimoku_list: [] as any,
+      nendo_list: [] as nendo_masters[],
+      kamoku_list: [] as kamoku_masters[],
+      saimoku_list: [] as saimoku_masters[],
     },
     loading: true,
     error: null as SerializedError | null,
