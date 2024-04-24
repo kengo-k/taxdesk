@@ -2,8 +2,31 @@ import { kamoku_masters, nendo_masters, saimoku_masters } from "@prisma/client";
 import {
   SerializedError,
   createAsyncThunk,
+  createSelector,
   createSlice,
 } from "@reduxjs/toolkit";
+
+import { RootState } from "@/store";
+
+export interface MasterState {
+  data: {
+    nendo_list: nendo_masters[];
+    kamoku_list: kamoku_masters[];
+    saimoku_list: saimoku_masters[];
+  };
+  loading: boolean;
+  error: SerializedError | null;
+}
+
+const initialState: MasterState = {
+  data: {
+    nendo_list: [],
+    kamoku_list: [],
+    saimoku_list: [],
+  },
+  loading: true,
+  error: null,
+};
 
 export const loadMasters = createAsyncThunk("masters/loadMasters", async () => {
   const response = await fetch("/api/v1/masters");
@@ -13,15 +36,7 @@ export const loadMasters = createAsyncThunk("masters/loadMasters", async () => {
 
 export const masterSlice = createSlice({
   name: "masters",
-  initialState: {
-    data: {
-      nendo_list: [] as nendo_masters[],
-      kamoku_list: [] as kamoku_masters[],
-      saimoku_list: [] as saimoku_masters[],
-    },
-    loading: true,
-    error: null as SerializedError | null,
-  },
+  initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(loadMasters.fulfilled, (state, action) => {
@@ -39,5 +54,20 @@ export const masterSlice = createSlice({
     });
   },
 });
+
+const selectSaimokuList = (state: RootState) => state.masters.data.saimoku_list;
+
+export const selectSaimokuMap = createSelector(
+  [selectSaimokuList],
+  (saimoku_list) => {
+    const map: Map<string, saimoku_masters> = new Map();
+    for (const saimoku of saimoku_list) {
+      if (saimoku.id != null) {
+        map.set(saimoku.saimoku_cd, saimoku);
+      }
+    }
+    return map;
+  }
+);
 
 export const masterActions = masterSlice.actions;
