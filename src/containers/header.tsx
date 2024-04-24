@@ -10,8 +10,6 @@ import { loadMasters } from "@/store/master";
 //import { useNavigate } from "react-router";
 
 export const Header: FC = () => {
-  const count = useSelector((state: RootState) => state.counter.value);
-  const message = useSelector((state: RootState) => state.counter.message);
   const appState = useSelector((state: RootState) => state.app);
   const {
     data: masters,
