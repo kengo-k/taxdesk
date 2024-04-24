@@ -37,6 +37,9 @@ export const appSlice = createSlice({
         state.is_ledger = false;
       }
     },
+    setLedgerCd: (state, action: PayloadAction<string | undefined>) => {
+      state.selected_ledger_cd = action.payload;
+    },
   },
 });
 

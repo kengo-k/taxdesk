@@ -1,4 +1,4 @@
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FC, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -114,8 +114,6 @@ export const Header: FC = () => {
   //const history = useNavigate();
 
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   return (
     <>
@@ -132,13 +130,6 @@ export const Header: FC = () => {
                     e.target.value === "" ? undefined : e.target.value
                   )
                 );
-                const newSearchParams = new URLSearchParams(searchParams);
-                if (e.target.value === "") {
-                  newSearchParams.delete("nendo");
-                } else {
-                  newSearchParams.set("nendo", e.target.value);
-                }
-                //router.push(`${pathname}?${newSearchParams}`);
                 router.push(`/${e.target.value}`);
               }}
             >
@@ -155,13 +146,15 @@ export const Header: FC = () => {
           <label>
             <input
               type="checkbox"
-              name="displayType"
-              id="journal"
-              value="journal"
               checked={appState.is_journal}
+              disabled={appState.selected_nendo == null}
               onChange={(e) => {
-                console.log(e.target.checked);
                 dispatch(appActions.showJournal(e.target.checked));
+                if (e.target.checked) {
+                  router.push(`/${appState.selected_nendo}/journal`);
+                } else {
+                  router.push(`/${appState.selected_nendo}`);
+                }
               }}
               // onClick={() => {
               //   if (journalRef.current?.checked) {
@@ -199,13 +192,17 @@ export const Header: FC = () => {
           <label>
             <input
               type="checkbox"
-              name="displayType"
-              id="ledger"
-              value="ledger"
+              disabled={appState.selected_nendo == null}
               checked={appState.is_ledger}
               onChange={(e) => {
-                console.log(e.target.checked);
                 dispatch(appActions.showLedger(e.target.checked));
+                if (appState.selected_ledger_cd == null) {
+                  router.push(`/${appState.selected_nendo}`);
+                } else {
+                  router.push(
+                    `/${appState.selected_nendo}/ledger/${appState.selected_ledger_cd}`
+                  );
+                }
               }}
               //checked={ledgerChecked}
               // onClick={() => {
@@ -257,6 +254,20 @@ export const Header: FC = () => {
           <select
             disabled={!appState.is_ledger}
             value={appState.selected_ledger_cd}
+            onChange={(e) => {
+              dispatch(
+                appActions.setLedgerCd(
+                  e.target.value != null ? e.target.value : undefined
+                )
+              );
+              if (e.target.value != "") {
+                router.push(
+                  `/${appState.selected_nendo}/ledger/${e.target.value}`
+                );
+              } else {
+                router.push(`/${appState.selected_nendo}`);
+              }
+            }}
             // onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             //   setLedger({ all_count: 0, list: [] });
             //   setLedgerCd(e.target.value);
@@ -276,7 +287,7 @@ export const Header: FC = () => {
             // disabled={!ledgerChecked}
             // ref={ledgerCdSelectRef}
           >
-            <option></option>
+            <option value=""></option>
             {masters.saimoku_list.map((s) => {
               return (
                 <option key={s.saimoku_cd} value={s.saimoku_cd}>
