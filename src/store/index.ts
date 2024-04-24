@@ -1,12 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 
-import appReducer from "@/store/app";
-import masterReducer from "@/store/master";
+import { appSlice } from "@/store/app";
+import { masterSlice } from "@/store/master";
 
 export const store = configureStore({
   reducer: {
-    app: appReducer,
-    masters: masterReducer,
+    app: appSlice.reducer,
+    masters: masterSlice.reducer,
   },
 });
 

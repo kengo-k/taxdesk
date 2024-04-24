@@ -1,9 +1,8 @@
 import { kamoku_masters, nendo_masters, saimoku_masters } from "@prisma/client";
 import {
+  SerializedError,
   createAsyncThunk,
   createSlice,
-  PayloadAction,
-  SerializedError,
 } from "@reduxjs/toolkit";
 
 export const loadMasters = createAsyncThunk("masters/loadMasters", async () => {
@@ -41,4 +40,4 @@ export const masterSlice = createSlice({
   },
 });
 
-export default masterSlice.reducer;
+export const masterActions = masterSlice.actions;
