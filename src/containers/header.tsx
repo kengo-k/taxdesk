@@ -11,11 +11,7 @@ import { loadMasters } from "@/store/master";
 
 export const Header: FC = () => {
   const appState = useSelector((state: RootState) => state.app);
-  const {
-    data: masters,
-    error,
-    loading,
-  } = useSelector((state: RootState) => state.masters);
+  const { data: masters } = useSelector((state: RootState) => state.masters);
 
   const dispatch = useDispatch<AppDispatch>();
 
