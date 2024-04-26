@@ -56,6 +56,7 @@ export const masterSlice = createSlice({
 });
 
 const selectSaimokuList = (state: RootState) => state.masters.data.saimoku_list;
+const selectNendoList = (state: RootState) => state.masters.data.nendo_list;
 
 export const selectSaimokuMap = createSelector(
   [selectSaimokuList],
@@ -65,6 +66,17 @@ export const selectSaimokuMap = createSelector(
       if (saimoku.id != null) {
         map.set(saimoku.saimoku_cd, saimoku);
       }
+    }
+    return map;
+  }
+);
+
+export const selectNendoMap = createSelector(
+  [selectNendoList],
+  (nendo_list) => {
+    const map: Map<string, nendo_masters> = new Map();
+    for (const nendo of nendo_list) {
+      map.set(nendo.nendo, nendo);
     }
     return map;
   }
