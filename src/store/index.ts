@@ -1,11 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 import { appSlice } from "@/store/app";
+import { ledgerSlice } from "@/store/ledger";
 import { masterSlice } from "@/store/master";
 
 export const store = configureStore({
   reducer: {
     app: appSlice.reducer,
+    ledger: ledgerSlice.reducer,
     masters: masterSlice.reducer,
   },
 });
