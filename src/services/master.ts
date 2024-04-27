@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { injectable } from "inversify";
 
 import { SaimokuSearchRequest, SaimokuSearchResponse } from "@/models/master";
 
@@ -10,6 +11,7 @@ export interface MasterService {
   ): Promise<SaimokuSearchResponse[]>;
 }
 
+@injectable()
 export class MasterServiceImpl implements MasterService {
   public async selectSaimokuDetail(
     condition: SaimokuSearchRequest
