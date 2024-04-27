@@ -1,13 +1,15 @@
 import { Container } from "inversify";
-
 import "reflect-metadata";
-import { MasterService, MasterServiceImpl } from "./services/master";
+
+import { LedgerService, LedgerServiceImpl } from "@/services/ledger";
+import { MasterService, MasterServiceImpl } from "@/services/master";
 
 interface ServiceMap {
   MasterService: MasterService;
+  LedgerService: LedgerService;
 }
 
-function bind<T>(
+function register<T>(
   container: Container,
   serviceImplementation: new (...args: any[]) => T,
   serviceIdentifier: keyof ServiceMap
@@ -16,7 +18,9 @@ function bind<T>(
 }
 
 const serviceContainer = new Container();
-bind<MasterService>(serviceContainer, MasterServiceImpl, "MasterService");
+const registerService = register.bind(null, serviceContainer);
+registerService(MasterServiceImpl, "MasterService");
+registerService(LedgerServiceImpl, "LedgerService");
 
 function getService<K extends keyof ServiceMap>(key: K): ServiceMap[K] {
   return serviceContainer.get<ServiceMap[K]>(key);
