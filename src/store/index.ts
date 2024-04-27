@@ -14,3 +14,15 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export type NextActions = any[] | (() => any[]);
+export const callNextActions = (nextActions: NextActions | undefined) => {
+  if (nextActions == null) {
+    return [];
+  }
+  if (typeof nextActions === "function") {
+    return nextActions();
+  } else {
+    return nextActions;
+  }
+};
