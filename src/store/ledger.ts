@@ -1,4 +1,5 @@
 import {
+  PayloadAction,
   SerializedError,
   createAsyncThunk,
   createSlice,
@@ -9,6 +10,7 @@ import { LedgerSearchRequest, LedgerSearchResponse } from "@/models/ledger";
 export interface LedgerState {
   data: {
     ledger_list: LedgerSearchResponse[];
+    all_count: number;
   };
   loading: boolean;
   error: SerializedError | null;
@@ -17,6 +19,7 @@ export interface LedgerState {
 const initialState: LedgerState = {
   data: {
     ledger_list: [],
+    all_count: 0,
   },
   loading: true,
   error: null,
@@ -25,7 +28,7 @@ const initialState: LedgerState = {
 export const loadLedgerList = createAsyncThunk<
   LedgerSearchResponse[],
   LedgerSearchRequest
->("app/loadLedgerList", async (request) => {
+>("ledger/loadLedgerList", async (request) => {
   const response = await fetch(
     `/api/v1/ledger/${request.nendo}/${request.ledger_cd}`
   );
@@ -36,7 +39,18 @@ export const loadLedgerList = createAsyncThunk<
 export const ledgerSlice = createSlice({
   name: "ledger",
   initialState,
-  reducers: {},
+  reducers: {
+    setLedgerList: (
+      state,
+      action: PayloadAction<{
+        ledger_list: LedgerSearchResponse[];
+        all_count: number;
+      }>
+    ) => {
+      state.data.all_count = action.payload.all_count;
+      state.data.ledger_list = action.payload.ledger_list;
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(loadLedgerList.fulfilled, (state, action) => {
       state.loading = false;

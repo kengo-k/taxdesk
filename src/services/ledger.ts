@@ -1,0 +1,140 @@
+import { PrismaClient } from "@prisma/client";
+import { injectable } from "inversify";
+
+import { DIContainer } from "@/dicontainer";
+import { LedgerSearchRequest, LedgerSearchResponse } from "@/models/ledger";
+import { getPagingOffset } from "@/models/paging";
+
+const prisma = new PrismaClient();
+
+export interface LedgerService {
+  selectLedgerList(req: LedgerSearchRequest): Promise<{
+    all_count: number;
+    list: LedgerSearchResponse[];
+  }>;
+}
+
+@injectable()
+export class LedgerServiceImpl implements LedgerService {
+  public async selectLedgerList(req: LedgerSearchRequest): Promise<{
+    all_count: number;
+    list: LedgerSearchResponse[];
+  }> {
+    req = { ...req };
+    req.month = req.month ?? "all";
+    req.page_no = req.page_no ?? 1;
+    req.page_size = req.page_size ?? 10;
+    const masterService =
+      DIContainer.getService<"MasterService">("MasterService");
+
+    const saimoku_detail = (
+      await masterService.selectSaimokuDetail({
+        saimoku_cd: req.ledger_cd,
+      })
+    )[0];
+
+    const rows = await prisma.$queryRaw<any[]>`
+      select
+        *,
+        count(*) over (partition by 1) as all_count
+      from
+        (
+          select
+            j.id as journal_id,
+            j.nendo,
+            j.date,
+            j.another_cd,
+            j.karikata_cd,
+            j.karikata_value,
+            j.kasikata_cd,
+            j.kasikata_value,
+            sum(
+              case
+                when
+                  j.karikata_cd = ${req.ledger_cd}
+                then
+                  j.karikata_value else 0 end
+            ) over (
+              order by
+                j.date desc,
+                j.created_at desc
+              rows
+                between current row and unbounded following
+            ) karikata_sum,
+            sum(
+              case
+                when
+                  j.kasikata_cd = ${req.ledger_cd}
+                then
+                  j.kasikata_value else 0 end
+            ) over (
+              order by
+                j.date desc,
+                j.created_at desc
+              rows
+                between current row and unbounded following
+            ) kasikata_sum,
+            note,
+            j.created_at
+          from
+            (
+              select
+                id,
+                nendo,
+                date,
+                karikata_cd,
+                kasikata_cd,
+                karikata_value,
+                kasikata_value,
+                case karikata_cd
+                  when ${req.ledger_cd} then kasikata_cd
+                  else karikata_cd
+                end as another_cd,
+                note,
+                created_at
+              from
+                journals j
+              where
+                nendo = ${req.nendo}
+                and (
+                  karikata_cd = ${req.ledger_cd}
+                  or kasikata_cd = ${req.ledger_cd}
+                )
+            ) j
+        ) j2
+      where
+        (case when ${req.month} = 'all' then 'all' else ${req.month} end)
+        = (case when ${
+          req.month
+        } = 'all' then 'all' else substring(j2.date, 5, 2) end)
+      order by
+        j2.date desc,
+        j2.created_at desc
+      limit ${req.page_size} offset ${getPagingOffset(req)}`;
+
+    let all_count = 0;
+    const ledger_list = rows.map((res) => {
+      all_count = (res as any).all_count;
+      const sumL = res.karikata_sum;
+      const sumR = res.kasikata_sum;
+      if (saimoku_detail.kamoku_bunrui_type === "L") {
+        res.acc = sumL - sumR;
+        if (res.karikata_cd === req.ledger_cd) {
+          res.kasikata_value = 0;
+        } else {
+          res.karikata_value = 0;
+        }
+      } else {
+        res.acc = sumR - sumL;
+        if (res.karikata_cd === req.ledger_cd) {
+          res.kasikata_value = 0;
+        } else {
+          res.karikata_value = 0;
+        }
+      }
+      return res as LedgerSearchResponse;
+    });
+
+    return { all_count, list: ledger_list };
+  }
+}
