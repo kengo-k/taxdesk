@@ -11,7 +11,7 @@ import { getPageList } from '@/misc/page'
 import { LedgerSearchResponse, LedgerUpdateRequest } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
 import { updateJournal } from '@/store/journal'
-import { ledgerActions, loadLedgerList } from '@/store/ledger'
+import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectNendoMap, selectSaimokuMap } from '@/store/master'
 
 interface LedgerListProps {
@@ -781,6 +781,8 @@ export const LedgerListNewRow = (props: {
   setError: SetLedgerListInputError
   notifyError: () => void
 }) => {
+  const dispatch = useDispatch<AppDispatch>()
+
   //const { createLedger } = useActions();
   const { data: masters } = useSelector((state: RootState) => state.masters)
   const saimokuList = masters.saimoku_list
@@ -1004,6 +1006,17 @@ export const LedgerListNewRow = (props: {
       updateCd(cd),
     ]
     if (validateResutls.every((valid) => valid)) {
+      dispatch(
+        createLedger({
+          nendo: props.nendo,
+          date: toRawDate(date),
+          ledger_cd: props.ledgerCd,
+          other_cd: cd,
+          karikata_value: toNumber(kariValueStr),
+          kasikata_value: toNumber(kasiValueStr),
+          note,
+        }),
+      )
       // createLedger(
       //   {
       //     nendo: props.nendo,

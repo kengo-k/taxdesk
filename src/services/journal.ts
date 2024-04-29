@@ -1,13 +1,13 @@
 import { inject, injectable } from 'inversify'
 import 'reflect-metadata'
 
-import { PrismaClient, journals } from '@prisma/client'
+import { Prisma, PrismaClient, journals } from '@prisma/client'
 
 import { Factory } from '@/dicontainer'
 import { NullableOptional } from '@/misc/types'
 
 export interface JournalService {
-  create(entity: journals): Promise<journals>
+  create(entity: Prisma.journalsCreateInput): Promise<journals>
   updateById(
     id: number,
     condition: NullableOptional<Omit<journals, 'id'>>,
@@ -21,9 +21,8 @@ export class JournalServiceImpl implements JournalService {
     @inject('PrismaClient') private prisma: PrismaClient,
     @inject('Factory') private factory: typeof Factory,
   ) {}
-  public async create(entity: journals): Promise<journals> {
-    const new_entity = await this.prisma.journals.create({ data: entity })
-    return new_entity
+  public async create(entity: Prisma.journalsCreateInput): Promise<journals> {
+    return await this.prisma.journals.create({ data: entity })
   }
   public async updateById(
     id: number,

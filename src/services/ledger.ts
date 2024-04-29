@@ -8,7 +8,7 @@ import {
   LedgerCreateRequest,
   LedgerSearchRequest,
   LedgerSearchResponse,
-  toJournalEntity,
+  toJournalCreateInput,
 } from '@/models/ledger'
 import { getPagingOffset } from '@/models/paging'
 
@@ -28,6 +28,7 @@ export class LedgerServiceImpl implements LedgerService {
   ) {}
   public async createLedger(req: LedgerCreateRequest): Promise<journals> {
     const masterService = this.factory.getMasterService()
+    const journalService = this.factory.getJournalService()
 
     const saimoku_detail = (
       await masterService.selectSaimokuDetail({
@@ -35,8 +36,8 @@ export class LedgerServiceImpl implements LedgerService {
       })
     )[0]
 
-    const journal_entity = toJournalEntity(req, saimoku_detail)
-    return null as any
+    const entity = toJournalCreateInput(req, saimoku_detail)
+    return journalService.create(entity)
   }
   public async selectLedgerList(req: LedgerSearchRequest): Promise<{
     all_count: number

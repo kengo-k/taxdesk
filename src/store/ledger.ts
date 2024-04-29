@@ -1,3 +1,4 @@
+import { journals } from '@prisma/client'
 import {
   PayloadAction,
   SerializedError,
@@ -5,10 +6,15 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
-import { LedgerSearchRequest, LedgerSearchResponse } from '@/models/ledger'
+import {
+  LedgerCreateRequest,
+  LedgerSearchRequest,
+  LedgerSearchResponse,
+} from '@/models/ledger'
 
 export interface LedgerState {
   data: {
+    last_upserted: journals | null
     ledger_list: LedgerSearchResponse[]
     all_count: number
   }
@@ -18,6 +24,7 @@ export interface LedgerState {
 
 const initialState: LedgerState = {
   data: {
+    last_upserted: null,
     ledger_list: [],
     all_count: 0,
   },
@@ -35,6 +42,19 @@ export const loadLedgerList = createAsyncThunk<
   const data = await response.json()
   return data
 })
+
+export const createLedger = createAsyncThunk<journals, LedgerCreateRequest>(
+  'ledger/createLedger',
+  async (request) => {
+    const { nendo, ledger_cd, ...requestBody } = request
+    const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+    })
+    const data = await response.json()
+    return data
+  },
+)
 
 export const ledgerSlice = createSlice({
   name: 'ledger',
@@ -61,6 +81,18 @@ export const ledgerSlice = createSlice({
       state.loading = true
     })
     builder.addCase(loadLedgerList.rejected, (state, action) => {
+      state.loading = false
+      state.error = action.error
+    })
+
+    builder.addCase(createLedger.fulfilled, (state, action) => {
+      state.loading = false
+      state.data.last_upserted = action.payload
+    })
+    builder.addCase(createLedger.pending, (state) => {
+      state.loading = true
+    })
+    builder.addCase(createLedger.rejected, (state, action) => {
       state.loading = false
       state.error = action.error
     })
