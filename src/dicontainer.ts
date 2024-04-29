@@ -1,5 +1,5 @@
+import { PrismaClient } from "@prisma/client";
 import { Container } from "inversify";
-import "reflect-metadata";
 
 import { LedgerService, LedgerServiceImpl } from "@/services/ledger";
 import { MasterService, MasterServiceImpl } from "@/services/master";
@@ -18,6 +18,10 @@ function register<T>(
 }
 
 const serviceContainer = new Container();
+serviceContainer
+  .bind<PrismaClient>("PrismaClient")
+  .toConstantValue(new PrismaClient());
+
 const registerService = register.bind(null, serviceContainer);
 registerService(MasterServiceImpl, "MasterService");
 registerService(LedgerServiceImpl, "LedgerService");
