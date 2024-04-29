@@ -1,4 +1,17 @@
+import { journals } from "@prisma/client";
+
+import { SaimokuSearchResponse } from "@/models/master";
 import { PagingRequest } from "@/models/paging";
+
+export interface LedgerCreateRequest {
+  nendo: string;
+  date: string;
+  ledger_cd: string;
+  other_cd: string;
+  karikata_value: number | null;
+  kasikata_value: number | null;
+  note?: string;
+}
 
 export type LedgerSearchRequest = {
   nendo: string;
@@ -57,6 +70,66 @@ export interface LedgerListInputErrorItem {
   kasi_negative?: Omit<Invalid, "hasError">;
   value_both?: Omit<Invalid, "hasError">;
   value_neither?: Omit<Invalid, "hasError">;
+}
+
+export function toJournalEntity(
+  condition: LedgerCreateRequest | LedgerUpdateRequest,
+  saimokuDetail: SaimokuSearchResponse
+): Partial<journals> {
+  let value: number;
+  // 金額が両方nullはありえないのでエラー
+  if (condition.karikata_value === null && condition.kasikata_value === null) {
+    throw new Error();
+  }
+  // 金額が両方設定されることはありえないのでエラー
+  if (condition.karikata_value != null && condition.kasikata_value != null) {
+    throw new Error();
+  }
+  if (condition.karikata_value != null) {
+    value = condition.karikata_value;
+  } else {
+    value = condition.kasikata_value!;
+  }
+  let karikata_cd: string;
+  let kasikata_cd: string;
+  if (saimokuDetail.kamoku_bunrui_type === "L") {
+    if (condition.karikata_value != null) {
+      karikata_cd = condition.ledger_cd;
+      kasikata_cd = condition.other_cd;
+    } else {
+      karikata_cd = condition.other_cd;
+      kasikata_cd = condition.ledger_cd;
+    }
+  } else {
+    if (condition.kasikata_value != null) {
+      karikata_cd = condition.other_cd;
+      kasikata_cd = condition.ledger_cd;
+    } else {
+      karikata_cd = condition.ledger_cd;
+      kasikata_cd = condition.other_cd;
+    }
+  }
+  const entityValue: Partial<journals> = {
+    karikata_cd,
+    karikata_value: value,
+    kasikata_cd,
+    kasikata_value: value,
+    checked: "0",
+  };
+  if ("id" in condition) {
+    entityValue.id = condition.id;
+  } else {
+    if (condition.nendo != null) {
+      entityValue.nendo = condition.nendo;
+    }
+    if (condition.date != null) {
+      entityValue.date = condition.date;
+    }
+    if (condition.note != null) {
+      entityValue.note = condition.note;
+    }
+  }
+  return entityValue;
 }
 
 export type LedgerListInputErrors = Map<string, LedgerListInputErrorItem>;

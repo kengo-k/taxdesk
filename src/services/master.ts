@@ -4,11 +4,9 @@ import {
   nendo_masters,
   saimoku_masters,
 } from "@prisma/client";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { SaimokuSearchRequest, SaimokuSearchResponse } from "@/models/master";
-
-const prisma = new PrismaClient();
 
 export interface MasterService {
   selectNendoList(): Promise<nendo_masters[]>;
@@ -21,8 +19,9 @@ export interface MasterService {
 
 @injectable()
 export class MasterServiceImpl implements MasterService {
+  constructor(@inject("PrismaClient") private prisma: PrismaClient) {}
   public async selectNendoList(): Promise<nendo_masters[]> {
-    return await prisma.nendo_masters.findMany({
+    return await this.prisma.nendo_masters.findMany({
       orderBy: {
         nendo: "desc",
       },
@@ -30,7 +29,7 @@ export class MasterServiceImpl implements MasterService {
   }
 
   public async selectKamokuList(): Promise<kamoku_masters[]> {
-    return await prisma.kamoku_masters.findMany({
+    return await this.prisma.kamoku_masters.findMany({
       orderBy: {
         kamoku_cd: "asc",
       },
@@ -38,7 +37,7 @@ export class MasterServiceImpl implements MasterService {
   }
 
   public async selectSaimokuList(): Promise<saimoku_masters[]> {
-    return await prisma.saimoku_masters.findMany({
+    return await this.prisma.saimoku_masters.findMany({
       orderBy: {
         saimoku_cd: "asc",
       },
@@ -48,7 +47,7 @@ export class MasterServiceImpl implements MasterService {
   public async selectSaimokuDetail(
     condition: SaimokuSearchRequest
   ): Promise<SaimokuSearchResponse[]> {
-    const ledger_list = await prisma.$queryRaw<SaimokuSearchResponse[]>`
+    const ledger_list = await this.prisma.$queryRaw<SaimokuSearchResponse[]>`
     select
       k.kamoku_cd,
       s.saimoku_cd,

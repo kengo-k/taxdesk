@@ -1,13 +1,18 @@
-import { PrismaClient } from "@prisma/client";
-import { injectable } from "inversify";
+import { PrismaClient, journals } from "@prisma/client";
+import { inject, injectable } from "inversify";
 
-import { DIContainer } from "@/dicontainer";
-import { LedgerSearchRequest, LedgerSearchResponse } from "@/models/ledger";
+import { Factory } from "@/dicontainer";
+import {
+  LedgerCreateRequest,
+  LedgerSearchRequest,
+  LedgerSearchResponse,
+  toJournalEntity,
+} from "@/models/ledger";
 import { getPagingOffset } from "@/models/paging";
-
-const prisma = new PrismaClient();
+import "reflect-metadata";
 
 export interface LedgerService {
+  createLedger(req: LedgerCreateRequest): Promise<journals>;
   selectLedgerList(req: LedgerSearchRequest): Promise<{
     all_count: number;
     list: LedgerSearchResponse[];
@@ -16,16 +21,12 @@ export interface LedgerService {
 
 @injectable()
 export class LedgerServiceImpl implements LedgerService {
-  public async selectLedgerList(req: LedgerSearchRequest): Promise<{
-    all_count: number;
-    list: LedgerSearchResponse[];
-  }> {
-    req = { ...req };
-    req.month = req.month ?? "all";
-    req.page_no = req.page_no ?? 1;
-    req.page_size = req.page_size ?? 10;
-    const masterService =
-      DIContainer.getService<"MasterService">("MasterService");
+  constructor(
+    @inject("PrismaClient") private prisma: PrismaClient,
+    @inject("Factory") private factory: typeof Factory
+  ) {}
+  public async createLedger(req: LedgerCreateRequest): Promise<journals> {
+    const masterService = this.factory.getMasterService();
 
     const saimoku_detail = (
       await masterService.selectSaimokuDetail({
@@ -33,7 +34,26 @@ export class LedgerServiceImpl implements LedgerService {
       })
     )[0];
 
-    const rows = await prisma.$queryRaw<any[]>`
+    const journal_entity = toJournalEntity(req, saimoku_detail);
+    return null as any;
+  }
+  public async selectLedgerList(req: LedgerSearchRequest): Promise<{
+    all_count: number;
+    list: LedgerSearchResponse[];
+  }> {
+    const masterService = this.factory.getMasterService();
+    req = { ...req };
+    req.month = req.month ?? "all";
+    req.page_no = req.page_no ?? 1;
+    req.page_size = req.page_size ?? 10;
+
+    const saimoku_detail = (
+      await masterService.selectSaimokuDetail({
+        saimoku_cd: req.ledger_cd,
+      })
+    )[0];
+
+    const rows = await this.prisma.$queryRaw<any[]>`
       select
         *,
         count(*) over (partition by 1) as all_count
