@@ -6,7 +6,13 @@
   "trailingComma": "all",
   "singleQuote": true,
   "semi": false,
-  "importOrder": ["^react", "<THIRD_PARTY_MODULES>", "^@(?!/)\\w+", "^@/"],
+  "importOrder": [
+    "<THIRD_PARTY_MODULES>",
+    "^react",
+    "^next",
+    "^@(?!/)\\w+",
+    "^@/"
+  ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true
 }
