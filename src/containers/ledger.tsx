@@ -35,17 +35,21 @@ export const LedgerList: FC<LedgerListProps> = ({
   // const state = useState();
   // const saimokuMap = useSelector(selectSaimokuMap);
 
+  const dispatch = useDispatch<AppDispatch>();
+
   const [errors, setErrors] = useState(new Map() as LedgerListInputErrors);
 
   useEffect(() => {
-    loadLedgerList({
-      nendo,
-      ledger_cd,
-      month: ledger_month,
-      page_no,
-      page_size,
-    });
-  }, [ledger_cd, ledger_month, nendo, page_no, page_size]);
+    dispatch(
+      loadLedgerList({
+        nendo,
+        ledger_cd,
+        month: ledger_month,
+        page_no,
+        page_size,
+      })
+    );
+  }, [dispatch, ledger_cd, ledger_month, nendo, page_no, page_size]);
 
   const ledgerListRows: (
     | { isNewRow: true; journal_id: number }
