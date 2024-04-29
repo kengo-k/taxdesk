@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 import { Header } from "@/containers/header";
+import { LedgerList } from "@/containers/ledger";
 import { AppDispatch } from "@/store";
 import { appActions } from "@/store/app";
 
@@ -25,7 +26,13 @@ export default function Page({ params }: PageProps) {
   return (
     <div>
       <Header />
-      <span>this is ledger for {params.ledger_cd}</span>
+      <LedgerList
+        nendo={params.nendo}
+        ledger_cd={params.ledger_cd}
+        ledger_month={"03"}
+        page_no={1}
+        page_size={10}
+      />
     </div>
   );
 }
