@@ -26,7 +26,7 @@ const initialState: LedgerState = {
 };
 
 export const loadLedgerList = createAsyncThunk<
-  LedgerSearchResponse[],
+  { all_count: number; list: LedgerSearchResponse[] },
   LedgerSearchRequest
 >("ledger/loadLedgerList", async (request) => {
   const response = await fetch(
@@ -54,7 +54,8 @@ export const ledgerSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(loadLedgerList.fulfilled, (state, action) => {
       state.loading = false;
-      state.data.ledger_list = action.payload;
+      state.data.ledger_list = action.payload.list;
+      state.data.all_count = action.payload.all_count;
     });
     builder.addCase(loadLedgerList.pending, (state) => {
       state.loading = true;
