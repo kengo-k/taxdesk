@@ -1,19 +1,19 @@
-import { journals } from "@prisma/client";
+import { journals } from '@prisma/client'
 import {
   SerializedError,
   createAsyncThunk,
   createSlice,
-} from "@reduxjs/toolkit";
+} from '@reduxjs/toolkit'
 
-import { NextActions } from "@/store";
+import { NextActions } from '@/store'
 
 export interface JournalState {
   data: {
-    journal_list: journals[];
-    all_count: number;
-  };
-  loading: boolean;
-  error: SerializedError | null;
+    journal_list: journals[]
+    all_count: number
+  }
+  loading: boolean
+  error: SerializedError | null
 }
 
 const initialState: JournalState = {
@@ -23,57 +23,57 @@ const initialState: JournalState = {
   },
   loading: true,
   error: null,
-};
+}
 
 export const updateJournal = createAsyncThunk<
   void,
   {
-    id: number;
-    journal: Partial<Omit<journals, "id">>;
-    nextActions: NextActions;
+    id: number
+    journal: Partial<Omit<journals, 'id'>>
+    nextActions: NextActions
   }
->("journal/updateJournal", async (request) => {
+>('journal/updateJournal', async (request) => {
   const response = await fetch(`/api/v1/journal/${request.id}`, {
-    method: "PUT",
-  });
-  const data = await response.json();
-  return data;
-});
+    method: 'PUT',
+  })
+  const data = await response.json()
+  return data
+})
 
 export const journalSlice = createSlice({
-  name: "journal",
+  name: 'journal',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(updateJournal.fulfilled, (state, action) => {
-      state.loading = false;
+      state.loading = false
       // const foo = updateJournal({ id: 1, journal: {}, nextActions: [] });
       // for (const a in action.meta.arg.nextActions) {
       //   store.dispatch(foo);
       // }
-    });
+    })
     builder.addCase(updateJournal.pending, (state) => {
-      state.loading = true;
-    });
+      state.loading = true
+    })
     builder.addCase(updateJournal.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error;
-    });
+      state.loading = false
+      state.error = action.error
+    })
     builder.addCase(updateJournal.fulfilled, (state, action) => {
-      state.loading = false;
+      state.loading = false
       // const foo = updateJournal({ id: 1, journal: {}, nextActions: [] });
       // for (const a in action.meta.arg.nextActions) {
       //   store.dispatch(foo);
       // }
-    });
+    })
     builder.addCase(updateJournal.pending, (state) => {
-      state.loading = true;
-    });
+      state.loading = true
+    })
     builder.addCase(updateJournal.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error;
-    });
+      state.loading = false
+      state.error = action.error
+    })
   },
-});
+})
 
-export const journalActions = journalSlice.actions;
+export const journalActions = journalSlice.actions

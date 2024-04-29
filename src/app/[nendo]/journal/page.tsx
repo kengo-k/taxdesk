@@ -1,29 +1,29 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 
-import { Header } from "@/containers/header";
-import { AppDispatch } from "@/store";
-import { appActions } from "@/store/app";
+import { Header } from '@/containers/header'
+import { AppDispatch } from '@/store'
+import { appActions } from '@/store/app'
 
 interface PageProps {
   params: {
-    nendo: string;
-  };
+    nendo: string
+  }
 }
 
 export default function Page({ params }: PageProps) {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>()
   useEffect(() => {
-    dispatch(appActions.setNendo(params.nendo));
-    dispatch(appActions.showJournal(true));
-  }, [dispatch, params.nendo]);
+    dispatch(appActions.setNendo(params.nendo))
+    dispatch(appActions.showJournal(true))
+  }, [dispatch, params.nendo])
 
   return (
     <div>
       <Header />
       <span>this is journal</span>
     </div>
-  );
+  )
 }

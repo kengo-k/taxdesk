@@ -1,23 +1,24 @@
-import { useRouter } from "next/navigation";
-import { FC, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { FC, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
-import { AppDispatch, RootState } from "@/store";
-import { appActions } from "@/store/app";
-import { loadMasters } from "@/store/master";
+import { useRouter } from 'next/navigation'
+
+import { AppDispatch, RootState } from '@/store'
+import { appActions } from '@/store/app'
+import { loadMasters } from '@/store/master'
 
 //import Numeral from "numeral";
 //import { useNavigate } from "react-router";
 
 export const Header: FC = () => {
-  const appState = useSelector((state: RootState) => state.app);
-  const { data: masters } = useSelector((state: RootState) => state.masters);
+  const appState = useSelector((state: RootState) => state.app)
+  const { data: masters } = useSelector((state: RootState) => state.masters)
 
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<AppDispatch>()
 
   useEffect(() => {
-    dispatch(loadMasters());
-  }, [dispatch]);
+    dispatch(loadMasters())
+  }, [dispatch])
 
   // // load initial data
   // const { loadInit, loadSummary, setSummary, setTmpLedgerCd, setLedger } =
@@ -109,7 +110,7 @@ export const Header: FC = () => {
 
   //const history = useNavigate();
 
-  const router = useRouter();
+  const router = useRouter()
 
   return (
     <>
@@ -119,14 +120,14 @@ export const Header: FC = () => {
           <label>
             年度:
             <select
-              value={appState.selected_nendo ?? ""}
+              value={appState.selected_nendo ?? ''}
               onChange={(e) => {
                 dispatch(
                   appActions.setNendo(
-                    e.target.value === "" ? undefined : e.target.value
-                  )
-                );
-                router.push(`/${e.target.value}`);
+                    e.target.value === '' ? undefined : e.target.value,
+                  ),
+                )
+                router.push(`/${e.target.value}`)
               }}
             >
               <option value="">未指定</option>
@@ -135,7 +136,7 @@ export const Header: FC = () => {
                   <option key={n.nendo} value={n.nendo}>
                     {n.nendo}
                   </option>
-                );
+                )
               })}
             </select>
           </label>
@@ -145,11 +146,11 @@ export const Header: FC = () => {
               checked={appState.is_journal}
               disabled={appState.selected_nendo == null}
               onChange={(e) => {
-                dispatch(appActions.showJournal(e.target.checked));
+                dispatch(appActions.showJournal(e.target.checked))
                 if (e.target.checked) {
-                  router.push(`/${appState.selected_nendo}/journal`);
+                  router.push(`/${appState.selected_nendo}/journal`)
                 } else {
-                  router.push(`/${appState.selected_nendo}`);
+                  router.push(`/${appState.selected_nendo}`)
                 }
               }}
               // onClick={() => {
@@ -191,13 +192,13 @@ export const Header: FC = () => {
               disabled={appState.selected_nendo == null}
               checked={appState.is_ledger}
               onChange={(e) => {
-                dispatch(appActions.showLedger(e.target.checked));
+                dispatch(appActions.showLedger(e.target.checked))
                 if (appState.selected_ledger_cd == null) {
-                  router.push(`/${appState.selected_nendo}`);
+                  router.push(`/${appState.selected_nendo}`)
                 } else {
                   router.push(
-                    `/${appState.selected_nendo}/ledger/${appState.selected_ledger_cd}`
-                  );
+                    `/${appState.selected_nendo}/ledger/${appState.selected_ledger_cd}`,
+                  )
                 }
               }}
               //checked={ledgerChecked}
@@ -253,15 +254,15 @@ export const Header: FC = () => {
             onChange={(e) => {
               dispatch(
                 appActions.setLedgerCd(
-                  e.target.value != null ? e.target.value : undefined
-                )
-              );
-              if (e.target.value != "") {
+                  e.target.value != null ? e.target.value : undefined,
+                ),
+              )
+              if (e.target.value != '') {
                 router.push(
-                  `/${appState.selected_nendo}/ledger/${e.target.value}`
-                );
+                  `/${appState.selected_nendo}/ledger/${e.target.value}`,
+                )
               } else {
-                router.push(`/${appState.selected_nendo}`);
+                router.push(`/${appState.selected_nendo}`)
               }
             }}
             // onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -289,7 +290,7 @@ export const Header: FC = () => {
                 <option key={s.saimoku_cd} value={s.saimoku_cd}>
                   {s.saimoku_cd}: {s.saimoku_full_name}
                 </option>
-              );
+              )
             })}
           </select>
           {/* {props.showLedger ? (
@@ -447,8 +448,8 @@ export const Header: FC = () => {
         </div> */}
       {/* </div> */}
     </>
-  );
-};
+  )
+}
 
 // const format = (n: number | undefined) => {
 //   if (format == null) {

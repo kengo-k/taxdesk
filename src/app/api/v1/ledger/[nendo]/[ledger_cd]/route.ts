@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 
-import { Factory } from "@/dicontainer";
-import { LedgerSearchRequest } from "@/models/ledger";
+import { Factory } from '@/dicontainer'
+import { LedgerSearchRequest } from '@/models/ledger'
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: LedgerSearchRequest }
+  { params }: { params: LedgerSearchRequest },
 ) {
-  const ledgerService = Factory.getLedgerService();
+  const ledgerService = Factory.getLedgerService()
 
-  const response = await ledgerService.selectLedgerList(params);
+  const response = await ledgerService.selectLedgerList(params)
 
-  return NextResponse.json(response);
+  return NextResponse.json(response)
 }
