@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { useRouter } from 'next/navigation'
 
+//import { Box, Select } from '@mantine/core'
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
 import { loadMasters } from '@/store/master'
@@ -118,7 +119,14 @@ export const Header: FC = () => {
         <h1 className="subTitle">帳票選択</h1>
         <div className="mainHeader">
           <label>
-            年度:
+            {/* <Box m={20}>
+              <Select
+                withAsterisk
+                label="Ledger Year"
+                data={masters.nendo_list.map((n) => n.nendo)}
+                placeholder="Pick one"
+              />
+            </Box> */}
             <select
               value={appState.selected_nendo ?? ''}
               onChange={(e) => {
