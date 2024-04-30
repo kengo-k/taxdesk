@@ -9,24 +9,94 @@ import { PagingRequest } from '@/models/paging'
 export const LedgerCreateRequestSchema = z
   .object({
     nendo: z.string(),
+    ledger_cd: z
+      .string()
+      .length(3, 'ledger cd must be exactly 3 characters long.'),
     date: z.string(),
-    ledger_cd: z.string(),
+    karikata_value: z.string(),
+    kasikata_value: z.string(),
+    note: z.string(),
     other_cd: z.string(),
-    karikata_value: z.number().nullable(),
-    kasikata_value: z.number().nullable(),
-    note: z.string().nullable(),
   })
+  .transform((data) => ({
+    ...data,
+    karikata_value:
+      data.karikata_value === '' ? null : Number(data.karikata_value),
+    kasikata_value:
+      data.kasikata_value === '' ? null : Number(data.kasikata_value),
+    note: data.note === '' ? null : data.note,
+  }))
   .refine(
-    (data) =>
-      (data.karikata_value !== null && data.kasikata_value === null) ||
-      (data.karikata_value === null && data.kasikata_value !== null),
+    (data) => {
+      const { karikata_value, kasikata_value } = data
+      const isKarikataNull = karikata_value === null
+      const isKasikataNull = kasikata_value === null
+      return (
+        (isKarikataNull && !isKasikataNull) ||
+        (!isKarikataNull && isKasikataNull)
+      )
+    },
     {
       message:
-        'Either "karikata_value" or "kasikata_value" must be defined, but not both',
-      path: ['karikata_value', 'kasikata_value'],
+        'Either karikata_value or kasikata_value must be a number, and the other must be null.',
+      //path: ['karikata_value'],
     },
   )
 
+// export const LedgerCreateRequestSchema = z.preprocess(
+//   (data: any) => {
+//     data.karikata_value = 100
+//     data.kasikata_value = null
+//     return data
+//   },
+//   z
+//     .object({
+//       nendo: z.string(),
+//       date: z.string(),
+//       ledger_cd: z.string(),
+//       other_cd: z.string(),
+//       karikata_value: z.number().nullable(),
+//       kasikata_value: z.number().nullable(),
+//       note: z.string().nullable(),
+//     })
+//     .refine(
+//       (data) => {
+//         console.log('refine!!!', data)
+//         return (
+//           (data.karikata_value === null && data.kasikata_value !== null) ||
+//           (data.karikata_value !== null && data.kasikata_value === null)
+//         )
+//       },
+//       {
+//         message:
+//           'Either "karikata_value" or "kasikata_value" must be defined, but not both',
+//         path: ['karikata_value', 'kasikata_value'],
+//       },
+//     ),
+// )
+
+// export const LedgerCreateRequestSchema = z
+//   .object({
+//     nendo: z.string(),
+//     date: z.string(),
+//     ledger_cd: z.string(),
+//     other_cd: z.string(),
+//     karikata_value: z.number().nullable(),
+//     kasikata_value: z.number().nullable(),
+//     note: z.string().nullable(),
+//   })
+//   .refine(
+//     (data) =>
+//       (data.karikata_value !== null && data.kasikata_value === null) ||
+//       (data.karikata_value === null && data.kasikata_value !== null),
+//     {
+//       message:
+//         'Either "karikata_value" or "kasikata_value" must be defined, but not both',
+//       path: ['karikata_value', 'kasikata_value'],
+//     },
+//   )
+
+export type LedgerCreateRequestForm = z.input<typeof LedgerCreateRequestSchema>
 export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
 
 export function isValidLedgerCreateRequest(
