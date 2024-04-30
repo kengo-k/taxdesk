@@ -58,7 +58,7 @@ export class LedgerServiceImpl implements LedgerService {
     const rows = await this.prisma.$queryRaw<any[]>`
       select
         *,
-        count(*) over (partition by 1) as all_count
+        cast(count(*) over (partition by 1) as integer) as all_count
       from
         (
           select
@@ -70,7 +70,7 @@ export class LedgerServiceImpl implements LedgerService {
             j.karikata_value,
             j.kasikata_cd,
             j.kasikata_value,
-            sum(
+            cast(sum(
               case
                 when
                   j.karikata_cd = ${req.ledger_cd}
@@ -82,8 +82,8 @@ export class LedgerServiceImpl implements LedgerService {
                 j.created_at desc
               rows
                 between current row and unbounded following
-            ) karikata_sum,
-            sum(
+            ) as integer) karikata_sum,
+            cast(sum(
               case
                 when
                   j.kasikata_cd = ${req.ledger_cd}
@@ -95,7 +95,7 @@ export class LedgerServiceImpl implements LedgerService {
                 j.created_at desc
               rows
                 between current row and unbounded following
-            ) kasikata_sum,
+            ) as integer) kasikata_sum,
             note,
             j.created_at
           from

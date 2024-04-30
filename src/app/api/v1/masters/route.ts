@@ -4,6 +4,7 @@ import { getDefault } from '@/constants/cache'
 import { Factory } from '@/dicontainer'
 
 const cache = getDefault()
+export const revalidate = cache.revalidate
 
 export async function GET() {
   const service = Factory.getMasterService()
@@ -18,5 +19,3 @@ export async function GET() {
     },
   )
 }
-
-export const revalidate = cache.revalidate
