@@ -7,9 +7,9 @@
   "singleQuote": true,
   "semi": false,
   "importOrder": [
-    "<THIRD_PARTY_MODULES>",
     "^react",
     "^next",
+    "<THIRD_PARTY_MODULES>",
     "^@(?!/)\\w+",
     "^@/"
   ],

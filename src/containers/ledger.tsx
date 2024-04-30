@@ -1,9 +1,9 @@
+import { FC, createRef, useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+
 import { DateTime } from 'luxon'
 import Numeral from 'numeral'
 import { useDebouncedCallback } from 'use-debounce'
-
-import { FC, createRef, useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 
 import { saimoku_masters } from '@prisma/client'
 
@@ -692,7 +692,7 @@ const LedgerListRow = (props: {
             setKariValue(fmtValue)
             props.notifyError()
           }}
-          className={`w-24 num value ${
+          className={`w-24 text-right num value ${
             props.error.kari_format != null ||
             props.error.kari_negative != null ||
             props.error.value_both != null ||
@@ -727,7 +727,7 @@ const LedgerListRow = (props: {
             setKasiValue(fmtValue)
             props.notifyError()
           }}
-          className={`w-24 num value ${
+          className={`w-24 text-right num value ${
             props.error.kasi_format != null ||
             props.error.kasi_negative ||
             props.error.value_both != null ||
@@ -754,7 +754,7 @@ const LedgerListRow = (props: {
           type="text"
           value={Numeral(props.ledger.acc).format('0,0')}
           disabled
-          className="w-28 num readonly"
+          className="w-28 text-right num readonly"
         />
       </td>
       <td>
@@ -1202,7 +1202,7 @@ export const LedgerListNewRow = (props: {
               save()
             }
           }}
-          className={`w-24 num value ${
+          className={`w-24 text-right num value ${
             props.error.kari_format != null ||
             props.error.kari_negative != null ||
             props.error.value_both != null ||
@@ -1241,7 +1241,7 @@ export const LedgerListNewRow = (props: {
               save()
             }
           }}
-          className={`w-24 num value ${
+          className={`w-24 text-right value ${
             props.error.kasi_format != null ||
             props.error.kasi_negative ||
             props.error.value_both != null ||
