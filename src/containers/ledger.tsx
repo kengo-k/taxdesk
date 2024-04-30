@@ -95,7 +95,7 @@ export const LedgerList: FC<LedgerListProps> = ({
         <table>
           <thead className="ledgerHeader">
             <tr>
-              <th className="ledgerHeader-date">登録日</th>
+              <th>登録日</th>
               <th className="ledgerHeader-anotherCd" colSpan={2}>
                 相手科目
               </th>
@@ -562,7 +562,7 @@ const LedgerListRow = (props: {
 
   return (
     <tr>
-      <td className="ledgerBody-date">
+      <td>
         {props.ledgerMonth !== 'all' ? (
           <>
             <input
@@ -571,7 +571,7 @@ const LedgerListRow = (props: {
               maxLength={6}
               readOnly
               disabled
-              className={`ledgerBody-date-yyyymm`}
+              className="w-18"
             />
             <input
               type="text"
@@ -586,7 +586,7 @@ const LedgerListRow = (props: {
               onBlur={() => {
                 props.notifyError()
               }}
-              className={`ledgerBody-date-dd ${
+              className={`w-8 ledgerBody-date-dd ${
                 props.error.date_format != null || props.error.date_required
                   ? 'error'
                   : ''
@@ -644,7 +644,7 @@ const LedgerListRow = (props: {
               updateCd(e.target.value)
               props.notifyError()
             }}
-            className={`search ${
+            className={`w-12 search ${
               props.error.cd_required != null || props.error.cd_invalid != null
                 ? 'error'
                 : ''
@@ -666,7 +666,7 @@ const LedgerListRow = (props: {
         </div>
       </td>
       <td className="ledgerBody-otherCdName">
-        <input type="text" value={cdName} disabled readOnly />
+        <input type="text" value={cdName} className="w-24" disabled readOnly />
       </td>
       <td className="ledgerBody-karikataValue">
         <input
@@ -692,7 +692,7 @@ const LedgerListRow = (props: {
             setKariValue(fmtValue)
             props.notifyError()
           }}
-          className={`num value ${
+          className={`w-24 num value ${
             props.error.kari_format != null ||
             props.error.kari_negative != null ||
             props.error.value_both != null ||
@@ -727,7 +727,7 @@ const LedgerListRow = (props: {
             setKasiValue(fmtValue)
             props.notifyError()
           }}
-          className={`num value ${
+          className={`w-24 num value ${
             props.error.kasi_format != null ||
             props.error.kasi_negative ||
             props.error.value_both != null ||
@@ -746,6 +746,7 @@ const LedgerListRow = (props: {
             setNote(e.target.value)
             updateNoteDebounced(e.target.value)
           }}
+          className="w-24"
         />
       </td>
       <td className="ledgerBody-acc">
@@ -753,7 +754,7 @@ const LedgerListRow = (props: {
           type="text"
           value={Numeral(props.ledger.acc).format('0,0')}
           disabled
-          className="num readonly"
+          className="w-28 num readonly"
         />
       </td>
       <td>
@@ -1049,7 +1050,7 @@ export const LedgerListNewRow = (props: {
 
   return (
     <tr>
-      <td className="ledgerBody-date">
+      <td>
         {props.ledgerMonth !== 'all' ? (
           <>
             <input
@@ -1059,7 +1060,7 @@ export const LedgerListNewRow = (props: {
               maxLength={6}
               readOnly
               disabled
-              className={`ledgerBody-date-yyyymm`}
+              className={`w-18 ledgerBody-date-yyyymm`}
             />
             <input
               type="text"
@@ -1073,7 +1074,7 @@ export const LedgerListNewRow = (props: {
                   save()
                 }
               }}
-              className={`ledgerBody-date-dd ${
+              className={`w-8 ledgerBody-date-dd ${
                 props.error.date_format != null || props.error.date_required
                   ? 'error'
                   : ''
@@ -1149,7 +1150,7 @@ export const LedgerListNewRow = (props: {
                 save()
               }
             }}
-            className={`search ${
+            className={`w-12 search ${
               props.error.cd_required != null || props.error.cd_invalid != null
                 ? 'error'
                 : ''
@@ -1171,7 +1172,7 @@ export const LedgerListNewRow = (props: {
         </div>
       </td>
       <td className="ledgerBody-otherCdName">
-        <input type="text" value={cdName} disabled readOnly />
+        <input type="text" value={cdName} className="w-24" disabled readOnly />
       </td>
       <td className="ledgerBody-karikataValue">
         <input
@@ -1201,7 +1202,7 @@ export const LedgerListNewRow = (props: {
               save()
             }
           }}
-          className={`num value ${
+          className={`w-24 num value ${
             props.error.kari_format != null ||
             props.error.kari_negative != null ||
             props.error.value_both != null ||
@@ -1240,7 +1241,7 @@ export const LedgerListNewRow = (props: {
               save()
             }
           }}
-          className={`num value ${
+          className={`w-24 num value ${
             props.error.kasi_format != null ||
             props.error.kasi_negative ||
             props.error.value_both != null ||
@@ -1266,6 +1267,7 @@ export const LedgerListNewRow = (props: {
           onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
             save()
           }}
+          className="w-24"
         />
       </td>
       <td>
