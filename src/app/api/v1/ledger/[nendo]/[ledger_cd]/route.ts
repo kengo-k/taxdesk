@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { Factory } from '@/dicontainer'
-import { LedgerSearchRequest } from '@/models/ledger'
+import {
+  LedgerSearchRequest,
+  isValidLedgerCreateRequest,
+} from '@/models/ledger'
 
 export async function GET(
   _: NextRequest,
@@ -18,13 +21,12 @@ export async function POST(
 ) {
   const service = Factory.getLedgerService()
   const body = await request.json()
-  const response = await service.createLedger({
-    ...params,
-    date: '',
-    other_cd: '',
-    karikata_value: null,
-    kasikata_value: null,
-    note: null,
-  })
-  return NextResponse.json(response)
+
+  const is_valid = isValidLedgerCreateRequest({ ...params, ...body })
+  if (is_valid.success) {
+    const response = await service.createLedger(is_valid.data)
+    return NextResponse.json(response)
+  } else {
+    NextResponse.json({ error: 'Missing require fields' }, { status: 400 })
+  }
 }

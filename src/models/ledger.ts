@@ -1,18 +1,40 @@
 import { DateTime } from 'luxon'
+import * as z from 'zod'
 
 import { Prisma } from '@prisma/client'
 
 import { SaimokuSearchResponse } from '@/models/master'
 import { PagingRequest } from '@/models/paging'
 
-export interface LedgerCreateRequest {
-  nendo: string
-  date: string
-  ledger_cd: string
-  other_cd: string
-  karikata_value: number | null
-  kasikata_value: number | null
-  note: string | null
+export const LedgerCreateRequestSchema = z
+  .object({
+    nendo: z.string(),
+    date: z.string(),
+    ledger_cd: z.string(),
+    other_cd: z.string(),
+    karikata_value: z.number().nullable(),
+    kasikata_value: z.number().nullable(),
+    note: z.string().nullable(),
+  })
+  .refine(
+    (data) =>
+      (data.karikata_value !== null && data.kasikata_value === null) ||
+      (data.karikata_value === null && data.kasikata_value !== null),
+    {
+      message:
+        'Either "karikata_value" or "kasikata_value" must be defined, but not both',
+      path: ['karikata_value', 'kasikata_value'],
+    },
+  )
+
+export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
+
+export function isValidLedgerCreateRequest(
+  data: unknown,
+):
+  | { success: true; data: LedgerCreateRequest }
+  | { success: false; error: z.ZodError } {
+  return LedgerCreateRequestSchema.safeParse(data)
 }
 
 export type LedgerSearchRequest = {
@@ -79,7 +101,7 @@ export function toJournalCreateInput(
       kasikata_cd = condition.other_cd
     }
   }
-  const now = DateTime.local().toFormat('yyyy-MM-dd HH:mm:ss')
+  const now = DateTime.local().toISO()
   const entity = {
     date: condition.date,
     nendo: condition.nendo,
