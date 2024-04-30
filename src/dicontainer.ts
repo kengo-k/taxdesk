@@ -6,6 +6,21 @@ import { JournalService, JournalServiceImpl } from '@/services/journal'
 import { LedgerService, LedgerServiceImpl } from '@/services/ledger'
 import { MasterService, MasterServiceImpl } from '@/services/master'
 
+let prisma = getConnection()
+
+function getConnection(): PrismaClient {
+  let prisma: PrismaClient
+  if (process.env.NODE_ENV === 'production') {
+    prisma = new PrismaClient()
+  } else {
+    if (!(global as any).prisma) {
+      ;(global as any).prisma = new PrismaClient()
+    }
+    prisma = (global as any).prisma
+  }
+  return prisma
+}
+
 interface ServiceMap {
   MasterService: MasterService
   LedgerService: LedgerService
@@ -21,9 +36,7 @@ function register<T>(
 }
 
 const serviceContainer = new Container()
-serviceContainer
-  .bind<PrismaClient>('PrismaClient')
-  .toConstantValue(new PrismaClient())
+serviceContainer.bind<PrismaClient>('PrismaClient').toConstantValue(prisma)
 
 const registerService = register.bind(null, serviceContainer)
 registerService(MasterServiceImpl, 'MasterService')
