@@ -1095,16 +1095,17 @@ export const LedgerListNewRow = (props: {
       <td>
         {props.ledgerMonth !== 'all' ? (
           <>
-            <input
+            <TextInput
               type="text"
-              //value={`${props.nendo}/${props.ledgerMonth}/`}
               value={getTargetYYYYMM(`${props.nendo}${props.ledgerMonth}01`)}
               maxLength={6}
               readOnly
               disabled
-              className={`w-18 ledgerBody-date-yyyymm`}
+              styles={() => ({
+                root: { width: '80px', display: 'inline-block' },
+              })}
             />
-            <input
+            <TextInput
               type="text"
               value={dateStrDD}
               maxLength={2}
@@ -1116,12 +1117,10 @@ export const LedgerListNewRow = (props: {
                   save()
                 }
               }}
-              className={`w-8 ledgerBody-date-dd ${
-                props.error.date_format != null || props.error.date_required
-                  ? 'error'
-                  : ''
-              }`}
               ref={dateRef}
+              styles={() => ({
+                root: { width: '40px', display: 'inline-block' },
+              })}
             />
           </>
         ) : (
