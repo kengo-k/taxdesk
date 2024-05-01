@@ -1307,24 +1307,27 @@ export const LedgerListNewRow = (props: {
           withArrow
         > */}
         <TextInput
-          className="w-24"
-          styles={() => ({ input: { textAlign: 'right' } })}
+          className={'w-24'}
+          styles={() => ({
+            input: {
+              textAlign: 'right',
+              ...(form.errors.karikata_value ? { borderColor: 'red' } : {}),
+            },
+          })}
           {...form.getInputProps('karikata_value')}
-          value={form.values.karikata_value ?? ''}
-          // onChange={(e) => {
-          //   const num = Number(e.currentTarget.value)
-          //   form.setFieldValue('karikata_value', isNaN(num) ? null : num)
-          // }}
-          //error={null}
+          value={form.values.karikata_value}
+          error={null}
           onBlur={(e) => {
             const { errors } = form.validate()
             if (!LedgerCreateRequestForm.hasError('karikata_value', errors)) {
               const value = Numeral(e.currentTarget.value)
-              LedgerCreateRequestForm.set(
-                'karikata_value',
-                form,
-                value.format('0,0'),
-              )
+              if (value.value() != null) {
+                LedgerCreateRequestForm.set(
+                  'karikata_value',
+                  form,
+                  value.format('0,0'),
+                )
+              }
             }
           }}
           onFocus={(e) => {

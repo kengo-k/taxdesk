@@ -27,6 +27,9 @@ export const LedgerCreateRequestSchema = z
     // ),
     karikata_value: z.string().refine(
       (value) => {
+        if (value.trim().length === 0) {
+          return true
+        }
         const num = numeral(value)
         return num.value() != null
       },
