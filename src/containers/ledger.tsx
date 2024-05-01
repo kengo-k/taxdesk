@@ -18,7 +18,7 @@ import {
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
 import { updateJournal } from '@/store/journal'
-import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
+import { ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectNendoMap, selectSaimokuMap } from '@/store/master'
 
 interface LedgerListProps {
@@ -810,7 +810,13 @@ export const LedgerListNewRow = (props: {
   const nendoMap = useSelector(selectNendoMap)
 
   const [dateStr, setDate] = useState('')
+
   const [dateStrDD, setDateDD] = useState('')
+  useEffect(() => {
+    const date = `${props.nendo}${props.ledgerMonth}${dateStrDD}`
+    LedgerCreateRequestForm.set('date', form, date)
+  }, [dateStrDD, form, props.ledgerMonth, props.nendo])
+
   const [kariValueStr, setKariValue] = useState('')
   const [kasiValueStr, setKasiValue] = useState('')
   const [cd, setCd] = useState('')
@@ -1017,7 +1023,8 @@ export const LedgerListNewRow = (props: {
     }
     const { success, data } = LedgerCreateRequestSchema.safeParse(form.values)
     if (success) {
-      dispatch(createLedger(data))
+      console.log('create: ', data)
+      //dispatch(createLedger(data))
     }
     // dispatch(
     //   createLedger({
