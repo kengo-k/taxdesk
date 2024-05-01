@@ -5,7 +5,12 @@ import { DateTime } from 'luxon'
 import Numeral from 'numeral'
 import { useDebouncedCallback } from 'use-debounce'
 
-import { TextInput } from '@mantine/core'
+import {
+  Autocomplete,
+  ComboboxItem,
+  OptionsFilter,
+  TextInput,
+} from '@mantine/core'
 import { useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
@@ -1088,6 +1093,19 @@ export const LedgerListNewRow = (props: {
     setFilterdSaimokuList(filterdSaimokuList)
   }, [cd, saimokuList])
 
+  const optionsFilter: OptionsFilter = ({ options, search }) => {
+    return (options as ComboboxItem[]).filter((option) => {
+      const key = search.trim().toLowerCase()
+      if (key.length === 0) {
+        return true
+      }
+      const saimoku = saimokuMap.get(option.value)!
+      const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+      const kana = saimoku.saimoku_kana_name.toLowerCase()
+      return saimoku_cd.includes(key) || kana.includes(key)
+    })
+  }
+
   return (
     <tr>
       <td>
@@ -1162,8 +1180,39 @@ export const LedgerListNewRow = (props: {
         )}
       </td>
       <td>
-        <div>
-          <TextInput
+        <div style={{ width: '100%', position: 'relative' }}>
+          <Autocomplete
+            className="w-14"
+            comboboxProps={{ width: '180px' }}
+            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
+            filter={optionsFilter}
+            value={form.values.other_cd}
+            renderOption={({ option }) => {
+              const saimoku = saimokuMap.get(option.value)!
+              return (
+                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+              )
+            }}
+            onChange={(value: string) => {
+              LedgerCreateRequestForm.set('other_cd', form, value)
+            }}
+            onBlur={(e) => {
+              const keyword = e.currentTarget.value.toLowerCase()
+              const results = saimokuList.filter((s) => {
+                const code = s.saimoku_cd.toLowerCase()
+                const kana = s.saimoku_kana_name
+                return code.includes(keyword) || kana.includes(keyword)
+              })
+              if (results.length === 1) {
+                LedgerCreateRequestForm.set(
+                  'other_cd',
+                  form,
+                  results[0].saimoku_cd,
+                )
+              }
+            }}
+          />
+          {/* <TextInput
             className="w-12"
             {...form.getInputProps('other_cd')}
             value={form.values.other_cd}
@@ -1183,7 +1232,7 @@ export const LedgerListNewRow = (props: {
                 //save()
               }
             }}
-          />
+          /> */}
           {/* <input
             type="text"
             value={cd}
