@@ -1124,9 +1124,15 @@ export const LedgerListNewRow = (props: {
                   save()
                 }
               }}
+              onBlur={(e) => {
+                const day = e.currentTarget.value
+                if (day.length === 1) {
+                  setDateDD(`0${day}`)
+                }
+              }}
               ref={dateRef}
               styles={() => ({
-                root: { width: '40px', display: 'inline-block' },
+                root: { width: '50px', display: 'inline-block' },
               })}
             />
           </>
