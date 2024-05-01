@@ -1011,56 +1011,76 @@ export const LedgerListNewRow = (props: {
   // }
 
   const save = () => {
-    let date
-    if (props.ledgerMonth !== 'all') {
-      date = `${getTargetYYYYMM(
-        `${props.nendo}${props.ledgerMonth}01`,
-      )}/${dateStrDD}`
-    } else {
-      date = dateStr
+    const { hasErrors } = form.validate()
+    if (hasErrors) {
+      return
     }
-    const validateResutls = [
-      true,
-      // updateDate(date),
-      // updateKariValue(kariValueStr),
-      // updateKasiValue(kasiValueStr),
-      // updateCd(cd),
-    ]
-    if (validateResutls.every((valid) => valid)) {
-      dispatch(
-        createLedger({
-          nendo: props.nendo,
-          date: toRawDate(date),
-          ledger_cd: props.ledgerCd,
-          other_cd: cd,
-          karikata_value: toNumber(kariValueStr),
-          kasikata_value: toNumber(kasiValueStr),
-          note,
-        }),
-      )
-      // createLedger(
-      //   {
-      //     nendo: props.nendo,
-      //     date: toRawDate(date),
-      //     ledger_cd: props.ledgerCd,
-      //     other_cd: cd,
-      //     karikata_value: toNumber(kariValueStr),
-      //     kasikata_value: toNumber(kasiValueStr),
-      //     note,
-      //   },
-      //   reloadLedger(false)
-      // );
-      // dateRef.current?.focus();
-      // setDate("");
-      // setDateDD("");
-      // setCd("");
-      // setCdName("");
-      // setKariValue("");
-      // setKasiValue("");
-      // setNote("");
-    } else {
-      props.notifyError()
+    const { success, data } = LedgerCreateRequestSchema.safeParse(form.values)
+    if (success) {
+      dispatch(createLedger(data))
     }
+    // dispatch(
+    //   createLedger({
+    //     nendo: props.nendo,
+    //     date: toRawDate(date),
+    //     ledger_cd: props.ledgerCd,
+    //     other_cd: cd,
+    //     karikata_value: toNumber(kariValueStr),
+    //     kasikata_value: toNumber(kasiValueStr),
+    //     note,
+    //   }),
+    // )
+
+    // let date
+    // if (props.ledgerMonth !== 'all') {
+    //   date = `${getTargetYYYYMM(
+    //     `${props.nendo}${props.ledgerMonth}01`,
+    //   )}/${dateStrDD}`
+    // } else {
+    //   date = dateStr
+    // }
+    // const validateResutls = [
+    //   true,
+    //   // updateDate(date),
+    //   // updateKariValue(kariValueStr),
+    //   // updateKasiValue(kasiValueStr),
+    //   // updateCd(cd),
+    // ]
+    // if (validateResutls.every((valid) => valid)) {
+    //   dispatch(
+    //     createLedger({
+    //       nendo: props.nendo,
+    //       date: toRawDate(date),
+    //       ledger_cd: props.ledgerCd,
+    //       other_cd: cd,
+    //       karikata_value: toNumber(kariValueStr),
+    //       kasikata_value: toNumber(kasiValueStr),
+    //       note,
+    //     }),
+    //   )
+    //   createLedger(
+    //     {
+    //       nendo: props.nendo,
+    //       date: toRawDate(date),
+    //       ledger_cd: props.ledgerCd,
+    //       other_cd: cd,
+    //       karikata_value: toNumber(kariValueStr),
+    //       kasikata_value: toNumber(kasiValueStr),
+    //       note,
+    //     },
+    //     reloadLedger(false)
+    //   );
+    //   dateRef.current?.focus();
+    //   setDate("");
+    //   setDateDD("");
+    //   setCd("");
+    //   setCdName("");
+    //   setKariValue("");
+    //   setKasiValue("");
+    //   setNote("");
+    // } else {
+    //   props.notifyError()
+    // }
   }
 
   useEffect(() => {
@@ -1141,13 +1161,12 @@ export const LedgerListNewRow = (props: {
           />
         )}
       </td>
-      <td className="ledgerBody-anotherCd">
-        <div className="cdSelect">
+      <td>
+        <div>
           <TextInput
             className="w-12"
-            style={{ textAlign: 'right' }}
-            {...form.getInputProps('ledger_cd')}
-            value={form.values.ledger_cd}
+            {...form.getInputProps('other_cd')}
+            value={form.values.other_cd}
             // onChange={(e) => {
             //   const num = Number(e.currentTarget.value)
             //   form.setFieldValue('karikata_value', isNaN(num) ? null : num)
@@ -1254,10 +1273,7 @@ export const LedgerListNewRow = (props: {
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              const { hasErrors } = form.validate()
-              if (!hasErrors) {
-                save()
-              }
+              save()
             }
           }}
         />
