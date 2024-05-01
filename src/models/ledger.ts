@@ -1,6 +1,8 @@
 import { DateTime } from 'luxon'
+import numeral from 'numeral'
 import * as z from 'zod'
 
+import { FormErrors, UseFormReturnType } from '@mantine/form'
 import { Prisma } from '@prisma/client'
 
 import { SaimokuSearchResponse } from '@/models/master'
@@ -13,7 +15,23 @@ export const LedgerCreateRequestSchema = z
       .string()
       .length(3, 'ledger cd must be exactly 3 characters long.'),
     date: z.string(),
-    karikata_value: z.string(),
+    // karikata_value: z.custom(
+    //   (data) => {
+    //     if (typeof data !== 'string') {
+    //       return false
+    //     }
+    //     const num = numeral(data)
+    //     return num.value() != null
+    //   },
+    //   { message: 'must be a number' },
+    // ),
+    karikata_value: z.string().refine(
+      (value) => {
+        const num = numeral(value)
+        return num.value() != null
+      },
+      { message: 'must be a number' },
+    ),
     kasikata_value: z.string(),
     note: z.string(),
     other_cd: z.string(),
@@ -21,9 +39,9 @@ export const LedgerCreateRequestSchema = z
   .transform((data) => ({
     ...data,
     karikata_value:
-      data.karikata_value === '' ? null : Number(data.karikata_value),
+      data.karikata_value === '' ? null : numeral(data.karikata_value).value(),
     kasikata_value:
-      data.kasikata_value === '' ? null : Number(data.kasikata_value),
+      data.kasikata_value === '' ? null : numeral(data.kasikata_value).value(),
     note: data.note === '' ? null : data.note,
   }))
   .refine(
@@ -43,61 +61,21 @@ export const LedgerCreateRequestSchema = z
     },
   )
 
-// export const LedgerCreateRequestSchema = z.preprocess(
-//   (data: any) => {
-//     data.karikata_value = 100
-//     data.kasikata_value = null
-//     return data
-//   },
-//   z
-//     .object({
-//       nendo: z.string(),
-//       date: z.string(),
-//       ledger_cd: z.string(),
-//       other_cd: z.string(),
-//       karikata_value: z.number().nullable(),
-//       kasikata_value: z.number().nullable(),
-//       note: z.string().nullable(),
-//     })
-//     .refine(
-//       (data) => {
-//         console.log('refine!!!', data)
-//         return (
-//           (data.karikata_value === null && data.kasikata_value !== null) ||
-//           (data.karikata_value !== null && data.kasikata_value === null)
-//         )
-//       },
-//       {
-//         message:
-//           'Either "karikata_value" or "kasikata_value" must be defined, but not both',
-//         path: ['karikata_value', 'kasikata_value'],
-//       },
-//     ),
-// )
-
-// export const LedgerCreateRequestSchema = z
-//   .object({
-//     nendo: z.string(),
-//     date: z.string(),
-//     ledger_cd: z.string(),
-//     other_cd: z.string(),
-//     karikata_value: z.number().nullable(),
-//     kasikata_value: z.number().nullable(),
-//     note: z.string().nullable(),
-//   })
-//   .refine(
-//     (data) =>
-//       (data.karikata_value !== null && data.kasikata_value === null) ||
-//       (data.karikata_value === null && data.kasikata_value !== null),
-//     {
-//       message:
-//         'Either "karikata_value" or "kasikata_value" must be defined, but not both',
-//       path: ['karikata_value', 'kasikata_value'],
-//     },
-//   )
+export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
 
 export type LedgerCreateRequestForm = z.input<typeof LedgerCreateRequestSchema>
-export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
+export const LedgerCreateRequestForm = {
+  hasError: (key: keyof LedgerCreateRequestForm, errors: FormErrors) => {
+    return errors[key]
+  },
+  set: <K extends keyof LedgerCreateRequestForm>(
+    key: K,
+    form: UseFormReturnType<LedgerCreateRequestForm>,
+    value: LedgerCreateRequestForm[K],
+  ) => {
+    form.setFieldValue(key, value as any)
+  },
+}
 
 export function isValidLedgerCreateRequest(
   data: unknown,

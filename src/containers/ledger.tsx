@@ -1226,7 +1226,7 @@ export const LedgerListNewRow = (props: {
         > */}
         <TextInput
           className="w-24"
-          style={{ textAlign: 'right' }}
+          styles={() => ({ input: { textAlign: 'right' } })}
           {...form.getInputProps('karikata_value')}
           value={form.values.karikata_value ?? ''}
           // onChange={(e) => {
@@ -1234,15 +1234,30 @@ export const LedgerListNewRow = (props: {
           //   form.setFieldValue('karikata_value', isNaN(num) ? null : num)
           // }}
           //error={null}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+          onBlur={(e) => {
+            const { errors } = form.validate()
+            if (!LedgerCreateRequestForm.hasError('karikata_value', errors)) {
+              const value = Numeral(e.currentTarget.value)
+              LedgerCreateRequestForm.set(
+                'karikata_value',
+                form,
+                value.format('0,0'),
+              )
+            }
+          }}
+          onFocus={(e) => {
+            const value = Numeral(e.currentTarget.value)
+            const num = value.value()
+            if (num != null) {
+              LedgerCreateRequestForm.set('karikata_value', form, `${num}`)
+            }
+          }}
+          onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              console.log('enter')
-              const result = form.validate()
-              console.log(result)
-              //form.onSubmit({})
-              //const result = LedgerCreateRequestSchema.safeParse(form.values)
-              //console.log(result)
-              //save()
+              const { hasErrors } = form.validate()
+              if (!hasErrors) {
+                save()
+              }
             }
           }}
         />
@@ -1285,7 +1300,7 @@ export const LedgerListNewRow = (props: {
           ref={kariRef}
         /> */}
       </td>
-      <td className="ledgerBody-kasikataValue">
+      <td>
         <TextInput
           className="w-24"
           style={{ textAlign: 'right' }}
@@ -1298,7 +1313,6 @@ export const LedgerListNewRow = (props: {
           //error={null}
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
-              console.log('enter')
               const result = form.validate()
               console.log(result)
               //form.onSubmit({})
