@@ -5,12 +5,7 @@ import { DateTime } from 'luxon'
 import Numeral from 'numeral'
 import { useDebouncedCallback } from 'use-debounce'
 
-import {
-  Autocomplete,
-  ComboboxItem,
-  OptionsFilter,
-  TextInput,
-} from '@mantine/core'
+import { Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
 import { useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
@@ -1093,18 +1088,7 @@ export const LedgerListNewRow = (props: {
     setFilterdSaimokuList(filterdSaimokuList)
   }, [cd, saimokuList])
 
-  const optionsFilter: OptionsFilter = ({ options, search }) => {
-    return (options as ComboboxItem[]).filter((option) => {
-      const key = search.trim().toLowerCase()
-      if (key.length === 0) {
-        return true
-      }
-      const saimoku = saimokuMap.get(option.value)!
-      const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-      const kana = saimoku.saimoku_kana_name.toLowerCase()
-      return saimoku_cd.includes(key) || kana.includes(key)
-    })
-  }
+  const [other_cd_name, setOtherCdName] = useState('')
 
   return (
     <tr>
@@ -1182,11 +1166,20 @@ export const LedgerListNewRow = (props: {
       <td>
         <div style={{ width: '100%', position: 'relative' }}>
           <Autocomplete
-            className="w-14"
-            comboboxProps={{ width: '180px' }}
-            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
-            filter={optionsFilter}
             value={form.values.other_cd}
+            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
+            filter={({ options, search }) => {
+              return (options as ComboboxItem[]).filter((option) => {
+                const key = search.trim().toLowerCase()
+                if (key.length === 0) {
+                  return true
+                }
+                const saimoku = saimokuMap.get(option.value)!
+                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                const kana = saimoku.saimoku_kana_name.toLowerCase()
+                return saimoku_cd.includes(key) || kana.includes(key)
+              })
+            }}
             renderOption={({ option }) => {
               const saimoku = saimokuMap.get(option.value)!
               return (
@@ -1209,8 +1202,11 @@ export const LedgerListNewRow = (props: {
                   form,
                   results[0].saimoku_cd,
                 )
+                setOtherCdName(results[0].saimoku_ryaku_name)
               }
             }}
+            className="w-14"
+            comboboxProps={{ width: '180px' }}
           />
           {/* <TextInput
             className="w-12"
@@ -1281,8 +1277,14 @@ export const LedgerListNewRow = (props: {
           )}
         </div>
       </td>
-      <td className="ledgerBody-otherCdName">
-        <input type="text" value={cdName} className="w-24" disabled readOnly />
+      <td>
+        <TextInput
+          type="text"
+          value={other_cd_name}
+          className="w-16"
+          disabled
+          readOnly
+        />
       </td>
       <td>
         {/* <Tooltip
