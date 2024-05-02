@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import numeral from 'numeral'
 import * as z from 'zod'
 
-import { FormErrors, UseFormReturnType } from '@mantine/form'
+import { UseFormReturnType } from '@mantine/form'
 import { Prisma } from '@prisma/client'
 
 import { SaimokuSearchResponse } from '@/models/master'
@@ -62,9 +62,16 @@ export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
 
 export type LedgerCreateRequestForm = z.input<typeof LedgerCreateRequestSchema>
 export const LedgerCreateRequestForm = {
-  hasError: (key: keyof LedgerCreateRequestForm, errors: FormErrors) => {
-    return errors[key]
+  hasError: (
+    key: keyof LedgerCreateRequestForm,
+    form: UseFormReturnType<LedgerCreateRequestForm>,
+  ) => {
+    return Object.keys(form.errors).some((error_id) => {
+      console.log(`${error_id} includes ${key}= ${error_id.includes(key)}`)
+      return error_id.includes(key)
+    })
   },
+
   set: <K extends keyof LedgerCreateRequestForm>(
     key: K,
     form: UseFormReturnType<LedgerCreateRequestForm>,

@@ -1315,7 +1315,9 @@ export const LedgerListNewRow = (props: {
           styles={() => ({
             input: {
               textAlign: 'right',
-              ...(form.errors.karikata_value ? { borderColor: 'red' } : {}),
+              ...(LedgerCreateRequestForm.hasError('karikata_value', form)
+                ? { borderColor: 'red' }
+                : {}),
             },
           })}
           {...form.getInputProps('karikata_value')}
@@ -1323,7 +1325,7 @@ export const LedgerListNewRow = (props: {
           error={null}
           onBlur={(e) => {
             const { errors } = form.validate()
-            if (!LedgerCreateRequestForm.hasError('karikata_value', errors)) {
+            if (!LedgerCreateRequestForm.hasError('karikata_value', form)) {
               const value = Numeral(e.currentTarget.value)
               if (value.value() != null) {
                 LedgerCreateRequestForm.set(
@@ -1392,15 +1394,17 @@ export const LedgerListNewRow = (props: {
           styles={() => ({
             input: {
               textAlign: 'right',
-              ...(form.errors.kasikata_value ? { borderColor: 'red' } : {}),
+              ...(LedgerCreateRequestForm.hasError('kasikata_value', form)
+                ? { borderColor: 'red' }
+                : {}),
             },
           })}
           {...form.getInputProps('kasikata_value')}
           value={form.values.kasikata_value}
           error={null}
           onBlur={(e) => {
-            const { errors } = form.validate()
-            if (!LedgerCreateRequestForm.hasError('kasikata_value', errors)) {
+            form.validate()
+            if (!LedgerCreateRequestForm.hasError('kasikata_value', form)) {
               const value = Numeral(e.currentTarget.value)
               if (value.value() != null) {
                 LedgerCreateRequestForm.set(
