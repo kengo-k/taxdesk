@@ -196,16 +196,15 @@ export const LedgerList: FC<LedgerListProps> = ({
                 )
               } else {
                 return (
-                  <tr key={row.journal_id}></tr>
-                  // <LedgerListRow
-                  //   key={row.journal_id}
-                  //   nendo={nendo}
-                  //   ledgerCd={ledger_cd}
-                  //   ledgerMonth={ledger_month}
-                  //   pageNo={page_no}
-                  //   pageSize={page_size}
-                  //   ledger={row}
-                  // />
+                  <LedgerListRow
+                    key={row.journal_id}
+                    nendo={nendo}
+                    ledgerCd={ledger_cd}
+                    ledgerMonth={ledger_month}
+                    pageNo={page_no}
+                    pageSize={page_size}
+                    ledger={row}
+                  />
                 )
               }
             })}
@@ -216,32 +215,7 @@ export const LedgerList: FC<LedgerListProps> = ({
   )
 }
 
-export const toNumber = (s: string | undefined) => {
-  if (s == null) {
-    return null
-  }
-  if (s.length === 0) {
-    return null
-  }
-  return Numeral(s).value()
-}
-
-export const toRawDate = (dateStr: string) => {
-  const date1 = DateTime.fromFormat(dateStr, 'yyyymmdd')
-  const date2 = DateTime.fromFormat(dateStr, 'yyyy/mm/dd')
-  if (date1.invalidReason == null) {
-    return dateStr
-  }
-  if (date2.invalidReason == null) {
-    return date2.toFormat('yyyymmdd')
-  }
-  throw new Error()
-}
-
-export const filterSaimokuList = (
-  saimokuList: saimoku_masters[],
-  cd: string,
-) => {
+const filterSaimokuList = (saimokuList: saimoku_masters[], cd: string) => {
   return saimokuList.flatMap((s) => {
     if (s.saimoku_cd.toLowerCase().startsWith(cd.toLowerCase())) {
       return [s]
@@ -282,16 +256,6 @@ export const createReloadLedger =
     )
     return ret
   }
-
-export const getTargetYYYYMM = (dateStr: string) => {
-  const date = DateTime.fromFormat(dateStr, 'yyyymmdd')
-  let nendoStr = date.toFormat('yyyy')
-  const mmStr = date.toFormat('mm')
-  if ([1, 2, 3].includes(Number(mmStr))) {
-    nendoStr = `${Number(nendoStr) + 1}`
-  }
-  return `${nendoStr}/${mmStr}`
-}
 
 const LedgerListRow = (props: {
   nendo: string
@@ -343,55 +307,74 @@ const LedgerListRow = (props: {
       <td>
         {props.ledgerMonth !== 'all' ? (
           <>
-            <input
-              type="text"
+            <TextInput
               maxLength={6}
               readOnly
               disabled
-              className="w-18"
+              styles={() => ({
+                root: { width: '80px', display: 'inline-block' },
+              })}
             />
-            <input
-              type="text"
+            <TextInput
               maxLength={2}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setDateDD(e.target.value)
-              }}
+              styles={() => ({
+                root: { width: '50px', display: 'inline-block' },
+              })}
             />
           </>
         ) : (
           <input type="text" maxLength={8} />
         )}
       </td>
-      <td className="ledgerBody-anotherCd">
-        <div className="cdSelect">
-          <input type="text" />
+      <td>
+        <div>
+          <Autocomplete
+            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
+            filter={({ options, search }) => {
+              return (options as ComboboxItem[]).filter((option) => {
+                const key = search.trim().toLowerCase()
+                if (key.length === 0) {
+                  return true
+                }
+                const saimoku = saimokuMap.get(option.value)!
+                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                const kana = saimoku.saimoku_kana_name.toLowerCase()
+                return saimoku_cd.includes(key) || kana.includes(key)
+              })
+            }}
+            renderOption={({ option }) => {
+              const saimoku = saimokuMap.get(option.value)!
+              return (
+                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+              )
+            }}
+            className="w-14"
+            comboboxProps={{ width: '180px' }}
+          />
         </div>
       </td>
-      <td className="ledgerBody-otherCdName">
-        <input type="text" className="w-24" disabled readOnly />
+      <td>
+        <TextInput type="text" className="w-16" disabled readOnly />
       </td>
-      <td className="ledgerBody-karikataValue">
-        <input type="text" />
+      <td>
+        <TextInput className={'w-24'} />
       </td>
-      <td className="ledgerBody-kasikataValue">
-        <input type="text" value={kasiValueStr} />
+      <td>
+        <TextInput className={'w-24'} />
       </td>
-      <td className="ledgerBody-note">
-        <input
-          type="text"
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setNote(e.target.value)
-            updateNoteDebounced(e.target.value)
-          }}
-          className="w-24"
-        />
+      <td>
+        <TextInput className={'w-96'} />
       </td>
-      <td className="ledgerBody-acc">
-        <input
-          type="text"
+      <td>
+        <TextInput
           value={Numeral(props.ledger.acc).format('0,0')}
+          styles={() => ({
+            input: {
+              textAlign: 'right',
+            },
+          })}
           disabled
-          className="w-28 text-right num readonly"
+          className="w-28"
         />
       </td>
       <td>
@@ -406,8 +389,6 @@ const LedgerListRow = (props: {
     </tr>
   )
 }
-
-const isEmpty = (str: string) => str == null || str.length === 0
 
 export const LedgerListNewRow = (props: {
   form: UseFormReturnType<LedgerCreateRequestForm>
@@ -581,60 +562,6 @@ export const LedgerListNewRow = (props: {
             className="w-14"
             comboboxProps={{ width: '180px' }}
           />
-          {/* <TextInput
-            className="w-12"
-            {...form.getInputProps('other_cd')}
-            value={form.values.other_cd}
-            // onChange={(e) => {
-            //   const num = Number(e.currentTarget.value)
-            //   form.setFieldValue('karikata_value', isNaN(num) ? null : num)
-            // }}
-            //error={null}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') {
-                console.log('enter')
-                const result = form.validate()
-                console.log(result)
-                //form.onSubmit({})
-                //const result = LedgerCreateRequestSchema.safeParse(form.values)
-                //console.log(result)
-                //save()
-              }
-            }}
-          /> */}
-          {/* <input
-            type="text"
-            value={cd}
-            onChange={(e: React.FocusEvent<HTMLInputElement>) => {
-              setCd(e.target.value)
-            }}
-            onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
-              setCdSelectMode(true)
-            }}
-            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
-              setCdSelectMode(false)
-              const otherCd = e.target.value.toUpperCase()
-              if (saimokuMap.has(otherCd)) {
-                setCd(otherCd)
-                setCdName(saimokuMap.get(otherCd)!.saimoku_ryaku_name)
-              } else if (filterdSaimokuList.length === 1) {
-                setCd(filterdSaimokuList[0].saimoku_cd)
-                setCdName(filterdSaimokuList[0].saimoku_ryaku_name)
-              } else {
-                setCd('')
-              }
-            }}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') {
-                save()
-              }
-            }}
-            className={`w-12 search ${
-              props.error.cd_required != null || props.error.cd_invalid != null
-                ? 'error'
-                : ''
-            }`}
-          /> */}
         </div>
       </td>
       <td>
@@ -653,7 +580,7 @@ export const LedgerListNewRow = (props: {
         <AmountInput input_key="kasikata_value" form={form} onSave={onSave} />
       </td>
       <td>
-        <input
+        <TextInput
           type="text"
           value={note}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -663,7 +590,7 @@ export const LedgerListNewRow = (props: {
           onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
             save()
           }}
-          className="w-24"
+          className="w-96"
         />
       </td>
       <td>
