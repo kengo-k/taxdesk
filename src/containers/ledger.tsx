@@ -5,8 +5,8 @@ import { DateTime } from 'luxon'
 import Numeral from 'numeral'
 import { useDebouncedCallback } from 'use-debounce'
 
-import { Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
-import { useForm, zodResolver } from '@mantine/form'
+import { Alert, Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
+import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
 import { getPageList } from '@/misc/page'
@@ -66,6 +66,20 @@ export const LedgerList: FC<LedgerListProps> = ({
   )[] = [{ isNewRow: true, journal_id: -1 }, ...ledgerState.ledger_list]
 
   const pageInfo = getPageList(page_no, ledgerState.all_count, page_size)
+
+  const create_form = useForm<LedgerCreateRequestForm>({
+    initialValues: {
+      nendo,
+      ledger_cd,
+      date: '',
+      other_cd: '',
+      karikata_value: '',
+      kasikata_value: '',
+      note: '',
+    },
+    validate: zodResolver(LedgerCreateRequestSchema),
+  })
+
   return (
     <div className="ledgerList">
       <h1 className="subTitle">
@@ -73,7 +87,19 @@ export const LedgerList: FC<LedgerListProps> = ({
         {saimokuMap.get(ledger_cd)?.saimoku_full_name}
         {ledger_month !== 'all' ? ` - ${ledger_month}月分 ` : ''}
       </h1>
-      <LedgerListError errors={errors} />
+      {Object.keys(create_form.errors).length > 0 && (
+        <Alert
+          variant="light"
+          color="red"
+          title="Failed to creating new ledgger."
+        >
+          <ul>
+            {Object.keys(create_form.errors).map((key) => {
+              return <li key={key}>{key}</li>
+            })}
+          </ul>
+        </Alert>
+      )}
       <div>
         <span className="pageSummary">
           {`${pageInfo.from}-${pageInfo.to}`}件(全
@@ -145,6 +171,7 @@ export const LedgerList: FC<LedgerListProps> = ({
                 return (
                   <LedgerListNewRow
                     key={row.journal_id}
+                    form={create_form}
                     nendo={nendo}
                     ledgerCd={ledger_cd}
                     ledgerMonth={ledger_month}
@@ -780,6 +807,7 @@ const LedgerListRow = (props: {
 const isEmpty = (str: string) => str == null || str.length === 0
 
 export const LedgerListNewRow = (props: {
+  form: UseFormReturnType<LedgerCreateRequestForm>
   nendo: string
   ledgerCd: string
   ledgerMonth: string | null
@@ -790,18 +818,7 @@ export const LedgerListNewRow = (props: {
   notifyError: () => void
 }) => {
   const dispatch = useDispatch<AppDispatch>()
-  const form = useForm<LedgerCreateRequestForm>({
-    initialValues: {
-      nendo: props.nendo,
-      ledger_cd: props.ledgerCd,
-      date: '',
-      other_cd: '',
-      karikata_value: '',
-      kasikata_value: '',
-      note: '',
-    },
-    validate: zodResolver(LedgerCreateRequestSchema),
-  })
+  const form = props.form
 
   //const { createLedger } = useActions();
   const { data: masters } = useSelector((state: RootState) => state.masters)
@@ -1274,19 +1291,6 @@ export const LedgerListNewRow = (props: {
                 : ''
             }`}
           /> */}
-          {cdSelectMode ? (
-            <select size={5} className="candidate" tabIndex={-1}>
-              {filterdSaimokuList.map((s) => {
-                return (
-                  <option key={s.saimoku_cd} value={s.saimoku_cd}>
-                    {`${s.saimoku_cd}:${s.saimoku_ryaku_name}`}
-                  </option>
-                )
-              })}
-            </select>
-          ) : (
-            <></>
-          )}
         </div>
       </td>
       <td>
@@ -1384,23 +1388,39 @@ export const LedgerListNewRow = (props: {
       </td>
       <td>
         <TextInput
-          className="w-24"
-          style={{ textAlign: 'right' }}
+          className={'w-24'}
+          styles={() => ({
+            input: {
+              textAlign: 'right',
+              ...(form.errors.kasikata_value ? { borderColor: 'red' } : {}),
+            },
+          })}
           {...form.getInputProps('kasikata_value')}
-          value={form.values.kasikata_value ?? ''}
-          // onChange={(e) => {
-          //   const num = Number(e.currentTarget.value)
-          //   form.setFieldValue('karikata_value', isNaN(num) ? null : num)
-          // }}
-          //error={null}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+          value={form.values.kasikata_value}
+          error={null}
+          onBlur={(e) => {
+            const { errors } = form.validate()
+            if (!LedgerCreateRequestForm.hasError('kasikata_value', errors)) {
+              const value = Numeral(e.currentTarget.value)
+              if (value.value() != null) {
+                LedgerCreateRequestForm.set(
+                  'kasikata_value',
+                  form,
+                  value.format('0,0'),
+                )
+              }
+            }
+          }}
+          onFocus={(e) => {
+            const value = Numeral(e.currentTarget.value)
+            const num = value.value()
+            if (num != null) {
+              LedgerCreateRequestForm.set('kasikata_value', form, `${num}`)
+            }
+          }}
+          onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              const result = form.validate()
-              console.log(result)
-              //form.onSubmit({})
-              //const result = LedgerCreateRequestSchema.safeParse(form.values)
-              //console.log(result)
-              //save()
+              save()
             }
           }}
         />

@@ -8,6 +8,19 @@ import { Prisma } from '@prisma/client'
 import { SaimokuSearchResponse } from '@/models/master'
 import { PagingRequest } from '@/models/paging'
 
+function createAmountValidator() {
+  return z.string().refine(
+    (value) => {
+      if (value.trim().length === 0) {
+        return true
+      }
+      const num = numeral(value)
+      return num.value() != null
+    },
+    { message: 'must be a number' },
+  )
+}
+
 export const LedgerCreateRequestSchema = z
   .object({
     nendo: z.string(),
@@ -15,27 +28,8 @@ export const LedgerCreateRequestSchema = z
       .string()
       .length(3, 'ledger cd must be exactly 3 characters long.'),
     date: z.string(),
-    // karikata_value: z.custom(
-    //   (data) => {
-    //     if (typeof data !== 'string') {
-    //       return false
-    //     }
-    //     const num = numeral(data)
-    //     return num.value() != null
-    //   },
-    //   { message: 'must be a number' },
-    // ),
-    karikata_value: z.string().refine(
-      (value) => {
-        if (value.trim().length === 0) {
-          return true
-        }
-        const num = numeral(value)
-        return num.value() != null
-      },
-      { message: 'must be a number' },
-    ),
-    kasikata_value: z.string(),
+    karikata_value: createAmountValidator(),
+    kasikata_value: createAmountValidator(),
     note: z.string(),
     other_cd: z.string(),
   })
@@ -60,7 +54,7 @@ export const LedgerCreateRequestSchema = z
     {
       message:
         'Either karikata_value or kasikata_value must be a number, and the other must be null.',
-      //path: ['karikata_value'],
+      path: ['karikata_value', 'kasikata_value'],
     },
   )
 
