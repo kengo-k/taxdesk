@@ -1303,13 +1303,6 @@ export const LedgerListNewRow = (props: {
         />
       </td>
       <td>
-        {/* <Tooltip
-          label={form.errors.karikata_value}
-          opened={form.errors.karikata_value !== undefined}
-          color="red"
-          position="bottom"
-          withArrow
-        > */}
         <TextInput
           className={'w-24'}
           styles={() => ({
@@ -1349,44 +1342,6 @@ export const LedgerListNewRow = (props: {
             }
           }}
         />
-        {/* </Tooltip> */}
-        {/* <input
-          type="text"
-          value={kariValueStr}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setKariValue(e.target.value)
-            updateKariValue(e.target.value)
-          }}
-          onFocus={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const valueStr = e.target.value
-            if (valueStr.length === 0) {
-              return
-            }
-            const value = Numeral(valueStr)
-            const rawValue = `${value.value()}`
-            setKariValue(rawValue)
-          }}
-          onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const valueStr = e.target.value
-            const value = Numeral(valueStr)
-            const fmtValue = value.value() == null ? '' : value.format('0,0')
-            setKariValue(fmtValue)
-          }}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-              save()
-            }
-          }}
-          className={`w-24 text-right num value ${
-            props.error.kari_format != null ||
-            props.error.kari_negative != null ||
-            props.error.value_both != null ||
-            props.error.value_neither != null
-              ? 'error'
-              : ''
-          }`}
-          ref={kariRef}
-        /> */}
       </td>
       <td>
         <TextInput
@@ -1428,45 +1383,8 @@ export const LedgerListNewRow = (props: {
             }
           }}
         />
-        {/* <input
-          type="text"
-          value={kasiValueStr}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setKasiValue(e.target.value)
-            //updateKasiValue(e.target.value)
-          }}
-          onFocus={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const valueStr = e.target.value
-            if (valueStr.length === 0) {
-              return
-            }
-            const value = Numeral(valueStr)
-            const rawValue = `${value.value()}`
-            setKasiValue(rawValue)
-          }}
-          onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const valueStr = e.target.value
-            const value = Numeral(valueStr)
-            const fmtValue = value.value() == null ? '' : value.format('0,0')
-            setKasiValue(fmtValue)
-          }}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-              save()
-            }
-          }}
-          className={`w-24 text-right value ${
-            props.error.kasi_format != null ||
-            props.error.kasi_negative ||
-            props.error.value_both != null ||
-            props.error.value_neither != null
-              ? 'error'
-              : ''
-          }`}
-          ref={kasiRef}
-        /> */}
       </td>
-      <td className="ledgerBody-note">
+      <td>
         <input
           type="text"
           value={note}
