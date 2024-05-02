@@ -29,6 +29,50 @@ interface LedgerListProps {
   page_size: number
 }
 
+const AmountInput: FC<{
+  input_key: 'karikata_value' | 'kasikata_value'
+  form: UseFormReturnType<LedgerCreateRequestForm>
+  save: () => void
+}> = ({ input_key, form, save }) => {
+  return (
+    <TextInput
+      className={'w-24'}
+      styles={() => ({
+        input: {
+          textAlign: 'right',
+          ...(LedgerCreateRequestForm.hasError(input_key, form)
+            ? { borderColor: 'red' }
+            : {}),
+        },
+      })}
+      {...form.getInputProps(input_key)}
+      value={form.values[input_key]}
+      error={null}
+      onBlur={(e) => {
+        const { errors } = form.validate()
+        if (!LedgerCreateRequestForm.hasError(input_key, form)) {
+          const value = Numeral(e.currentTarget.value)
+          if (value.value() != null) {
+            LedgerCreateRequestForm.set(input_key, form, value.format('0,0'))
+          }
+        }
+      }}
+      onFocus={(e) => {
+        const value = Numeral(e.currentTarget.value)
+        const num = value.value()
+        if (num != null) {
+          LedgerCreateRequestForm.set(input_key, form, `${num}`)
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          save()
+        }
+      }}
+    />
+  )
+}
+
 export const LedgerList: FC<LedgerListProps> = ({
   nendo,
   ledger_cd,
@@ -1303,86 +1347,10 @@ export const LedgerListNewRow = (props: {
         />
       </td>
       <td>
-        <TextInput
-          className={'w-24'}
-          styles={() => ({
-            input: {
-              textAlign: 'right',
-              ...(LedgerCreateRequestForm.hasError('karikata_value', form)
-                ? { borderColor: 'red' }
-                : {}),
-            },
-          })}
-          {...form.getInputProps('karikata_value')}
-          value={form.values.karikata_value}
-          error={null}
-          onBlur={(e) => {
-            const { errors } = form.validate()
-            if (!LedgerCreateRequestForm.hasError('karikata_value', form)) {
-              const value = Numeral(e.currentTarget.value)
-              if (value.value() != null) {
-                LedgerCreateRequestForm.set(
-                  'karikata_value',
-                  form,
-                  value.format('0,0'),
-                )
-              }
-            }
-          }}
-          onFocus={(e) => {
-            const value = Numeral(e.currentTarget.value)
-            const num = value.value()
-            if (num != null) {
-              LedgerCreateRequestForm.set('karikata_value', form, `${num}`)
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              save()
-            }
-          }}
-        />
+        <AmountInput input_key="karikata_value" form={form} save={save} />
       </td>
       <td>
-        <TextInput
-          className={'w-24'}
-          styles={() => ({
-            input: {
-              textAlign: 'right',
-              ...(LedgerCreateRequestForm.hasError('kasikata_value', form)
-                ? { borderColor: 'red' }
-                : {}),
-            },
-          })}
-          {...form.getInputProps('kasikata_value')}
-          value={form.values.kasikata_value}
-          error={null}
-          onBlur={(e) => {
-            form.validate()
-            if (!LedgerCreateRequestForm.hasError('kasikata_value', form)) {
-              const value = Numeral(e.currentTarget.value)
-              if (value.value() != null) {
-                LedgerCreateRequestForm.set(
-                  'kasikata_value',
-                  form,
-                  value.format('0,0'),
-                )
-              }
-            }
-          }}
-          onFocus={(e) => {
-            const value = Numeral(e.currentTarget.value)
-            const num = value.value()
-            if (num != null) {
-              LedgerCreateRequestForm.set('kasikata_value', form, `${num}`)
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              save()
-            }
-          }}
-        />
+        <AmountInput input_key="kasikata_value" form={form} save={save} />
       </td>
       <td>
         <input
