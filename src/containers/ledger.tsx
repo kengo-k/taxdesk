@@ -32,8 +32,8 @@ interface LedgerListProps {
 const AmountInput: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerCreateRequestForm>
-  save: () => void
-}> = ({ input_key, form, save }) => {
+  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+}> = ({ input_key, form, onSave }) => {
   return (
     <TextInput
       className={'w-24'}
@@ -49,7 +49,7 @@ const AmountInput: FC<{
       value={form.values[input_key]}
       error={null}
       onBlur={(e) => {
-        const { errors } = form.validate()
+        form.validate()
         if (!LedgerCreateRequestForm.hasError(input_key, form)) {
           const value = Numeral(e.currentTarget.value)
           if (value.value() != null) {
@@ -64,11 +64,7 @@ const AmountInput: FC<{
           LedgerCreateRequestForm.set(input_key, form, `${num}`)
         }
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          save()
-        }
-      }}
+      onKeyDown={onSave}
     />
   )
 }
@@ -115,7 +111,9 @@ export const LedgerList: FC<LedgerListProps> = ({
     initialValues: {
       nendo,
       ledger_cd,
-      date: '',
+      date_full: '',
+      date_yymm: ledger_month ? `${nendo}/${ledger_month}` : '',
+      date_dd: '',
       other_cd: '',
       karikata_value: '',
       kasikata_value: '',
@@ -1087,68 +1085,12 @@ export const LedgerListNewRow = (props: {
       console.log('create: ', data)
       //dispatch(createLedger(data))
     }
-    // dispatch(
-    //   createLedger({
-    //     nendo: props.nendo,
-    //     date: toRawDate(date),
-    //     ledger_cd: props.ledgerCd,
-    //     other_cd: cd,
-    //     karikata_value: toNumber(kariValueStr),
-    //     kasikata_value: toNumber(kasiValueStr),
-    //     note,
-    //   }),
-    // )
+  }
 
-    // let date
-    // if (props.ledgerMonth !== 'all') {
-    //   date = `${getTargetYYYYMM(
-    //     `${props.nendo}${props.ledgerMonth}01`,
-    //   )}/${dateStrDD}`
-    // } else {
-    //   date = dateStr
-    // }
-    // const validateResutls = [
-    //   true,
-    //   // updateDate(date),
-    //   // updateKariValue(kariValueStr),
-    //   // updateKasiValue(kasiValueStr),
-    //   // updateCd(cd),
-    // ]
-    // if (validateResutls.every((valid) => valid)) {
-    //   dispatch(
-    //     createLedger({
-    //       nendo: props.nendo,
-    //       date: toRawDate(date),
-    //       ledger_cd: props.ledgerCd,
-    //       other_cd: cd,
-    //       karikata_value: toNumber(kariValueStr),
-    //       kasikata_value: toNumber(kasiValueStr),
-    //       note,
-    //     }),
-    //   )
-    //   createLedger(
-    //     {
-    //       nendo: props.nendo,
-    //       date: toRawDate(date),
-    //       ledger_cd: props.ledgerCd,
-    //       other_cd: cd,
-    //       karikata_value: toNumber(kariValueStr),
-    //       kasikata_value: toNumber(kasiValueStr),
-    //       note,
-    //     },
-    //     reloadLedger(false)
-    //   );
-    //   dateRef.current?.focus();
-    //   setDate("");
-    //   setDateDD("");
-    //   setCd("");
-    //   setCdName("");
-    //   setKariValue("");
-    //   setKasiValue("");
-    //   setNote("");
-    // } else {
-    //   props.notifyError()
-    // }
+  const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      save()
+    }
   }
 
   useEffect(() => {
@@ -1165,7 +1107,7 @@ export const LedgerListNewRow = (props: {
           <>
             <TextInput
               type="text"
-              value={getTargetYYYYMM(`${props.nendo}${props.ledgerMonth}01`)}
+              value={form.values.date_yymm}
               maxLength={6}
               readOnly
               disabled
@@ -1175,23 +1117,16 @@ export const LedgerListNewRow = (props: {
             />
             <TextInput
               type="text"
-              value={dateStrDD}
+              value={form.values.date_dd}
               maxLength={2}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setDateDD(e.target.value)
-              }}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === 'Enter') {
-                  save()
-                }
-              }}
+              {...form.getInputProps('date_dd')}
+              onKeyDown={onSave}
               onBlur={(e) => {
                 const day = e.currentTarget.value
                 if (day.length === 1) {
                   setDateDD(`0${day}`)
                 }
               }}
-              ref={dateRef}
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
               })}
@@ -1219,11 +1154,7 @@ export const LedgerListNewRow = (props: {
                 setDate(date.toFormat('yyyy/mm/dd'))
               }
             }}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter') {
-                save()
-              }
-            }}
+            onKeyDown={onSave}
             className={`ledgerBody-date-input ${
               props.error.date_format != null ||
               props.error.date_required ||
@@ -1347,10 +1278,10 @@ export const LedgerListNewRow = (props: {
         />
       </td>
       <td>
-        <AmountInput input_key="karikata_value" form={form} save={save} />
+        <AmountInput input_key="karikata_value" form={form} onSave={onSave} />
       </td>
       <td>
-        <AmountInput input_key="kasikata_value" form={form} save={save} />
+        <AmountInput input_key="kasikata_value" form={form} onSave={onSave} />
       </td>
       <td>
         <input
@@ -1359,11 +1290,7 @@ export const LedgerListNewRow = (props: {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setNote(e.target.value)
           }}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') {
-              save()
-            }
-          }}
+          onKeyDown={onSave}
           onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
             save()
           }}

@@ -21,26 +21,48 @@ function createAmountValidator() {
   )
 }
 
+function getDateString(date_full: string, date_yymm: string, date_dd: string) {
+  let date_str = date_full
+  if (date_yymm.length > 0) {
+    date_str = `${date_yymm}/${date_dd}`
+  }
+  const date = numeral(date_str)
+  return `${date.value()}`
+}
+
 export const LedgerCreateRequestSchema = z
   .object({
     nendo: z.string(),
     ledger_cd: z
       .string()
       .length(3, 'ledger cd must be exactly 3 characters long.'),
-    date: z.string(),
+    date_full: z.string(),
+    date_yymm: z.string(),
+    date_dd: z.string(),
     karikata_value: createAmountValidator(),
     kasikata_value: createAmountValidator(),
     note: z.string(),
     other_cd: z.string(),
   })
-  .transform((data) => ({
-    ...data,
-    karikata_value:
-      data.karikata_value === '' ? null : numeral(data.karikata_value).value(),
-    kasikata_value:
-      data.kasikata_value === '' ? null : numeral(data.kasikata_value).value(),
-    note: data.note === '' ? null : data.note,
-  }))
+  .transform((data) => {
+    const ret: any = {
+      ...data,
+      date: getDateString(data.date_full, data.date_yymm, data.date_dd),
+      karikata_value:
+        data.karikata_value === ''
+          ? null
+          : numeral(data.karikata_value).value(),
+      kasikata_value:
+        data.kasikata_value === ''
+          ? null
+          : numeral(data.kasikata_value).value(),
+      note: data.note === '' ? null : data.note,
+    }
+    delete ret.date_full
+    delete ret.date_yymm
+    delete ret.date_dd
+    return ret
+  })
   .refine(
     (data) => {
       const { karikata_value, kasikata_value } = data
