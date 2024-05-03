@@ -145,6 +145,7 @@ export const LedgerUpdateRequestSchema = z.object({
         note: z.string(),
         other_cd: z.string(),
         other_cd_name: z.string(),
+        acc: z.number(),
       })
       .transform((data) => {
         const ret: any = {
@@ -164,6 +165,7 @@ export const LedgerUpdateRequestSchema = z.object({
         delete ret.date_yymm
         delete ret.date_dd
         delete ret.other_cd_name
+        delete ret.acc
         return ret
       })
       .refine(

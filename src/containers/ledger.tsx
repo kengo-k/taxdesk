@@ -185,6 +185,7 @@ export const LedgerList: FC<{
           kasikata_value:
             item.kasikata_value === 0 ? '' : String(item.kasikata_value),
           other_cd_name: saimoku_map.get(item.other_cd)!.saimoku_ryaku_name,
+          acc: item.acc,
         }
       }),
     })
@@ -455,8 +456,7 @@ const LedgerListRows: FC<{
         </td>
         <td>
           <TextInput
-            // value={Numeral(props.ledger.acc).format('0,0')}
-            value={100}
+            value={Numeral(item.acc).format('0,0')}
             styles={() => ({
               input: {
                 textAlign: 'right',
