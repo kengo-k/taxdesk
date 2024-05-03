@@ -11,9 +11,14 @@ const cache = getDefault()
 export const revalidate = cache.revalidate
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: LedgerSearchRequest },
 ) {
+  const { searchParams } = new URL(request.url)
+  const month = searchParams.get('month')
+  if (month !== null) {
+    params.month = month
+  }
   const service = Factory.getLedgerService()
   const response = await service.selectLedgerList(params)
   return NextResponse.json(response, {

@@ -20,3 +20,31 @@ export function isMonth(month: string) {
   }
   return n >= 1 && n <= 12
 }
+
+export function fromMonth(month: Month | null): string | null {
+  if (month === null) {
+    return null
+  }
+  return month.toString()
+}
+
+export class Nendo {
+  private value: number
+  public constructor(value: number) {
+    this.value = value
+  }
+}
+
+export class Month {
+  private value: number
+  public constructor(value: number) {
+    this.value = value
+  }
+  public toString(): string {
+    const ret = String(this.value)
+    if (ret.length === 1) {
+      return `0${ret}`
+    }
+    return ret
+  }
+}

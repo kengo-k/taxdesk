@@ -45,10 +45,9 @@ export class LedgerServiceImpl implements LedgerService {
   }> {
     const masterService = this.factory.getMasterService()
     req = { ...req }
-    req.month = req.month ?? 'all'
     req.page_no = req.page_no ?? 1
     req.page_size = req.page_size ?? 10
-
+    const month = req.month === null ? 'all' : req.month
     const saimoku_detail = (
       await masterService.selectSaimokuDetail({
         saimoku_cd: req.ledger_cd,
@@ -125,10 +124,8 @@ export class LedgerServiceImpl implements LedgerService {
             ) j
         ) j2
       where
-        (case when ${req.month} = 'all' then 'all' else ${req.month} end)
-        = (case when ${
-          req.month
-        } = 'all' then 'all' else substring(j2.date, 5, 2) end)
+        (case when ${month} = 'all' then 'all' else ${month} end)
+        = (case when ${month} = 'all' then 'all' else substring(j2.date, 5, 2) end)
       order by
         j2.date desc,
         j2.created_at desc

@@ -9,6 +9,7 @@ import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
 import { formatDate, fromDateString } from '@/misc/format'
+import { Month, fromMonth } from '@/misc/nendo'
 import { getPageList } from '@/misc/page'
 import {
   LedgerCreateRequestForm,
@@ -17,7 +18,7 @@ import {
   LedgerUpdateRequestSchema,
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
-import { ledgerActions, loadLedgerList } from '@/store/ledger'
+import { loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
 const AmountInputForCreate: FC<{
@@ -109,7 +110,7 @@ const AmountInputForUpdate: FC<{
 export const LedgerList: FC<{
   nendo: string
   ledger_cd: string
-  month: string | null
+  month: Month | null
   page_no: number
   page_size: number
 }> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
@@ -132,7 +133,7 @@ export const LedgerList: FC<{
       loadLedgerList({
         nendo,
         ledger_cd,
-        month,
+        month: fromMonth(month),
         page_no,
         page_size,
       }),
@@ -195,7 +196,7 @@ export const LedgerList: FC<{
       <h1>
         台帳:
         {saimoku_map.get(ledger_cd)?.saimoku_full_name}
-        {month !== 'all' ? ` - ${month}月分 ` : ''}
+        {month !== null ? ` - ${month}月分 ` : ''}
       </h1>
       {Object.keys(create_form.errors).length > 0 && (
         <Alert
@@ -290,40 +291,10 @@ export const LedgerList: FC<{
   )
 }
 
-// 更新後に必要な処理
-// 金額等を更新すると累計金額が全体的に変更されるため全データを取り直す必要がある。
-export const createReloadLedger =
-  (
-    nendo: string,
-    ledgerCd: string,
-    ledgerMonth: string | null,
-    pageNo: number,
-    pageSize: number,
-  ) =>
-  (needClear?: boolean) => {
-    const ret = []
-    if (needClear) {
-      // 日付を変更する場合、データの並び順が変わってしまうがその場合、
-      // 再描画で行が重複してしまう(※原因要調査)ため事前にクリア処理をする。
-      // ただしクリアするとフォーカスを失う模様。
-      ret.push(ledgerActions.setLedgerList({ all_count: 0, ledger_list: [] }))
-    }
-    ret.push(
-      loadLedgerList({
-        nendo: nendo,
-        ledger_cd: ledgerCd,
-        month: ledgerMonth,
-        page_no: pageNo,
-        page_size: pageSize,
-      }),
-    )
-    return ret
-  }
-
 const LedgerListRows: FC<{
   nendo: string
   ledger_cd: string
-  month: string | null
+  month: Month | null
   pageNo: number
   pageSize: number
   form: UseFormReturnType<LedgerUpdateRequestForm>
@@ -496,7 +467,7 @@ export const LedgerListNewRow: FC<{
   form: UseFormReturnType<LedgerCreateRequestForm>
   nendo: string
   ledger_cd: string
-  month: string | null
+  month: Month | null
   pageNo: number
   pageSize: number
   saimoku_map: Map<string, saimoku_masters>
@@ -546,7 +517,7 @@ export const LedgerListNewRow: FC<{
   return (
     <tr>
       <td>
-        {month !== 'all' ? (
+        {month !== null ? (
           <>
             <TextInput
               value={form.values.date_yymm}

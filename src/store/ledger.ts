@@ -6,6 +6,7 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
+import { createQueryString } from '@/misc/object'
 import {
   LedgerCreateRequest,
   LedgerSearchRequest,
@@ -36,8 +37,9 @@ export const loadLedgerList = createAsyncThunk<
   { all_count: number; list: LedgerSearchResponse[] },
   LedgerSearchRequest
 >('ledger/loadLedgerList', async (request) => {
+  const qs = createQueryString(request, ['month'])
   const response = await fetch(
-    `/api/v1/ledger/${request.nendo}/${request.ledger_cd}`,
+    `/api/v1/ledger/${request.nendo}/${request.ledger_cd}${qs.length === 0 ? '' : `?${qs}`}`,
   )
   const data = await response.json()
   return data
