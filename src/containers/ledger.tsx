@@ -143,8 +143,8 @@ export const LedgerList: FC<{
   }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="ledgerList">
-      <h1 className="subTitle">
+    <div>
+      <h1>
         台帳:
         {saimoku_map.get(ledger_cd)?.saimoku_full_name}
         {month !== 'all' ? ` - ${month}月分 ` : ''}
@@ -163,11 +163,11 @@ export const LedgerList: FC<{
         </Alert>
       )}
       <div>
-        <span className="pageSummary">
+        <span>
           {`${pageInfo.from}-${pageInfo.to}`}件(全
           {ledger_state.all_count ?? '0'}件)
         </span>
-        <span className="pageList">
+        <span>
           {pageInfo.pageList.map((no) =>
             no === page_no ? (
               <a key={no}>{no}</a>
@@ -186,24 +186,22 @@ export const LedgerList: FC<{
           )}
         </span>
       </div>
-      <div className="ledgerList">
+      <div>
         <table>
-          <thead className="ledgerHeader">
+          <thead>
             <tr>
               <th>登録日</th>
-              <th className="ledgerHeader-anotherCd" colSpan={2}>
-                相手科目
-              </th>
-              <th className="ledgerHeader-karikataValue">金額(借方)</th>
-              <th className="ledgerHeader-kasikataValue">金額(貸方)</th>
-              <th className="ledgerHeader-note">備考</th>
-              <th className="ledgerHeader-acc">累計</th>
-              <th className="ledgerHeader-delete">
+              <th colSpan={2}>相手科目</th>
+              <th>金額(借方)</th>
+              <th>金額(貸方)</th>
+              <th>備考</th>
+              <th>累計</th>
+              <th>
                 <br />
               </th>
             </tr>
           </thead>
-          <tbody className="ledgerBody">
+          <tbody>
             <LedgerListNewRow
               form={create_form}
               nendo={nendo}
