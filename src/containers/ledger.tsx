@@ -202,10 +202,23 @@ export const LedgerList: FC<{
         <Alert
           variant="light"
           color="red"
-          title="Failed to creating new ledgger."
+          title="Failed to creating a new ledgger."
         >
           <ul>
             {Object.keys(create_form.errors).map((key) => {
+              return <li key={key}>{key}</li>
+            })}
+          </ul>
+        </Alert>
+      )}
+      {Object.keys(update_form.errors).length > 0 && (
+        <Alert
+          variant="light"
+          color="red"
+          title="Failed to updating a ledgger."
+        >
+          <ul>
+            {Object.keys(update_form.errors).map((key) => {
               return <li key={key}>{key}</li>
             })}
           </ul>
