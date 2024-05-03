@@ -81,8 +81,7 @@ const AmountInputForUpdate: FC<{
       value={form.values.items[index][input_key]}
       error={null}
       onBlur={(e) => {
-        const result = form.validate()
-        console.log('validate result: ', result)
+        form.validate()
         if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
           const value = Numeral(e.currentTarget.value)
           if (value.value() != null) {

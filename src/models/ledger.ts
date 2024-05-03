@@ -176,7 +176,6 @@ export const LedgerUpdateRequestSchema = z.object({
           const is_valid =
             (isKarikataNull && !isKasikataNull) ||
             (!isKarikataNull && isKasikataNull)
-          console.log('is_valid: ', is_valid)
           return is_valid
         },
         {
