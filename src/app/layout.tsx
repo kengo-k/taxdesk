@@ -1,8 +1,8 @@
 'use client'
 
-import './globals.css'
-
 import { Provider } from 'react-redux'
+
+import './globals.css'
 
 import {
   Box,
@@ -38,7 +38,7 @@ export default function RootLayout({
       </head>
       <body>
         <MantineProvider theme={theme}>
-          <Box maw={1600} mx={'auto'}>
+          <Box maw={1600} mx={'auto'} p={20}>
             <Provider store={store}>{children}</Provider>
           </Box>
         </MantineProvider>
