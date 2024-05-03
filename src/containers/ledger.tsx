@@ -14,12 +14,13 @@ import {
   LedgerCreateRequestForm,
   LedgerCreateRequestSchema,
   LedgerUpdateRequestForm,
+  LedgerUpdateRequestSchema,
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
 import { ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
-const AmountInput: FC<{
+const AmountInputForCreate: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerCreateRequestForm>
   onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
@@ -52,6 +53,53 @@ const AmountInput: FC<{
         const num = value.value()
         if (num != null) {
           LedgerCreateRequestForm.set(input_key, form, `${num}`)
+        }
+      }}
+      onKeyDown={onSave}
+    />
+  )
+}
+
+const AmountInputForUpdate: FC<{
+  input_key: 'karikata_value' | 'kasikata_value'
+  form: UseFormReturnType<LedgerUpdateRequestForm>
+  index: number
+  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+}> = ({ input_key, form, index, onSave }) => {
+  return (
+    <TextInput
+      className={'w-24'}
+      styles={() => ({
+        input: {
+          textAlign: 'right',
+          ...(LedgerUpdateRequestForm.hasError(input_key, form, index)
+            ? { borderColor: 'red' }
+            : {}),
+        },
+      })}
+      {...form.getInputProps(`items.${index}.${input_key}`)}
+      value={form.values.items[index][input_key]}
+      error={null}
+      onBlur={(e) => {
+        const result = form.validate()
+        console.log('validate result: ', result)
+        if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
+          const value = Numeral(e.currentTarget.value)
+          if (value.value() != null) {
+            LedgerUpdateRequestForm.set(
+              input_key,
+              form,
+              index,
+              value.format('0,0'),
+            )
+          }
+        }
+      }}
+      onFocus={(e) => {
+        const value = Numeral(e.currentTarget.value)
+        const num = value.value()
+        if (num != null) {
+          LedgerUpdateRequestForm.set(input_key, form, index, `${num}`)
         }
       }}
       onKeyDown={onSave}
@@ -113,7 +161,7 @@ export const LedgerList: FC<{
     initialValues: {
       items: [],
     },
-    validate: zodResolver(LedgerCreateRequestSchema),
+    validate: zodResolver(LedgerUpdateRequestSchema),
   })
 
   useEffect(() => {
@@ -280,6 +328,24 @@ const LedgerListRows: FC<{
 }) => {
   const dispatch = useDispatch<AppDispatch>()
 
+  const save = () => {
+    const { hasErrors } = form.validate()
+    if (hasErrors) {
+      return
+    }
+    const { success, data } = LedgerUpdateRequestSchema.safeParse(form.values)
+    if (success) {
+      //console.log('create: ', data)
+      //dispatch(createLedger(data))
+    }
+  }
+
+  const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      save()
+    }
+  }
+
   return form.values.items.map((item, index) => {
     return (
       <tr key={item.journal_id}>
@@ -369,10 +435,20 @@ const LedgerListRows: FC<{
           />
         </td>
         <td>
-          <TextInput className={'w-24'} />
+          <AmountInputForUpdate
+            input_key="karikata_value"
+            form={form}
+            index={index}
+            onSave={onSave}
+          />
         </td>
         <td>
-          <TextInput className={'w-24'} />
+          <AmountInputForUpdate
+            input_key="kasikata_value"
+            form={form}
+            index={index}
+            onSave={onSave}
+          />
         </td>
         <td>
           <TextInput className={'w-96'} />
@@ -442,7 +518,7 @@ export const LedgerListNewRow: FC<{
     }
     const { success, data } = LedgerCreateRequestSchema.safeParse(form.values)
     if (success) {
-      console.log('create: ', data)
+      //console.log('create: ', data)
       //dispatch(createLedger(data))
     }
   }
@@ -569,10 +645,18 @@ export const LedgerListNewRow: FC<{
         />
       </td>
       <td>
-        <AmountInput input_key="karikata_value" form={form} onSave={onSave} />
+        <AmountInputForCreate
+          input_key="karikata_value"
+          form={form}
+          onSave={onSave}
+        />
       </td>
       <td>
-        <AmountInput input_key="kasikata_value" form={form} onSave={onSave} />
+        <AmountInputForCreate
+          input_key="kasikata_value"
+          form={form}
+          onSave={onSave}
+        />
       </td>
       <td>
         <TextInput

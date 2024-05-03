@@ -100,7 +100,7 @@ export const LedgerCreateRequestForm = {
     form: UseFormReturnType<LedgerCreateRequestForm>,
   ) => {
     return Object.keys(form.errors).some((error_id) => {
-      console.log(`${error_id} includes ${key}= ${error_id.includes(key)}`)
+      //console.log(`${error_id} includes ${key}= ${error_id.includes(key)}`)
       return error_id.includes(key)
     })
   },
@@ -128,10 +128,10 @@ export type LedgerSearchRequest = {
   month: string | null
 } & PagingRequest
 
-export const LedgerUpdateRequestSchema = z
-  .object({
-    items: z.array(
-      z.object({
+export const LedgerUpdateRequestSchema = z.object({
+  items: z.array(
+    z
+      .object({
         journal_id: z.number(),
         nendo: z.string(),
         ledger_cd: z
@@ -145,50 +145,46 @@ export const LedgerUpdateRequestSchema = z
         note: z.string(),
         other_cd: z.string(),
         other_cd_name: z.string(),
-      }),
-    ),
-  })
-  .transform((data) => {
-    const ret = {
-      items: data.items.map((item) => {
+      })
+      .transform((data) => {
         const ret: any = {
-          ...item,
-          date: getDateString(item.date_full, item.date_yymm, item.date_dd),
+          ...data,
+          date: getDateString(data.date_full, data.date_yymm, data.date_dd),
           karikata_value:
-            item.karikata_value === ''
+            data.karikata_value === ''
               ? null
-              : numeral(item.karikata_value).value(),
+              : numeral(data.karikata_value).value(),
           kasikata_value:
-            item.kasikata_value === ''
+            data.kasikata_value === ''
               ? null
-              : numeral(item.kasikata_value).value(),
-          note: item.note === '' ? null : item.note,
+              : numeral(data.kasikata_value).value(),
+          note: data.note === '' ? null : data.note,
         }
         delete ret.date_full
         delete ret.date_yymm
         delete ret.date_dd
         delete ret.other_cd_name
         return ret
-      }),
-    }
-    return ret
-  })
-// .refine((data) => {
-//   const invalid_items = data.items
-//     .map((item, index) => {
-//       const { karikata_value, kasikata_value } = item
-//       const isKarikataNull = karikata_value === null
-//       const isKasikataNull = kasikata_value === null
-//       return (
-//         (isKarikataNull && !isKasikataNull) ||
-//         (!isKarikataNull && isKasikataNull)
-//       )
-//     })
-//     .filter(Boolean)
-//   if (invalid_items.length === 0) {
-//     return null
-//   }
-// })
+      })
+      .refine(
+        (data) => {
+          const { karikata_value, kasikata_value } = data
+          const isKarikataNull = karikata_value === null
+          const isKasikataNull = kasikata_value === null
+          const is_valid =
+            (isKarikataNull && !isKasikataNull) ||
+            (!isKarikataNull && isKasikataNull)
+          console.log('is_valid: ', is_valid)
+          return is_valid
+        },
+        {
+          message:
+            'Either karikata_value or kasikata_value must be a number, and the other must be null.',
+          path: ['karikata_value', 'kasikata_value'],
+        },
+      ),
+  ),
+})
 
 export type LedgerUpdateRequest = z.infer<typeof LedgerUpdateRequestSchema>
 
@@ -197,6 +193,19 @@ export type LedgerUpdateRequestFormItem = ReturnType<
   () => LedgerUpdateRequestForm['items'][number]
 >
 export const LedgerUpdateRequestForm = {
+  hasError: <K extends keyof LedgerUpdateRequestFormItem>(
+    key: K,
+    form: UseFormReturnType<LedgerUpdateRequestForm>,
+    index: number,
+  ) => {
+    return Object.keys(form.errors).some((error_id) => {
+      if (error_id.startsWith(`items.${index}`)) {
+        return error_id.includes(key)
+      }
+      return false
+    })
+  },
+
   set: <K extends keyof LedgerUpdateRequestFormItem>(
     key: K,
     form: UseFormReturnType<LedgerUpdateRequestForm>,
