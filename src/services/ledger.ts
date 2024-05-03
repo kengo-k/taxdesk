@@ -65,7 +65,7 @@ export class LedgerServiceImpl implements LedgerService {
             j.id as journal_id,
             j.nendo,
             j.date,
-            j.another_cd,
+            j.other_cd,
             j.karikata_cd,
             j.karikata_value,
             j.kasikata_cd,
@@ -111,7 +111,7 @@ export class LedgerServiceImpl implements LedgerService {
                 case karikata_cd
                   when ${req.ledger_cd} then kasikata_cd
                   else karikata_cd
-                end as another_cd,
+                end as other_cd,
                 note,
                 created_at
               from
