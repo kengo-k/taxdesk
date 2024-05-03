@@ -1,32 +1,23 @@
-import { FC, createRef, useEffect, useState } from 'react'
+import { FC, createRef, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { DateTime } from 'luxon'
 import Numeral from 'numeral'
-import { useDebouncedCallback } from 'use-debounce'
 
 import { Alert, Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
+import { formatDate, fromDateString } from '@/misc/format'
 import { getPageList } from '@/misc/page'
 import {
   LedgerCreateRequestForm,
   LedgerCreateRequestSchema,
-  LedgerSearchResponse,
+  LedgerUpdateRequestForm,
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
-import { updateJournal } from '@/store/journal'
 import { ledgerActions, loadLedgerList } from '@/store/ledger'
-import { selectNendoMap, selectSaimokuMap } from '@/store/master'
-
-interface LedgerListProps {
-  nendo: string
-  ledger_cd: string
-  ledger_month: string | null
-  page_no: number
-  page_size: number
-}
+import { selectSaimokuMap } from '@/store/master'
 
 const AmountInput: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
@@ -68,20 +59,24 @@ const AmountInput: FC<{
   )
 }
 
-export const LedgerList: FC<LedgerListProps> = ({
-  nendo,
-  ledger_cd,
-  ledger_month,
-  page_no,
-  page_size,
-}) => {
-  const { data: ledgerState } = useSelector((state: RootState) => state.ledger)
-  const saimokuMap = useSelector(selectSaimokuMap)
+export const LedgerList: FC<{
+  nendo: string
+  ledger_cd: string
+  month: string | null
+  page_no: number
+  page_size: number
+}> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
+  const { data: masters_state } = useSelector(
+    (state: RootState) => state.masters,
+  )
+  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
 
-  // const history = useNavigate();
-  // const { loadLedger } = useActions();
-  // const state = useState();
-  // const saimokuMap = useSelector(selectSaimokuMap);
+  const saimoku_map = useSelector(selectSaimokuMap)
+  const saimoku_list = useMemo(() => {
+    return masters_state.saimoku_list.filter(
+      (saimoku) => saimoku.saimoku_cd !== ledger_cd,
+    )
+  }, [masters_state.saimoku_list, ledger_cd])
 
   const dispatch = useDispatch<AppDispatch>()
 
@@ -90,26 +85,21 @@ export const LedgerList: FC<LedgerListProps> = ({
       loadLedgerList({
         nendo,
         ledger_cd,
-        month: ledger_month,
+        month,
         page_no,
         page_size,
       }),
     )
-  }, [dispatch, ledger_cd, ledger_month, nendo, page_no, page_size])
+  }, [dispatch, ledger_cd, month, nendo, page_no, page_size])
 
-  const ledgerListRows: (
-    | { isNewRow: true; journal_id: number }
-    | LedgerSearchResponse
-  )[] = [{ isNewRow: true, journal_id: -1 }, ...ledgerState.ledger_list]
-
-  const pageInfo = getPageList(page_no, ledgerState.all_count, page_size)
+  const pageInfo = getPageList(page_no, ledger_state.all_count, page_size)
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
       nendo,
       ledger_cd,
       date_full: '',
-      date_yymm: ledger_month ? `${nendo}/${ledger_month}` : '',
+      date_yymm: month ? `${nendo}/${month}` : '',
       date_dd: '',
       other_cd: '',
       karikata_value: '',
@@ -119,12 +109,45 @@ export const LedgerList: FC<LedgerListProps> = ({
     validate: zodResolver(LedgerCreateRequestSchema),
   })
 
+  const update_form = useForm<LedgerUpdateRequestForm>({
+    initialValues: {
+      items: [],
+    },
+    validate: zodResolver(LedgerCreateRequestSchema),
+  })
+
+  useEffect(() => {
+    if (saimoku_map.size === 0) {
+      return
+    }
+    update_form.setValues({
+      items: ledger_state.ledger_list.map((item) => {
+        const date = fromDateString(item.date)
+        const date_full = date === null ? '' : formatDate(date, 'yyyy/MM/dd')
+        const date_yymm = date === null ? '' : formatDate(date, 'yyyy/MM')
+        const date_dd = date === null ? '' : formatDate(date, 'dd')
+        return {
+          ...item,
+          ledger_cd,
+          date_full,
+          date_yymm,
+          date_dd,
+          karikata_value:
+            item.karikata_value === 0 ? '' : String(item.karikata_value),
+          kasikata_value:
+            item.kasikata_value === 0 ? '' : String(item.kasikata_value),
+          other_cd_name: saimoku_map.get(item.other_cd)!.saimoku_ryaku_name,
+        }
+      }),
+    })
+  }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="ledgerList">
       <h1 className="subTitle">
         台帳:
-        {saimokuMap.get(ledger_cd)?.saimoku_full_name}
-        {ledger_month !== 'all' ? ` - ${ledger_month}月分 ` : ''}
+        {saimoku_map.get(ledger_cd)?.saimoku_full_name}
+        {month !== 'all' ? ` - ${month}月分 ` : ''}
       </h1>
       {Object.keys(create_form.errors).length > 0 && (
         <Alert
@@ -142,7 +165,7 @@ export const LedgerList: FC<LedgerListProps> = ({
       <div>
         <span className="pageSummary">
           {`${pageInfo.from}-${pageInfo.to}`}件(全
-          {ledgerState.all_count ?? '0'}件)
+          {ledger_state.all_count ?? '0'}件)
         </span>
         <span className="pageList">
           {pageInfo.pageList.map((no) =>
@@ -181,50 +204,31 @@ export const LedgerList: FC<LedgerListProps> = ({
             </tr>
           </thead>
           <tbody className="ledgerBody">
-            {ledgerListRows.map((row) => {
-              if ('isNewRow' in row) {
-                return (
-                  <LedgerListNewRow
-                    key={row.journal_id}
-                    form={create_form}
-                    nendo={nendo}
-                    ledgerCd={ledger_cd}
-                    ledgerMonth={ledger_month}
-                    pageNo={page_no}
-                    pageSize={page_size}
-                  />
-                )
-              } else {
-                return (
-                  <LedgerListRow
-                    key={row.journal_id}
-                    nendo={nendo}
-                    ledgerCd={ledger_cd}
-                    ledgerMonth={ledger_month}
-                    pageNo={page_no}
-                    pageSize={page_size}
-                    ledger={row}
-                  />
-                )
-              }
-            })}
+            <LedgerListNewRow
+              form={create_form}
+              nendo={nendo}
+              ledger_cd={ledger_cd}
+              month={month}
+              pageNo={page_no}
+              pageSize={page_size}
+              saimoku_map={saimoku_map}
+              saimoku_list={saimoku_list}
+            />
+            <LedgerListRows
+              nendo={nendo}
+              ledger_cd={ledger_cd}
+              month={month}
+              pageNo={page_no}
+              pageSize={page_size}
+              form={update_form}
+              saimoku_map={saimoku_map}
+              saimoku_list={saimoku_list}
+            />
           </tbody>
         </table>
       </div>
     </div>
   )
-}
-
-const filterSaimokuList = (saimokuList: saimoku_masters[], cd: string) => {
-  return saimokuList.flatMap((s) => {
-    if (s.saimoku_cd.toLowerCase().startsWith(cd.toLowerCase())) {
-      return [s]
-    }
-    if (s.saimoku_kana_name.toLowerCase().includes(cd.toLowerCase())) {
-      return [s]
-    }
-    return []
-  })
 }
 
 // 更新後に必要な処理
@@ -257,181 +261,181 @@ export const createReloadLedger =
     return ret
   }
 
-const LedgerListRow = (props: {
+const LedgerListRows: FC<{
   nendo: string
-  ledgerCd: string
-  ledgerMonth: string | null
+  ledger_cd: string
+  month: string | null
   pageNo: number
   pageSize: number
-  ledger: LedgerSearchResponse
+  form: UseFormReturnType<LedgerUpdateRequestForm>
+  saimoku_map: Map<string, saimoku_masters>
+  saimoku_list: saimoku_masters[]
+}> = ({
+  nendo,
+  ledger_cd,
+  month,
+  pageNo,
+  pageSize,
+  form,
+  saimoku_map,
+  saimoku_list,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
 
-  //const { updateJournal, deleteJournal, updateLedger } = useActions();
-  const { data: masters } = useSelector((state: RootState) => state.masters)
-  const saimokuList = masters.saimoku_list
-  const saimokuMap = useSelector(selectSaimokuMap)
-  const nendoMap = useSelector(selectNendoMap)
-
-  const [dateStr, setDate] = useState(props.ledger.date)
-  const [dateStrDD, setDateDD] = useState(props.ledger.date.substr(6, 2))
-  // prettier-ignore
-  const [kariValueStr, setKariValue] = useState(`${props.ledger.karikata_value}`);
-  // prettier-ignore
-  const [kasiValueStr, setKasiValue] = useState(`${props.ledger.kasikata_value}`);
-  const [cd, setCd] = useState(props.ledger.another_cd)
-  const [cdName, setCdName] = useState('')
-  const [cdSelectMode, setCdSelectMode] = useState(false)
-  const [filterdSaimokuList, setFilterdSaimokuList] = useState(
-    [] as saimoku_masters[],
-  )
-  const [note, setNote] = useState(props.ledger.note)
-
-  const updateNoteDebounced = useDebouncedCallback((note: string) => {
-    dispatch(
-      updateJournal({
-        id: props.ledger.journal_id,
-        journal: { note },
-        nextActions: [],
-      }),
-    )
-  }, 1500)
-
-  useEffect(() => {
-    const filterdSaimokuList = filterSaimokuList(saimokuList, cd)
-    setFilterdSaimokuList(filterdSaimokuList)
-  }, [cd, saimokuList])
-
-  return (
-    <tr>
-      <td>
-        {props.ledgerMonth !== 'all' ? (
-          <>
-            <TextInput
-              maxLength={6}
-              readOnly
-              disabled
-              styles={() => ({
-                root: { width: '80px', display: 'inline-block' },
-              })}
-            />
-            <TextInput
-              maxLength={2}
-              styles={() => ({
-                root: { width: '50px', display: 'inline-block' },
-              })}
-            />
-          </>
-        ) : (
-          <input type="text" maxLength={8} />
-        )}
-      </td>
-      <td>
-        <div>
-          <Autocomplete
-            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
-            filter={({ options, search }) => {
-              return (options as ComboboxItem[]).filter((option) => {
-                const key = search.trim().toLowerCase()
-                if (key.length === 0) {
-                  return true
+  return form.values.items.map((item, index) => {
+    return (
+      <tr key={item.journal_id}>
+        <td>
+          {month === null ? (
+            <input type="text" maxLength={8} />
+          ) : (
+            <>
+              <TextInput
+                value={item.date_yymm}
+                maxLength={6}
+                readOnly
+                disabled
+                styles={() => ({
+                  root: { width: '80px', display: 'inline-block' },
+                })}
+              />
+              <TextInput
+                value={item.date_dd}
+                {...form.getInputProps(`items.${index}.date_dd`)}
+                maxLength={2}
+                styles={() => ({
+                  root: { width: '50px', display: 'inline-block' },
+                })}
+              />
+            </>
+          )}
+        </td>
+        <td>
+          <div>
+            <Autocomplete
+              value={item.other_cd}
+              data={saimoku_list.map((s) => s.saimoku_cd)}
+              {...form.getInputProps(`items.${index}.other_cd`)}
+              filter={({ options, search }) => {
+                return (options as ComboboxItem[]).filter((option) => {
+                  const key = search.trim().toLowerCase()
+                  if (key.length === 0) {
+                    return true
+                  }
+                  const saimoku = saimoku_map.get(option.value)!
+                  const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                  const kana = saimoku.saimoku_kana_name.toLowerCase()
+                  return saimoku_cd.includes(key) || kana.includes(key)
+                })
+              }}
+              renderOption={({ option }) => {
+                const saimoku = saimoku_map.get(option.value)!
+                return (
+                  <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+                )
+              }}
+              onBlur={(e) => {
+                const keyword = e.currentTarget.value.toLowerCase()
+                const results = saimoku_list.filter((s) => {
+                  const code = s.saimoku_cd.toLowerCase()
+                  const kana = s.saimoku_kana_name
+                  return code.includes(keyword) || kana.includes(keyword)
+                })
+                if (results.length === 1) {
+                  LedgerUpdateRequestForm.set(
+                    'other_cd',
+                    form,
+                    index,
+                    results[0].saimoku_cd,
+                  )
+                  LedgerUpdateRequestForm.set(
+                    'other_cd_name',
+                    form,
+                    index,
+                    results[0].saimoku_ryaku_name,
+                  )
                 }
-                const saimoku = saimokuMap.get(option.value)!
-                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-                const kana = saimoku.saimoku_kana_name.toLowerCase()
-                return saimoku_cd.includes(key) || kana.includes(key)
-              })
-            }}
-            renderOption={({ option }) => {
-              const saimoku = saimokuMap.get(option.value)!
-              return (
-                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
-              )
-            }}
-            className="w-14"
-            comboboxProps={{ width: '180px' }}
+              }}
+              className="w-14"
+              comboboxProps={{ width: '180px' }}
+            />
+          </div>
+        </td>
+        <td>
+          <TextInput
+            type="text"
+            value={item.other_cd_name}
+            className="w-16"
+            disabled
+            readOnly
           />
-        </div>
-      </td>
-      <td>
-        <TextInput type="text" className="w-16" disabled readOnly />
-      </td>
-      <td>
-        <TextInput className={'w-24'} />
-      </td>
-      <td>
-        <TextInput className={'w-24'} />
-      </td>
-      <td>
-        <TextInput className={'w-96'} />
-      </td>
-      <td>
-        <TextInput
-          value={Numeral(props.ledger.acc).format('0,0')}
-          styles={() => ({
-            input: {
-              textAlign: 'right',
-            },
-          })}
-          disabled
-          className="w-28"
-        />
-      </td>
-      <td>
-        <button
-          onClick={() => {
-            //deleteJournal(props.ledger.journal_id, reloadLedger(false));
-          }}
-        >
-          削除
-        </button>
-      </td>
-    </tr>
-  )
+        </td>
+        <td>
+          <TextInput className={'w-24'} />
+        </td>
+        <td>
+          <TextInput className={'w-24'} />
+        </td>
+        <td>
+          <TextInput className={'w-96'} />
+        </td>
+        <td>
+          <TextInput
+            // value={Numeral(props.ledger.acc).format('0,0')}
+            value={100}
+            styles={() => ({
+              input: {
+                textAlign: 'right',
+              },
+            })}
+            disabled
+            className="w-28"
+          />
+        </td>
+        <td>
+          <button
+            onClick={() => {
+              //deleteJournal(props.ledger.journal_id, reloadLedger(false));
+            }}
+          >
+            削除
+          </button>
+        </td>
+      </tr>
+    )
+  })
 }
 
-export const LedgerListNewRow = (props: {
+export const LedgerListNewRow: FC<{
   form: UseFormReturnType<LedgerCreateRequestForm>
   nendo: string
-  ledgerCd: string
-  ledgerMonth: string | null
+  ledger_cd: string
+  month: string | null
   pageNo: number
   pageSize: number
+  saimoku_map: Map<string, saimoku_masters>
+  saimoku_list: saimoku_masters[]
+}> = ({
+  form,
+  nendo,
+  ledger_cd,
+  month,
+  pageNo,
+  pageSize,
+  saimoku_map,
+  saimoku_list,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
-  const form = props.form
 
   //const { createLedger } = useActions();
-  const { data: masters } = useSelector((state: RootState) => state.masters)
-  const saimokuList = masters.saimoku_list
-  const saimokuMap = useSelector(selectSaimokuMap)
-  const nendoMap = useSelector(selectNendoMap)
 
   const [dateStr, setDate] = useState('')
 
   const [dateStrDD, setDateDD] = useState('')
 
-  const [kariValueStr, setKariValue] = useState('')
-  const [kasiValueStr, setKasiValue] = useState('')
-  const [cd, setCd] = useState('')
-  const [cdName, setCdName] = useState('')
-  const [cdSelectMode, setCdSelectMode] = useState(false)
-  const [filterdSaimokuList, setFilterdSaimokuList] = useState(
-    [] as saimoku_masters[],
-  )
   const [note, setNote] = useState('')
 
   const dateRef = createRef<HTMLInputElement>()
-  const kariRef = createRef<HTMLInputElement>()
-  const kasiRef = createRef<HTMLInputElement>()
-
-  const reloadLedger = createReloadLedger(
-    props.nendo,
-    props.ledgerCd,
-    props.ledgerMonth,
-    props.pageNo,
-    props.pageSize,
-  )
 
   const save = () => {
     const { hasErrors } = form.validate()
@@ -451,20 +455,14 @@ export const LedgerListNewRow = (props: {
     }
   }
 
-  useEffect(() => {
-    const filterdSaimokuList = filterSaimokuList(saimokuList, cd)
-    setFilterdSaimokuList(filterdSaimokuList)
-  }, [cd, saimokuList])
-
   const [other_cd_name, setOtherCdName] = useState('')
 
   return (
     <tr>
       <td>
-        {props.ledgerMonth !== 'all' ? (
+        {month !== 'all' ? (
           <>
             <TextInput
-              type="text"
               value={form.values.date_yymm}
               maxLength={6}
               readOnly
@@ -474,7 +472,6 @@ export const LedgerListNewRow = (props: {
               })}
             />
             <TextInput
-              type="text"
               value={form.values.date_dd}
               maxLength={2}
               {...form.getInputProps('date_dd')}
@@ -521,21 +518,21 @@ export const LedgerListNewRow = (props: {
         <div style={{ width: '100%', position: 'relative' }}>
           <Autocomplete
             value={form.values.other_cd}
-            data={filterdSaimokuList.map((s) => s.saimoku_cd)}
+            data={saimoku_list.map((s) => s.saimoku_cd)}
             filter={({ options, search }) => {
               return (options as ComboboxItem[]).filter((option) => {
                 const key = search.trim().toLowerCase()
                 if (key.length === 0) {
                   return true
                 }
-                const saimoku = saimokuMap.get(option.value)!
+                const saimoku = saimoku_map.get(option.value)!
                 const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
                 const kana = saimoku.saimoku_kana_name.toLowerCase()
                 return saimoku_cd.includes(key) || kana.includes(key)
               })
             }}
             renderOption={({ option }) => {
-              const saimoku = saimokuMap.get(option.value)!
+              const saimoku = saimoku_map.get(option.value)!
               return (
                 <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
               )
@@ -545,7 +542,7 @@ export const LedgerListNewRow = (props: {
             }}
             onBlur={(e) => {
               const keyword = e.currentTarget.value.toLowerCase()
-              const results = saimokuList.filter((s) => {
+              const results = saimoku_list.filter((s) => {
                 const code = s.saimoku_cd.toLowerCase()
                 const kana = s.saimoku_kana_name
                 return code.includes(keyword) || kana.includes(keyword)

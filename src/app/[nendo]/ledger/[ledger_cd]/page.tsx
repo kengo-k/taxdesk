@@ -29,7 +29,7 @@ export default function Page({ params }: PageProps) {
       <LedgerList
         nendo={params.nendo}
         ledger_cd={params.ledger_cd}
-        ledger_month={'03'}
+        month={'03'}
         page_no={1}
         page_size={10}
       />

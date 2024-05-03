@@ -80,7 +80,18 @@ export const LedgerCreateRequestSchema = z
     },
   )
 
-export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
+export interface LedgerCreateRequest {
+  nendo: string
+  ledger_cd: string
+  date: string
+  karikata_value: number | null
+  kasikata_value: number | null
+  date_full: string
+  date_yymm: string
+  date_dd: string
+  note: string
+  other_cd: string
+}
 
 export type LedgerCreateRequestForm = z.input<typeof LedgerCreateRequestSchema>
 export const LedgerCreateRequestForm = {
@@ -117,19 +128,98 @@ export type LedgerSearchRequest = {
   month: string | null
 } & PagingRequest
 
-export interface LedgerUpdateRequest {
-  id: number
-  ledger_cd: string
-  other_cd: string
-  karikata_value: number | null
-  kasikata_value: number | null
+export const LedgerUpdateRequestSchema = z
+  .object({
+    items: z.array(
+      z.object({
+        journal_id: z.number(),
+        nendo: z.string(),
+        ledger_cd: z
+          .string()
+          .length(3, 'ledger cd must be exactly 3 characters long.'),
+        date_full: z.string(),
+        date_yymm: z.string(),
+        date_dd: z.string(),
+        karikata_value: createAmountValidator(),
+        kasikata_value: createAmountValidator(),
+        note: z.string(),
+        other_cd: z.string(),
+        other_cd_name: z.string(),
+      }),
+    ),
+  })
+  .transform((data) => {
+    const ret = {
+      items: data.items.map((item) => {
+        const ret: any = {
+          ...item,
+          date: getDateString(item.date_full, item.date_yymm, item.date_dd),
+          karikata_value:
+            item.karikata_value === ''
+              ? null
+              : numeral(item.karikata_value).value(),
+          kasikata_value:
+            item.kasikata_value === ''
+              ? null
+              : numeral(item.kasikata_value).value(),
+          note: item.note === '' ? null : item.note,
+        }
+        delete ret.date_full
+        delete ret.date_yymm
+        delete ret.date_dd
+        delete ret.other_cd_name
+        return ret
+      }),
+    }
+    return ret
+  })
+// .refine((data) => {
+//   const invalid_items = data.items
+//     .map((item, index) => {
+//       const { karikata_value, kasikata_value } = item
+//       const isKarikataNull = karikata_value === null
+//       const isKasikataNull = kasikata_value === null
+//       return (
+//         (isKarikataNull && !isKasikataNull) ||
+//         (!isKarikataNull && isKasikataNull)
+//       )
+//     })
+//     .filter(Boolean)
+//   if (invalid_items.length === 0) {
+//     return null
+//   }
+// })
+
+export type LedgerUpdateRequest = z.infer<typeof LedgerUpdateRequestSchema>
+
+export type LedgerUpdateRequestForm = z.input<typeof LedgerUpdateRequestSchema>
+export type LedgerUpdateRequestFormItem = ReturnType<
+  () => LedgerUpdateRequestForm['items'][number]
+>
+export const LedgerUpdateRequestForm = {
+  set: <K extends keyof LedgerUpdateRequestFormItem>(
+    key: K,
+    form: UseFormReturnType<LedgerUpdateRequestForm>,
+    index: number,
+    value: LedgerUpdateRequestFormItem[K],
+  ) => {
+    form.setFieldValue(`items.${index}.${key}`, value as any)
+  },
 }
+
+// export interface LedgerUpdateRequest {
+//   id: number
+//   ledger_cd: string
+//   other_cd: string
+//   karikata_value: number | null
+//   kasikata_value: number | null
+// }
 
 export interface LedgerSearchResponse {
   journal_id: number
   nendo: string
   date: string
-  another_cd: string
+  other_cd: string
   karikata_cd: string
   karikata_value: number
   kasikata_cd: string
