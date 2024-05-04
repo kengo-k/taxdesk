@@ -12,15 +12,16 @@ export const revalidate = cache.revalidate
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: LedgerSearchRequest },
+  { params }: { params: { nendo: string; ledger_cd: string } },
 ) {
+  const search_request = { ...params } as LedgerSearchRequest
   const { searchParams } = new URL(request.url)
   const month = searchParams.get('month')
   if (month !== null) {
-    params.month = month
+    search_request.month = month
   }
   const service = Factory.getLedgerService()
-  const response = await service.selectLedgerList(params)
+  const response = await service.selectLedgerList(search_request)
   return NextResponse.json(response, {
     status: 200,
     headers: cache.headers,

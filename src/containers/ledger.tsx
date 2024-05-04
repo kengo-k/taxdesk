@@ -9,7 +9,7 @@ import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
 import { formatDate, fromDateString } from '@/misc/format'
-import { Month, fromMonth } from '@/misc/nendo'
+import { Month, Nendo, fromMonth, fromNendo } from '@/misc/nendo'
 import { getPageList } from '@/misc/page'
 import {
   LedgerCreateRequestForm,
@@ -108,7 +108,7 @@ const AmountInputForUpdate: FC<{
 }
 
 export const LedgerList: FC<{
-  nendo: string
+  nendo: Nendo
   ledger_cd: string
   month: Month | null
   page_no: number
@@ -131,7 +131,7 @@ export const LedgerList: FC<{
   useEffect(() => {
     dispatch(
       loadLedgerList({
-        nendo,
+        nendo: fromNendo(nendo),
         ledger_cd,
         month: fromMonth(month),
         page_no,
@@ -144,10 +144,10 @@ export const LedgerList: FC<{
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
-      nendo,
+      nendo: fromNendo(nendo),
       ledger_cd,
       date_full: '',
-      date_yymm: month ? `${nendo}/${month}` : '',
+      date_yymm: month ? `${fromDateString(`${nendo}`)}` : '',
       date_dd: '',
       other_cd: '',
       karikata_value: '',
@@ -292,7 +292,7 @@ export const LedgerList: FC<{
 }
 
 const LedgerListRows: FC<{
-  nendo: string
+  nendo: Nendo
   ledger_cd: string
   month: Month | null
   pageNo: number
@@ -465,7 +465,7 @@ const LedgerListRows: FC<{
 
 export const LedgerListNewRow: FC<{
   form: UseFormReturnType<LedgerCreateRequestForm>
-  nendo: string
+  nendo: Nendo
   ledger_cd: string
   month: Month | null
   pageNo: number
