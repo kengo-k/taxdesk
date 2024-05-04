@@ -6,14 +6,23 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Header } from '@/containers/header'
 import { LedgerList } from '@/containers/ledger'
 import { removeExtraProperties } from '@/misc/object'
-import { Month, Nendo, isMonth } from '@/models/date'
-import { AppDispatch } from '@/store'
+import { Month, Nendo } from '@/models/date'
+import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
-import { selectNendoMap } from '@/store/master'
+import { loadMasters, selectNendoMap } from '@/store/master'
 
 export default function Page({ params, searchParams }: PageProps) {
   const dispatch = useDispatch<AppDispatch>()
+
+  useEffect(() => {
+    dispatch(loadMasters())
+  }, [dispatch])
+
+  const { loading: is_master_loading, error: is_master_error } = useSelector(
+    (state: RootState) => state.masters,
+  )
   const nendo_map = useSelector(selectNendoMap)
+
   useEffect(() => {
     dispatch(appActions.setNendo(params.nendo))
     dispatch(appActions.showLedger(true))
@@ -24,23 +33,17 @@ export default function Page({ params, searchParams }: PageProps) {
     ...SearchParams.default,
     ...removeExtraProperties(searchParams, SearchParams.default),
   }
-  const is_valid_month =
-    searchParams.month === undefined ? true : isMonth(searchParams.month)
+  const [is_valid_month, month] = Month.create(searchParams.month)
 
-  const is_valid_nendo = nendo_map.has(params.nendo)
+  const nendo = Nendo.create(params.nendo, Array.from(nendo_map.keys()))
 
-  const has_error = ![is_valid_month, is_valid_month].every(Boolean)
-
-  if (has_error) {
-    return <div>無効なパラメータ</div>
+  if (is_master_loading) {
+    return <div>Now loading...</div>
   }
 
-  const month =
-    searchParams.month === undefined
-      ? null
-      : new Month(Number(searchParams.month))
-
-  const nendo = new Nendo(Number(params.nendo))
+  if (!is_valid_month || nendo === null || is_master_error) {
+    return <div>Error...</div>
+  }
 
   return (
     <>

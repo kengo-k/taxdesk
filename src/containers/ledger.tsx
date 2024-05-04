@@ -10,7 +10,13 @@ import { saimoku_masters } from '@prisma/client'
 
 import { formatDate, fromDateString } from '@/misc/format'
 import { getPageList } from '@/misc/page'
-import { Month, Nendo, fromMonth, fromNendo } from '@/models/date'
+import {
+  Month,
+  Nendo,
+  fromMonth,
+  fromNendo,
+  getNendoMonth,
+} from '@/models/date'
 import {
   LedgerCreateRequestForm,
   LedgerCreateRequestSchema,
@@ -147,7 +153,7 @@ export const LedgerList: FC<{
       nendo: fromNendo(nendo),
       ledger_cd,
       date_full: '',
-      date_yymm: month ? `${fromDateString(`${nendo}`)}` : '',
+      date_yymm: month ? `${getNendoMonth(nendo, month)}` : '',
       date_dd: '',
       other_cd: '',
       karikata_value: '',

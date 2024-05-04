@@ -1,4 +1,4 @@
-import { FC, useEffect } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { useRouter } from 'next/navigation'
@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 //import { Box, Select } from '@mantine/core'
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
-import { loadMasters } from '@/store/master'
 
 //import Numeral from "numeral";
 //import { useNavigate } from "react-router";
@@ -17,9 +16,9 @@ export const Header: FC = () => {
 
   const dispatch = useDispatch<AppDispatch>()
 
-  useEffect(() => {
-    dispatch(loadMasters())
-  }, [dispatch])
+  // useEffect(() => {
+  //   dispatch(loadMasters())
+  // }, [dispatch])
 
   // // load initial data
   // const { loadInit, loadSummary, setSummary, setTmpLedgerCd, setLedger } =
