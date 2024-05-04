@@ -1,16 +1,17 @@
 import { FC, createRef, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+// FIXME:  dont use these packages directly
 import { DateTime } from 'luxon'
-import Numeral from 'numeral'
 
 import { Alert, Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
-import { formatDate, fromDateString } from '@/misc/format'
 import { getPageList } from '@/misc/page'
+import { Amount } from '@/models/amount'
 import {
+  JournalDate,
   Month,
   Nendo,
   toMonthString,
@@ -49,17 +50,20 @@ const AmountInputForCreate: FC<{
       onBlur={(e) => {
         form.validate()
         if (!LedgerCreateRequestForm.hasError(input_key, form)) {
-          const value = Numeral(e.currentTarget.value)
-          if (value.value() != null) {
-            LedgerCreateRequestForm.set(input_key, form, value.format('0,0'))
+          const amount = Amount.fromString(e.currentTarget.value)
+          if (amount != null) {
+            LedgerCreateRequestForm.set(
+              input_key,
+              form,
+              amount.toFormatedString(),
+            )
           }
         }
       }}
       onFocus={(e) => {
-        const value = Numeral(e.currentTarget.value)
-        const num = value.value()
-        if (num != null) {
-          LedgerCreateRequestForm.set(input_key, form, `${num}`)
+        const amount = Amount.fromString(e.currentTarget.value)
+        if (amount != null) {
+          LedgerCreateRequestForm.set(input_key, form, amount.toRawString())
         }
       }}
       onKeyDown={onSave}
@@ -90,22 +94,26 @@ const AmountInputForUpdate: FC<{
       onBlur={(e) => {
         form.validate()
         if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
-          const value = Numeral(e.currentTarget.value)
-          if (value.value() != null) {
+          const amount = Amount.fromString(e.currentTarget.value)
+          if (amount != null) {
             LedgerUpdateRequestForm.set(
               input_key,
               form,
               index,
-              value.format('0,0'),
+              amount.toFormatedString(),
             )
           }
         }
       }}
       onFocus={(e) => {
-        const value = Numeral(e.currentTarget.value)
-        const num = value.value()
-        if (num != null) {
-          LedgerUpdateRequestForm.set(input_key, form, index, `${num}`)
+        const amount = Amount.fromString(e.currentTarget.value)
+        if (amount != null) {
+          LedgerUpdateRequestForm.set(
+            input_key,
+            form,
+            index,
+            amount.toRawString(),
+          )
         }
       }}
       onKeyDown={onSave}
@@ -176,10 +184,10 @@ export const LedgerList: FC<{
     }
     update_form.setValues({
       items: ledger_state.ledger_list.map((item) => {
-        const date = fromDateString(item.date)
-        const date_full = date === null ? '' : formatDate(date, 'yyyy/MM/dd')
-        const date_yymm = date === null ? '' : formatDate(date, 'yyyy/MM')
-        const date_dd = date === null ? '' : formatDate(date, 'dd')
+        const date = JournalDate.create(item.date)
+        const date_full = date === null ? '' : date.format('yyyy/MM/dd')
+        const date_yymm = date === null ? '' : date.format('yyyy/MM')
+        const date_dd = date === null ? '' : date.format('dd')
         return {
           ...item,
           ledger_cd,
@@ -187,9 +195,13 @@ export const LedgerList: FC<{
           date_yymm,
           date_dd,
           karikata_value:
-            item.karikata_value === 0 ? '' : String(item.karikata_value),
+            item.karikata_value === 0
+              ? ''
+              : Amount.create(item.karikata_value).toFormatedString(),
           kasikata_value:
-            item.kasikata_value === 0 ? '' : String(item.kasikata_value),
+            item.kasikata_value === 0
+              ? ''
+              : Amount.create(item.kasikata_value).toFormatedString(),
           other_cd_name: saimoku_map.get(item.other_cd)!.saimoku_ryaku_name,
           acc: item.acc,
         }
@@ -445,7 +457,7 @@ const LedgerListRows: FC<{
         </td>
         <td>
           <TextInput
-            value={Numeral(item.acc).format('0,0')}
+            value={Amount.create(item.acc).toFormatedString()}
             styles={() => ({
               input: {
                 textAlign: 'right',

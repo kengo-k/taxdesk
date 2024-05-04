@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon'
 import numeral from 'numeral'
 
 export function toNendoMonthString(nendo: Nendo, mm: Month) {
@@ -79,8 +80,33 @@ export class Month {
   }
 }
 
-type MonthValue = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
-
 function isValidMonth(month: number): month is MonthValue {
   return month >= 1 && month <= 12
 }
+
+export class JournalDate {
+  private value: DateTime
+  private constructor(dateTime: DateTime) {
+    this.value = dateTime
+  }
+  public static create(date: string): JournalDate | null {
+    let dateTime: DateTime | null
+    if (DATE_REGEXP_FORMATTED.test(date)) {
+      dateTime = DateTime.fromFormat(date, 'yyyy/MM/dd')
+    } else if (DATE_REGEXP_RAW.test(date)) {
+      dateTime = DateTime.fromFormat(date, 'yyyyMMdd')
+    } else {
+      return null
+    }
+    return new JournalDate(dateTime)
+  }
+  public format(format: AVAILABLE_FORMATS): string {
+    return this.value.toFormat(format)
+  }
+}
+
+type MonthValue = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+type AVAILABLE_FORMATS = 'yyyy/MM/dd' | 'yyyyMMdd' | 'yyyy/MM' | 'dd'
+
+const DATE_REGEXP_FORMATTED = /^\d{4}\/\d{2}\/\d{2}$/
+const DATE_REGEXP_RAW = /^\d{8}$/
