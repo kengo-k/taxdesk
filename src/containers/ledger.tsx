@@ -13,9 +13,9 @@ import { getPageList } from '@/misc/page'
 import {
   Month,
   Nendo,
-  fromMonth,
-  fromNendo,
-  getNendoMonth,
+  toMonthString,
+  toNendoMonthString,
+  toNendoString,
 } from '@/models/date'
 import {
   LedgerCreateRequestForm,
@@ -137,9 +137,9 @@ export const LedgerList: FC<{
   useEffect(() => {
     dispatch(
       loadLedgerList({
-        nendo: fromNendo(nendo),
+        nendo: toNendoString(nendo),
         ledger_cd,
-        month: fromMonth(month),
+        month: toMonthString(month),
         page_no,
         page_size,
       }),
@@ -150,10 +150,10 @@ export const LedgerList: FC<{
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
-      nendo: fromNendo(nendo),
+      nendo: toNendoString(nendo),
       ledger_cd,
       date_full: '',
-      date_yymm: month ? `${getNendoMonth(nendo, month)}` : '',
+      date_yymm: month ? `${toNendoMonthString(nendo, month)}` : '',
       date_dd: '',
       other_cd: '',
       karikata_value: '',

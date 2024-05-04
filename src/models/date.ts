@@ -1,8 +1,6 @@
 import numeral from 'numeral'
 
-type Months = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
-
-export function getNendoMonth(nendo: Nendo, mm: Month) {
+export function toNendoMonthString(nendo: Nendo, mm: Month) {
   let n = nendo.value
   if (mm.value < 4) {
     n++
@@ -14,14 +12,14 @@ export function getNendoMonth(nendo: Nendo, mm: Month) {
   return `${n}/${mmstr}`
 }
 
-export function fromMonth(month: Month | null): string | null {
+export function toMonthString(month: Month | null): string | null {
   if (month === null) {
     return null
   }
   return month.toString()
 }
 
-export function fromNendo(nendo: Nendo): string {
+export function toNendoString(nendo: Nendo): string {
   return nendo.toString()
 }
 
@@ -52,8 +50,8 @@ export class Nendo {
 }
 
 export class Month {
-  private _value: Months
-  private constructor(value: Months) {
+  private _value: MonthValue
+  private constructor(value: MonthValue) {
     this._value = value
   }
   public get value() {
@@ -81,6 +79,8 @@ export class Month {
   }
 }
 
-function isValidMonth(month: number): month is Months {
+type MonthValue = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+
+function isValidMonth(month: number): month is MonthValue {
   return month >= 1 && month <= 12
 }
