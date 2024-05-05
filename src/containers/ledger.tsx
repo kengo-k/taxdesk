@@ -48,7 +48,6 @@ const AmountInputForCreate: FC<{
       value={form.values[input_key]}
       error={null}
       onBlur={(e) => {
-        form.validate()
         if (!LedgerCreateRequestForm.hasError(input_key, form)) {
           const amount = Amount.fromString(e.currentTarget.value)
           if (amount != null) {
@@ -92,7 +91,6 @@ const AmountInputForUpdate: FC<{
       value={form.values.items[index][input_key]}
       error={null}
       onBlur={(e) => {
-        form.validate()
         if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
           const amount = Amount.fromString(e.currentTarget.value)
           if (amount != null) {
