@@ -72,6 +72,9 @@ export const ledgerSlice = createSlice({
       state.data.all_count = action.payload.all_count
       state.data.ledger_list = action.payload.ledger_list
     },
+    clearLastUpserted: (state) => {
+      state.data.last_upserted = null
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(loadLedgerList.fulfilled, (state, action) => {

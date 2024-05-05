@@ -25,7 +25,7 @@ import {
   LedgerUpdateRequestSchema,
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
-import { createLedger, loadLedgerList } from '@/store/ledger'
+import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
 const AmountInputForCreate: FC<{
@@ -208,6 +208,13 @@ export const LedgerList: FC<{
       }),
     })
   }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (ledger_state.last_upserted !== null) {
+      dispatch(ledgerActions.clearLastUpserted())
+      create_form.reset()
+    }
+  }, [ledger_state.last_upserted])
 
   return (
     <div>
