@@ -1,3 +1,4 @@
+import { JournalDate, Nendo } from './date'
 import { DateTime } from 'luxon'
 import numeral from 'numeral'
 import * as z from 'zod'
@@ -21,7 +22,11 @@ function createAmountValidator() {
   )
 }
 
-function getDateString(date_full: string, date_yymm: string, date_dd: string) {
+function getDateString(
+  date_full: string,
+  date_yymm: string,
+  date_dd: string,
+): string {
   let date_str = date_full
   if (date_yymm.length > 0) {
     date_str = `${date_yymm}/${date_dd}`
@@ -30,38 +35,81 @@ function getDateString(date_full: string, date_yymm: string, date_dd: string) {
   return `${date.value()}`
 }
 
-export const LedgerCreateRequestSchema = z
+export const LedgerCreateRequestSchema = z.object({
+  nendo: z.string(),
+  ledger_cd: z.string().length(3),
+  other_cd: z.string(),
+  date: z.string(),
+  karikata_value: z.number().nullable(),
+  kasikata_value: z.number().nullable(),
+  note: z.string().nullable(),
+})
+
+export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
+
+export const LedgerCreateRequestFormSchema = z
   .object({
-    nendo: z.string(),
-    ledger_cd: z
-      .string()
-      .length(3, 'ledger cd must be exactly 3 characters long.'),
-    date_full: z.string(),
-    date_yymm: z.string(),
-    date_dd: z.string(),
+    nendo: z.string().regex(/^\d{4}$/),
+    ledger_cd: z.string().length(3),
+    date: z.string().regex(/^(\d{4}\/\d{2}\/\d{2})?$/),
+    date_yymm: z.string().regex(/^(\d{4}\/\d{2})?$/),
+    date_dd: z.string().regex(/^(\d{2})?$/),
     karikata_value: createAmountValidator(),
     kasikata_value: createAmountValidator(),
     note: z.string(),
     other_cd: z.string(),
   })
+  .refine(
+    (data) => {
+      return (
+        (data.date !== '' && data.date_yymm + data.date_dd === '') ||
+        (data.date === '' && data.date_yymm + data.date_dd !== '')
+      )
+    },
+    { message: 'invalid date', path: ['date'] },
+  )
   .transform((data) => {
-    const ret: any = {
+    const date =
+      data.date !== '' ? data.date : `${data.date_yymm}/${data.date_dd}`
+    const ret = {
       ...data,
-      date: getDateString(data.date_full, data.date_yymm, data.date_dd),
+      date,
       karikata_value:
-        data.karikata_value === ''
+        data.karikata_value === '' || data.karikata_value === null
           ? null
           : numeral(data.karikata_value).value(),
       kasikata_value:
-        data.kasikata_value === ''
+        data.kasikata_value === '' || data.karikata_value === null
           ? null
           : numeral(data.kasikata_value).value(),
       note: data.note === '' ? null : data.note,
-    }
-    delete ret.date_full
-    delete ret.date_yymm
-    delete ret.date_dd
+    } as LedgerCreateRequest
+    delete (ret as any).date_full
+    delete (ret as any).date_yymm
+    delete (ret as any).date_dd
     return ret
+  })
+  .superRefine((data, ctx) => {
+    const nendo = Nendo.create(data.nendo, [data.nendo])
+    const issue = {
+      code: z.ZodIssueCode.custom,
+      path: ['date'],
+    }
+    const date = JournalDate.create(data.date)
+    if (date == null) {
+      ctx.addIssue({ ...issue, message: `invalid date: ${data.date}` })
+      return
+    }
+    if (nendo != null && !nendo.isInNendo(date)) {
+      const [start, end] = nendo.getRange('yyyy/MM/dd')
+      ctx.addIssue({
+        ...issue,
+        message: `invalid date: ${data.date} must be in a range between ${start} and ${end}`,
+      })
+    }
+  })
+  .transform((data) => {
+    return { ...data, date: data.date.replaceAll('/', '') }
   })
   .refine(
     (data) => {
@@ -80,20 +128,9 @@ export const LedgerCreateRequestSchema = z
     },
   )
 
-export interface LedgerCreateRequest {
-  nendo: string
-  ledger_cd: string
-  date: string
-  karikata_value: number | null
-  kasikata_value: number | null
-  date_full: string
-  date_yymm: string
-  date_dd: string
-  note: string
-  other_cd: string
-}
-
-export type LedgerCreateRequestForm = z.input<typeof LedgerCreateRequestSchema>
+export type LedgerCreateRequestForm = z.input<
+  typeof LedgerCreateRequestFormSchema
+>
 export const LedgerCreateRequestForm = {
   hasError: (
     key: keyof LedgerCreateRequestForm,

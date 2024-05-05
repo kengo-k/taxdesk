@@ -20,12 +20,12 @@ import {
 } from '@/models/date'
 import {
   LedgerCreateRequestForm,
-  LedgerCreateRequestSchema,
+  LedgerCreateRequestFormSchema,
   LedgerUpdateRequestForm,
   LedgerUpdateRequestSchema,
 } from '@/models/ledger'
 import { AppDispatch, RootState } from '@/store'
-import { loadLedgerList } from '@/store/ledger'
+import { createLedger, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
 const AmountInputForCreate: FC<{
@@ -160,7 +160,7 @@ export const LedgerList: FC<{
     initialValues: {
       nendo: toNendoString(nendo),
       ledger_cd,
-      date_full: '',
+      date: '',
       date_yymm: month ? `${toNendoMonthString(nendo, month)}` : '',
       date_dd: '',
       other_cd: '',
@@ -168,7 +168,7 @@ export const LedgerList: FC<{
       kasikata_value: '',
       note: '',
     },
-    validate: zodResolver(LedgerCreateRequestSchema),
+    validate: zodResolver(LedgerCreateRequestFormSchema),
   })
 
   const update_form = useForm<LedgerUpdateRequestForm>({
@@ -517,10 +517,11 @@ export const LedgerListNewRow: FC<{
     if (hasErrors) {
       return
     }
-    const { success, data } = LedgerCreateRequestSchema.safeParse(form.values)
+    const { success, data } = LedgerCreateRequestFormSchema.safeParse(
+      form.values,
+    )
     if (success) {
-      //console.log('create: ', data)
-      //dispatch(createLedger(data))
+      dispatch(createLedger(data))
     }
   }
 
@@ -538,8 +539,8 @@ export const LedgerListNewRow: FC<{
         {month !== null ? (
           <>
             <TextInput
-              value={form.values.date_yymm}
-              maxLength={6}
+              maxLength={7}
+              {...form.getInputProps('date_yymm')}
               readOnly
               disabled
               styles={() => ({
@@ -557,8 +558,14 @@ export const LedgerListNewRow: FC<{
                   setDateDD(`0${day}`)
                 }
               }}
+              error={null}
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
+                input: {
+                  ...(LedgerCreateRequestForm.hasError('date_dd', form)
+                    ? { borderColor: 'red' }
+                    : {}),
+                },
               })}
             />
           </>

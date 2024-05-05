@@ -35,7 +35,8 @@ export async function POST(
   const service = Factory.getLedgerService()
   const body = await request.json()
 
-  const is_valid = isValidLedgerCreateRequest({ ...params, ...body })
+  const create_request = { ...params, ...body }
+  const is_valid = isValidLedgerCreateRequest(create_request)
   if (is_valid.success) {
     const response = await service.createLedger(is_valid.data)
     return NextResponse.json(response, {
@@ -43,6 +44,10 @@ export async function POST(
       headers: cache.headers,
     })
   } else {
-    NextResponse.json({ error: 'Missing require fields' }, { status: 400 })
+    const error = is_valid.error
+    return NextResponse.json(
+      { message: 'Missing require fields', error },
+      { status: 400 },
+    )
   }
 }

@@ -45,6 +45,20 @@ export class Nendo {
     }
     return null
   }
+  public isInNendo(date: JournalDate) {
+    const start = `${this._value}0401`
+    const end = `${this._value + 1}0331`
+    const raw_date = date.format('yyyyMMdd')
+    return raw_date >= start && raw_date <= end
+  }
+  public getRange(format: AVAILABLE_FORMATS) {
+    const start = `${this._value}0401`
+    const end = `${this._value + 1}0331`
+    return [
+      JournalDate.create(start)!.format('yyyy/MM/dd'),
+      JournalDate.create(end)!.format('yyyy/MM/dd'),
+    ]
+  }
   public toString(): string {
     return String(this._value)
   }
