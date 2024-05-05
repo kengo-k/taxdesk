@@ -528,7 +528,20 @@ export const LedgerListNewRow: FC<{
       form.values,
     )
     if (success) {
-      dispatch(createLedger(data))
+      dispatch(
+        createLedger({
+          request: data,
+          next: [
+            loadLedgerList({
+              nendo: toNendoString(nendo),
+              ledger_cd,
+              month: toMonthString(month),
+              page_no: pageNo,
+              page_size: pageSize,
+            }),
+          ],
+        }),
+      )
     }
   }
 

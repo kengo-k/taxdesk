@@ -12,6 +12,7 @@ import {
   LedgerSearchRequest,
   LedgerSearchResponse,
 } from '@/models/ledger'
+import { NextActions, callNextActions } from '@/store'
 
 export interface LedgerState {
   data: {
@@ -45,18 +46,20 @@ export const loadLedgerList = createAsyncThunk<
   return data
 })
 
-export const createLedger = createAsyncThunk<journals, LedgerCreateRequest>(
-  'ledger/createLedger',
-  async (request) => {
-    const { nendo, ledger_cd, ...requestBody } = request
-    const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-    })
-    const data = await response.json()
-    return data
-  },
-)
+export const createLedger = createAsyncThunk<
+  journals,
+  { request: LedgerCreateRequest; next: NextActions }
+>('ledger/createLedger', async (params, { dispatch }) => {
+  const request = params.request
+  const { nendo, ledger_cd, ...requestBody } = request
+  const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+  })
+  const data = await response.json()
+  callNextActions(dispatch, params.next)
+  return data
+})
 
 export const ledgerSlice = createSlice({
   name: 'ledger',
