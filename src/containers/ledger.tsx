@@ -2,8 +2,6 @@ import { FC, createRef, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 // FIXME:  dont use these packages directly
-import { DateTime } from 'luxon'
-
 import { Alert, Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
@@ -358,7 +356,13 @@ const LedgerListRows: FC<{
       <tr key={item.journal_id}>
         <td>
           {month === null ? (
-            <input type="text" maxLength={8} />
+            <TextInput
+              maxLength={8}
+              value={item.date_full}
+              styles={() => ({
+                root: { width: '110px' },
+              })}
+            />
           ) : (
             <>
               <TextInput
@@ -588,29 +592,11 @@ export const LedgerListNewRow: FC<{
             />
           </>
         ) : (
-          <input
-            type="text"
-            value={dateStr}
+          <TextInput
             maxLength={8}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              setDate(e.target.value)
-            }}
-            onFocus={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const dateStr = e.target.value
-              const date = DateTime.fromFormat(dateStr, 'yyyy/mm/dd')
-              if (date.invalidReason == null) {
-                setDate(date.toFormat('yyyymmdd'))
-              }
-            }}
-            onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const dateStr = e.target.value
-              const date = DateTime.fromFormat(dateStr, 'yyyymmdd')
-              if (date.invalidReason == null) {
-                setDate(date.toFormat('yyyy/mm/dd'))
-              }
-            }}
-            onKeyDown={onSave}
-            ref={dateRef}
+            styles={() => ({
+              root: { width: '110px' },
+            })}
           />
         )}
       </td>

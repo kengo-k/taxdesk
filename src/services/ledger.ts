@@ -47,7 +47,7 @@ export class LedgerServiceImpl implements LedgerService {
     req = { ...req }
     req.page_no = req.page_no ?? 1
     req.page_size = req.page_size ?? 10
-    const month = req.month === null ? 'all' : req.month
+    const month = req.month === undefined ? 'all' : req.month
     const saimoku_detail = (
       await masterService.selectSaimokuDetail({
         saimoku_cd: req.ledger_cd,
