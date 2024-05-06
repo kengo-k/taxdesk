@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"tsc --noEmit -w\"",
+    "dev": "next dev",
+    "watch": "tsc --noEmit --watch",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -37,7 +38,6 @@
     "@types/numeral": "^2.0.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
     "eslint": "^8",
     "eslint-config-next": "14.2.2",
