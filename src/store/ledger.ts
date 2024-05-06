@@ -38,7 +38,7 @@ export const loadLedgerList = createAsyncThunk<
   { all_count: number; list: LedgerSearchResponse[] },
   LedgerSearchRequest
 >('ledger/loadLedgerList', async (request) => {
-  const qs = createQueryString(request, ['month'])
+  const qs = createQueryString(request, ['month', 'page_no', 'page_size'])
   const response = await fetch(
     `/api/v1/ledger/${request.nendo}/${request.ledger_cd}${qs.length === 0 ? '' : `?${qs}`}`,
   )

@@ -20,6 +20,17 @@ export async function GET(
   if (month !== null) {
     search_request.month = month
   }
+  const page_no = searchParams.get('page_no')
+  if (page_no != null) {
+    const page_num = Number(page_no)
+    if (isNaN(page_num)) {
+      return NextResponse.json(
+        { message: 'Invalid page no: ' + page_no },
+        { status: 400 },
+      )
+    }
+    search_request.page_no = page_num
+  }
   const service = Factory.getLedgerService()
   const response = await service.selectLedgerList(search_request)
   return NextResponse.json(response, {

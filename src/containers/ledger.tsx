@@ -2,11 +2,16 @@ import { FC, createRef, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 // FIXME:  dont use these packages directly
-import { Alert, Autocomplete, ComboboxItem, TextInput } from '@mantine/core'
+import {
+  Alert,
+  Autocomplete,
+  ComboboxItem,
+  Pagination,
+  TextInput,
+} from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
-import { getPageList } from '@/misc/page'
 import { Amount } from '@/models/amount'
 import {
   JournalDate,
@@ -22,6 +27,13 @@ import {
   LedgerUpdateRequestForm,
   LedgerUpdateRequestSchema,
 } from '@/models/ledger'
+import {
+  PageNo,
+  PageSize,
+  getPageCount,
+  toPageNo,
+  toPageSize,
+} from '@/models/paging'
 import { AppDispatch, RootState } from '@/store'
 import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
@@ -121,8 +133,8 @@ export const LedgerList: FC<{
   nendo: Nendo
   ledger_cd: string
   month: Month | null
-  page_no: number
-  page_size: number
+  page_no: PageNo
+  page_size: PageSize
 }> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
   const { data: masters_state } = useSelector(
     (state: RootState) => state.masters,
@@ -144,13 +156,15 @@ export const LedgerList: FC<{
         nendo: toNendoString(nendo),
         ledger_cd,
         month: toMonthString(month),
-        page_no,
-        page_size,
+        page_no: toPageNo(page_no),
+        page_size: toPageSize(page_size),
       }),
     )
   }, [dispatch, ledger_cd, month, nendo, page_no, page_size])
 
-  const pageInfo = getPageList(page_no, ledger_state.all_count, page_size)
+  const page_count = getPageCount(ledger_state.all_count, page_size)
+
+  console.log('page_count: ', page_count)
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
@@ -246,13 +260,21 @@ export const LedgerList: FC<{
         </Alert>
       )}
       <div>
-        <span>
+        <Pagination
+          value={page_no.value}
+          total={page_count}
+          siblings={2}
+          onChange={(page_no) => {
+            console.log('page_no: ', page_no)
+          }}
+        />
+        {/* <span>
           {`${pageInfo.from}-${pageInfo.to}`}件(全
           {ledger_state.all_count ?? '0'}件)
         </span>
         <span>
           {pageInfo.pageList.map((no) =>
-            no === page_no ? (
+            no === page_no.value ? (
               <a key={no}>{no}</a>
             ) : (
               <a
@@ -267,7 +289,7 @@ export const LedgerList: FC<{
               </a>
             ),
           )}
-        </span>
+        </span> */}
       </div>
       <div>
         <table>
@@ -316,8 +338,8 @@ const LedgerListRows: FC<{
   nendo: Nendo
   ledger_cd: string
   month: Month | null
-  pageNo: number
-  pageSize: number
+  pageNo: PageNo
+  pageSize: PageSize
   form: UseFormReturnType<LedgerUpdateRequestForm>
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
@@ -495,8 +517,8 @@ export const LedgerListNewRow: FC<{
   nendo: Nendo
   ledger_cd: string
   month: Month | null
-  pageNo: number
-  pageSize: number
+  pageNo: PageNo
+  pageSize: PageSize
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
 }> = ({
@@ -538,8 +560,8 @@ export const LedgerListNewRow: FC<{
               nendo: toNendoString(nendo),
               ledger_cd,
               month: toMonthString(month),
-              page_no: pageNo,
-              page_size: pageSize,
+              page_no: toPageNo(pageNo),
+              page_size: toPageSize(pageSize),
             }),
           ],
         }),
