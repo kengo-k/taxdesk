@@ -40,97 +40,6 @@ import { AppDispatch, RootState } from '@/store'
 import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
-const AmountInputForCreate: FC<{
-  input_key: 'karikata_value' | 'kasikata_value'
-  form: UseFormReturnType<LedgerCreateRequestForm>
-  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
-}> = ({ input_key, form, onSave }) => {
-  return (
-    <TextInput
-      className={'w-24'}
-      styles={() => ({
-        input: {
-          textAlign: 'right',
-          ...(LedgerCreateRequestForm.hasError(input_key, form)
-            ? { borderColor: 'red' }
-            : {}),
-        },
-      })}
-      {...form.getInputProps(input_key)}
-      value={form.values[input_key]}
-      error={null}
-      onBlur={(e) => {
-        if (!LedgerCreateRequestForm.hasError(input_key, form)) {
-          const amount = Amount.fromString(e.currentTarget.value)
-          if (amount != null) {
-            LedgerCreateRequestForm.set(
-              input_key,
-              form,
-              amount.toFormatedString(),
-            )
-          }
-        }
-      }}
-      onFocus={(e) => {
-        const amount = Amount.fromString(e.currentTarget.value)
-        if (amount != null) {
-          LedgerCreateRequestForm.set(input_key, form, amount.toRawString())
-        }
-      }}
-      onKeyDown={onSave}
-    />
-  )
-}
-
-const AmountInputForUpdate: FC<{
-  input_key: 'karikata_value' | 'kasikata_value'
-  form: UseFormReturnType<LedgerUpdateRequestForm>
-  index: number
-  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
-}> = ({ input_key, form, index, onSave }) => {
-  return (
-    <TextInput
-      className={'w-24'}
-      styles={() => ({
-        input: {
-          textAlign: 'right',
-          ...(LedgerUpdateRequestForm.hasError(input_key, form, index)
-            ? { borderColor: 'red' }
-            : {}),
-        },
-      })}
-      {...form.getInputProps(`items.${index}.${input_key}`)}
-      value={form.values.items[index][input_key]}
-      error={null}
-      onBlur={(e) => {
-        if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
-          const amount = Amount.fromString(e.currentTarget.value)
-          if (amount != null) {
-            LedgerUpdateRequestForm.set(
-              input_key,
-              form,
-              index,
-              amount.toFormatedString(),
-            )
-          }
-        }
-      }}
-      onFocus={(e) => {
-        const amount = Amount.fromString(e.currentTarget.value)
-        if (amount != null) {
-          LedgerUpdateRequestForm.set(
-            input_key,
-            form,
-            index,
-            amount.toRawString(),
-          )
-        }
-      }}
-      onKeyDown={onSave}
-    />
-  )
-}
-
 export const LedgerList: FC<{
   nendo: Nendo
   ledger_cd: string
@@ -319,185 +228,6 @@ export const LedgerList: FC<{
       </div>
     </div>
   )
-}
-
-const LedgerListRows: FC<{
-  nendo: Nendo
-  ledger_cd: string
-  month: Month | null
-  pageNo: PageNo
-  pageSize: PageSize
-  form: UseFormReturnType<LedgerUpdateRequestForm>
-  saimoku_map: Map<string, saimoku_masters>
-  saimoku_list: saimoku_masters[]
-}> = ({
-  nendo,
-  ledger_cd,
-  month,
-  pageNo,
-  pageSize,
-  form,
-  saimoku_map,
-  saimoku_list,
-}) => {
-  const dispatch = useDispatch<AppDispatch>()
-
-  const save = () => {
-    const { hasErrors } = form.validate()
-    if (hasErrors) {
-      return
-    }
-    const { success, data } = LedgerUpdateRequestSchema.safeParse(form.values)
-    if (success) {
-      //console.log('create: ', data)
-      //dispatch(createLedger(data))
-    }
-  }
-
-  const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      save()
-    }
-  }
-
-  return form.values.items.map((item, index) => {
-    return (
-      <tr key={item.journal_id}>
-        <td>
-          {month === null ? (
-            <TextInput
-              value={item.date_full}
-              {...form.getInputProps(`items.${index}.date_full`)}
-              maxLength={8}
-              styles={() => ({
-                root: { width: '110px' },
-              })}
-            />
-          ) : (
-            <>
-              <TextInput
-                value={item.date_yymm}
-                maxLength={6}
-                readOnly
-                disabled
-                styles={() => ({
-                  root: { width: '80px', display: 'inline-block' },
-                })}
-              />
-              <TextInput
-                value={item.date_dd}
-                {...form.getInputProps(`items.${index}.date_dd`)}
-                maxLength={2}
-                styles={() => ({
-                  root: { width: '50px', display: 'inline-block' },
-                })}
-              />
-            </>
-          )}
-        </td>
-        <td>
-          <div>
-            <Autocomplete
-              value={item.other_cd}
-              data={saimoku_list.map((s) => s.saimoku_cd)}
-              {...form.getInputProps(`items.${index}.other_cd`)}
-              filter={({ options, search }) => {
-                return (options as ComboboxItem[]).filter((option) => {
-                  const key = search.trim().toLowerCase()
-                  if (key.length === 0) {
-                    return true
-                  }
-                  const saimoku = saimoku_map.get(option.value)!
-                  const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-                  const kana = saimoku.saimoku_kana_name.toLowerCase()
-                  return saimoku_cd.includes(key) || kana.includes(key)
-                })
-              }}
-              renderOption={({ option }) => {
-                const saimoku = saimoku_map.get(option.value)!
-                return (
-                  <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
-                )
-              }}
-              onBlur={(e) => {
-                const keyword = e.currentTarget.value.toLowerCase()
-                const results = saimoku_list.filter((s) => {
-                  const code = s.saimoku_cd.toLowerCase()
-                  const kana = s.saimoku_kana_name
-                  return code.includes(keyword) || kana.includes(keyword)
-                })
-                if (results.length === 1) {
-                  LedgerUpdateRequestForm.set(
-                    'other_cd',
-                    form,
-                    index,
-                    results[0].saimoku_cd,
-                  )
-                  LedgerUpdateRequestForm.set(
-                    'other_cd_name',
-                    form,
-                    index,
-                    results[0].saimoku_ryaku_name,
-                  )
-                }
-              }}
-              className="w-14"
-              comboboxProps={{ width: '180px' }}
-            />
-          </div>
-        </td>
-        <td>
-          <TextInput
-            type="text"
-            value={item.other_cd_name}
-            className="w-16"
-            disabled
-            readOnly
-          />
-        </td>
-        <td>
-          <AmountInputForUpdate
-            input_key="karikata_value"
-            form={form}
-            index={index}
-            onSave={onSave}
-          />
-        </td>
-        <td>
-          <AmountInputForUpdate
-            input_key="kasikata_value"
-            form={form}
-            index={index}
-            onSave={onSave}
-          />
-        </td>
-        <td>
-          <TextInput className={'w-96'} />
-        </td>
-        <td>
-          <TextInput
-            value={Amount.create(item.acc).toFormatedString()}
-            styles={() => ({
-              input: {
-                textAlign: 'right',
-              },
-            })}
-            disabled
-            className="w-28"
-          />
-        </td>
-        <td>
-          <button
-            onClick={() => {
-              //deleteJournal(props.ledger.journal_id, reloadLedger(false));
-            }}
-          >
-            削除
-          </button>
-        </td>
-      </tr>
-    )
-  })
 }
 
 export const LedgerListNewRow: FC<{
@@ -698,5 +428,275 @@ export const LedgerListNewRow: FC<{
         <br />
       </td>
     </tr>
+  )
+}
+
+const LedgerListRows: FC<{
+  nendo: Nendo
+  ledger_cd: string
+  month: Month | null
+  pageNo: PageNo
+  pageSize: PageSize
+  form: UseFormReturnType<LedgerUpdateRequestForm>
+  saimoku_map: Map<string, saimoku_masters>
+  saimoku_list: saimoku_masters[]
+}> = ({
+  nendo,
+  ledger_cd,
+  month,
+  pageNo,
+  pageSize,
+  form,
+  saimoku_map,
+  saimoku_list,
+}) => {
+  const dispatch = useDispatch<AppDispatch>()
+
+  const save = () => {
+    const { hasErrors } = form.validate()
+    if (hasErrors) {
+      return
+    }
+    const { success, data } = LedgerUpdateRequestSchema.safeParse(form.values)
+    if (success) {
+      //console.log('create: ', data)
+      //dispatch(createLedger(data))
+    }
+  }
+
+  const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      save()
+    }
+  }
+
+  return form.values.items.map((item, index) => {
+    return (
+      <tr key={item.journal_id}>
+        <td>
+          {month === null ? (
+            <TextInput
+              value={item.date_full}
+              {...form.getInputProps(`items.${index}.date_full`)}
+              maxLength={8}
+              styles={() => ({
+                root: { width: '110px' },
+              })}
+            />
+          ) : (
+            <>
+              <TextInput
+                value={item.date_yymm}
+                maxLength={6}
+                readOnly
+                disabled
+                styles={() => ({
+                  root: { width: '80px', display: 'inline-block' },
+                })}
+              />
+              <TextInput
+                value={item.date_dd}
+                {...form.getInputProps(`items.${index}.date_dd`)}
+                maxLength={2}
+                styles={() => ({
+                  root: { width: '50px', display: 'inline-block' },
+                })}
+              />
+            </>
+          )}
+        </td>
+        <td>
+          <div>
+            <Autocomplete
+              value={item.other_cd}
+              data={saimoku_list.map((s) => s.saimoku_cd)}
+              {...form.getInputProps(`items.${index}.other_cd`)}
+              filter={({ options, search }) => {
+                return (options as ComboboxItem[]).filter((option) => {
+                  const key = search.trim().toLowerCase()
+                  if (key.length === 0) {
+                    return true
+                  }
+                  const saimoku = saimoku_map.get(option.value)!
+                  const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                  const kana = saimoku.saimoku_kana_name.toLowerCase()
+                  return saimoku_cd.includes(key) || kana.includes(key)
+                })
+              }}
+              renderOption={({ option }) => {
+                const saimoku = saimoku_map.get(option.value)!
+                return (
+                  <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+                )
+              }}
+              onBlur={(e) => {
+                const keyword = e.currentTarget.value.toLowerCase()
+                const results = saimoku_list.filter((s) => {
+                  const code = s.saimoku_cd.toLowerCase()
+                  const kana = s.saimoku_kana_name
+                  return code.includes(keyword) || kana.includes(keyword)
+                })
+                if (results.length === 1) {
+                  LedgerUpdateRequestForm.set(
+                    'other_cd',
+                    form,
+                    index,
+                    results[0].saimoku_cd,
+                  )
+                  LedgerUpdateRequestForm.set(
+                    'other_cd_name',
+                    form,
+                    index,
+                    results[0].saimoku_ryaku_name,
+                  )
+                }
+              }}
+              className="w-14"
+              comboboxProps={{ width: '180px' }}
+            />
+          </div>
+        </td>
+        <td>
+          <TextInput
+            type="text"
+            value={item.other_cd_name}
+            className="w-16"
+            disabled
+            readOnly
+          />
+        </td>
+        <td>
+          <AmountInputForUpdate
+            input_key="karikata_value"
+            form={form}
+            index={index}
+            onSave={onSave}
+          />
+        </td>
+        <td>
+          <AmountInputForUpdate
+            input_key="kasikata_value"
+            form={form}
+            index={index}
+            onSave={onSave}
+          />
+        </td>
+        <td>
+          <TextInput className={'w-96'} />
+        </td>
+        <td>
+          <TextInput
+            value={Amount.create(item.acc).toFormatedString()}
+            styles={() => ({
+              input: {
+                textAlign: 'right',
+              },
+            })}
+            disabled
+            className="w-28"
+          />
+        </td>
+        <td>
+          <button
+            onClick={() => {
+              //deleteJournal(props.ledger.journal_id, reloadLedger(false));
+            }}
+          >
+            削除
+          </button>
+        </td>
+      </tr>
+    )
+  })
+}
+
+const AmountInputForCreate: FC<{
+  input_key: 'karikata_value' | 'kasikata_value'
+  form: UseFormReturnType<LedgerCreateRequestForm>
+  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+}> = ({ input_key, form, onSave }) => {
+  return (
+    <TextInput
+      className={'w-24'}
+      styles={() => ({
+        input: {
+          textAlign: 'right',
+          ...(LedgerCreateRequestForm.hasError(input_key, form)
+            ? { borderColor: 'red' }
+            : {}),
+        },
+      })}
+      {...form.getInputProps(input_key)}
+      value={form.values[input_key]}
+      error={null}
+      onBlur={(e) => {
+        if (!LedgerCreateRequestForm.hasError(input_key, form)) {
+          const amount = Amount.fromString(e.currentTarget.value)
+          if (amount != null) {
+            LedgerCreateRequestForm.set(
+              input_key,
+              form,
+              amount.toFormatedString(),
+            )
+          }
+        }
+      }}
+      onFocus={(e) => {
+        const amount = Amount.fromString(e.currentTarget.value)
+        if (amount != null) {
+          LedgerCreateRequestForm.set(input_key, form, amount.toRawString())
+        }
+      }}
+      onKeyDown={onSave}
+    />
+  )
+}
+
+const AmountInputForUpdate: FC<{
+  input_key: 'karikata_value' | 'kasikata_value'
+  form: UseFormReturnType<LedgerUpdateRequestForm>
+  index: number
+  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+}> = ({ input_key, form, index, onSave }) => {
+  return (
+    <TextInput
+      className={'w-24'}
+      styles={() => ({
+        input: {
+          textAlign: 'right',
+          ...(LedgerUpdateRequestForm.hasError(input_key, form, index)
+            ? { borderColor: 'red' }
+            : {}),
+        },
+      })}
+      {...form.getInputProps(`items.${index}.${input_key}`)}
+      value={form.values.items[index][input_key]}
+      error={null}
+      onBlur={(e) => {
+        if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
+          const amount = Amount.fromString(e.currentTarget.value)
+          if (amount != null) {
+            LedgerUpdateRequestForm.set(
+              input_key,
+              form,
+              index,
+              amount.toFormatedString(),
+            )
+          }
+        }
+      }}
+      onFocus={(e) => {
+        const amount = Amount.fromString(e.currentTarget.value)
+        if (amount != null) {
+          LedgerUpdateRequestForm.set(
+            input_key,
+            form,
+            index,
+            amount.toRawString(),
+          )
+        }
+      }}
+      onKeyDown={onSave}
+    />
   )
 }
