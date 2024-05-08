@@ -366,8 +366,9 @@ const LedgerListRows: FC<{
         <td>
           {month === null ? (
             <TextInput
-              maxLength={8}
               value={item.date_full}
+              {...form.getInputProps(`items.${index}.date_full`)}
+              maxLength={8}
               styles={() => ({
                 root: { width: '110px' },
               })}
