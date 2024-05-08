@@ -1,6 +1,8 @@
 import { FC, createRef, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+
 // FIXME:  dont use these packages directly
 import {
   Alert,
@@ -136,6 +138,11 @@ export const LedgerList: FC<{
   page_no: PageNo
   page_size: PageSize
 }> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const search_params = useSearchParams()
+  const dispatch = useDispatch<AppDispatch>()
+
   const { data: masters_state } = useSelector(
     (state: RootState) => state.masters,
   )
@@ -147,8 +154,6 @@ export const LedgerList: FC<{
       (saimoku) => saimoku.saimoku_cd !== ledger_cd,
     )
   }, [masters_state.saimoku_list, ledger_cd])
-
-  const dispatch = useDispatch<AppDispatch>()
 
   useEffect(() => {
     dispatch(
@@ -266,30 +271,12 @@ export const LedgerList: FC<{
           siblings={2}
           onChange={(page_no) => {
             console.log('page_no: ', page_no)
+            const params = new URLSearchParams(search_params.toString())
+            params.set('page_no', String(page_no))
+            console.log('query: ', params.toString())
+            router.push(`${pathname}?${params.toString()}`)
           }}
         />
-        {/* <span>
-          {`${pageInfo.from}-${pageInfo.to}`}件(全
-          {ledger_state.all_count ?? '0'}件)
-        </span>
-        <span>
-          {pageInfo.pageList.map((no) =>
-            no === page_no.value ? (
-              <a key={no}>{no}</a>
-            ) : (
-              <a
-                key={no}
-                onClick={() => {
-                  const url = new URL(location.href)
-                  url.searchParams.set('page_no', `${no}`)
-                  //history(`${url.pathname}${url.search}`);
-                }}
-              >
-                {no}
-              </a>
-            ),
-          )}
-        </span> */}
       </div>
       <div>
         <table>
