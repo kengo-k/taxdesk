@@ -64,6 +64,21 @@ export const LedgerList: FC<{
     )
   }, [masters_state.saimoku_list, ledger_cd])
 
+  const create_form = useForm<LedgerCreateRequestForm>({
+    initialValues: {
+      nendo: '', //toNendoString(nendo),
+      ledger_cd,
+      date: '',
+      date_yymm: '', //month ? `${toNendoMonthString(nendo, month)}` : '',
+      date_dd: '',
+      other_cd: '',
+      karikata_value: '',
+      kasikata_value: '',
+      note: '',
+    },
+    validate: zodResolver(LedgerCreateRequestFormSchema),
+  })
+
   useEffect(() => {
     dispatch(
       loadLedgerList({
@@ -74,26 +89,15 @@ export const LedgerList: FC<{
         page_size: toPageSize(page_size),
       }),
     )
+    if (month) {
+      create_form.setFieldValue('date_yymm', toNendoMonthString(nendo, month))
+    } else {
+      create_form.setFieldValue('date_yymm', '')
+    }
+    create_form.setFieldValue('nendo', toNendoString(nendo))
   }, [dispatch, ledger_cd, month, nendo, page_no, page_size])
 
   const page_count = getPageCount(ledger_state.all_count, page_size)
-
-  console.log('page_count: ', page_count)
-
-  const create_form = useForm<LedgerCreateRequestForm>({
-    initialValues: {
-      nendo: toNendoString(nendo),
-      ledger_cd,
-      date: '',
-      date_yymm: month ? `${toNendoMonthString(nendo, month)}` : '',
-      date_dd: '',
-      other_cd: '',
-      karikata_value: '',
-      kasikata_value: '',
-      note: '',
-    },
-    validate: zodResolver(LedgerCreateRequestFormSchema),
-  })
 
   const update_form = useForm<LedgerUpdateRequestForm>({
     initialValues: {
@@ -179,10 +183,8 @@ export const LedgerList: FC<{
           total={page_count}
           siblings={2}
           onChange={(page_no) => {
-            console.log('page_no: ', page_no)
             const params = new URLSearchParams(search_params.toString())
             params.set('page_no', String(page_no))
-            console.log('query: ', params.toString())
             router.push(`${pathname}?${params.toString()}`)
           }}
         />
@@ -334,6 +336,7 @@ export const LedgerListNewRow: FC<{
         ) : (
           <TextInput
             maxLength={8}
+            {...form.getInputProps('date')}
             styles={() => ({
               root: { width: '110px' },
             })}

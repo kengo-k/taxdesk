@@ -5,6 +5,7 @@ export interface AppState {
   is_journal: boolean
   is_ledger: boolean
   selected_ledger_cd: string | undefined
+  selected_month: string | undefined
 }
 
 const initialState: AppState = {
@@ -12,6 +13,7 @@ const initialState: AppState = {
   is_journal: false,
   is_ledger: false,
   selected_ledger_cd: undefined,
+  selected_month: undefined,
 }
 
 export const appSlice = createSlice({
@@ -39,6 +41,9 @@ export const appSlice = createSlice({
     },
     setLedgerCd: (state, action: PayloadAction<string | undefined>) => {
       state.selected_ledger_cd = action.payload
+    },
+    setMonth: (state, action: PayloadAction<string | undefined>) => {
+      state.selected_month = action.payload
     },
   },
 })

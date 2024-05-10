@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 //import { Box, Select } from '@mantine/core'
 import { AppDispatch, RootState } from '@/store'
@@ -111,6 +111,8 @@ export const Header: FC = () => {
   //const history = useNavigate();
 
   const router = useRouter()
+  const pathname = usePathname()
+  const search_params = useSearchParams()
 
   return (
     <>
@@ -296,6 +298,36 @@ export const Header: FC = () => {
               return (
                 <option key={s.saimoku_cd} value={s.saimoku_cd}>
                   {s.saimoku_cd}: {s.saimoku_full_name}
+                </option>
+              )
+            })}
+          </select>
+          <select
+            disabled={!appState.is_ledger}
+            value={appState.selected_month}
+            onChange={(e) => {
+              dispatch(
+                appActions.setMonth(
+                  e.target.value != null ? e.target.value : undefined,
+                ),
+              )
+              const month = e.currentTarget.value
+              if (month !== '') {
+                const params = new URLSearchParams(search_params.toString())
+                params.set('month', String(month))
+                router.push(`${pathname}?${params.toString()}`)
+              } else {
+                const params = new URLSearchParams(search_params.toString())
+                params.delete('month')
+                router.push(`${pathname}?${params.toString()}`)
+              }
+            }}
+          >
+            <option value=""></option>
+            {[4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3].map((month) => {
+              return (
+                <option key={month} value={String(month)}>
+                  {month}月
                 </option>
               )
             })}

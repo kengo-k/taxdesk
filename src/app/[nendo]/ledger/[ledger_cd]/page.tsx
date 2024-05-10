@@ -24,16 +24,20 @@ export default function Page({ params, searchParams }: PageProps) {
   )
   const nendo_map = useSelector(selectNendoMap)
 
-  useEffect(() => {
-    dispatch(appActions.setNendo(params.nendo))
-    dispatch(appActions.showLedger(true))
-    dispatch(appActions.setLedgerCd(params.ledger_cd))
-  }, [dispatch, params.nendo, params.ledger_cd])
-
   searchParams = {
     ...SearchParams.default,
     ...removeExtraProperties(searchParams, SearchParams.default),
   }
+
+  useEffect(() => {
+    dispatch(appActions.setNendo(params.nendo))
+    dispatch(appActions.showLedger(true))
+    dispatch(appActions.setLedgerCd(params.ledger_cd))
+    if (searchParams.month) {
+      dispatch(appActions.setMonth(searchParams.month))
+    }
+  }, [dispatch, params.nendo, params.ledger_cd, searchParams])
+
   const [is_valid_month, month] = Month.create(searchParams.month)
 
   const nendo = Nendo.create(params.nendo, Array.from(nendo_map.keys()))
