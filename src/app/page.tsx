@@ -1,11 +1,7 @@
 'use client'
 
-import { Header } from '@/containers/header'
+import { SinglePage } from '@/containers/spa'
 
 export default function Home() {
-  return (
-    <div>
-      <Header />
-    </div>
-  )
+  return <SinglePage page_type="" />
 }

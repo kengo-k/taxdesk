@@ -47,7 +47,7 @@ export const Header: FC = () => {
     return list
   }, [])
 
-  const type = useMemo(() => {
+  const type = useMemo<string>(() => {
     if (appState.is_ledger) {
       return '1'
     }
@@ -65,7 +65,7 @@ export const Header: FC = () => {
             <SimpleGrid cols={2}>
               <Select
                 w={150}
-                label="Fiscal year"
+                label="Fiscal Year"
                 value={appState.selected_nendo ?? ''}
                 data={nendo_list}
                 onChange={(value) => {
@@ -83,15 +83,40 @@ export const Header: FC = () => {
                 value={type}
                 data={type_list}
                 disabled={appState.selected_nendo === undefined}
-                label="Type"
+                label="Document Type"
                 w={150}
+                onChange={(value) => {
+                  if (value === null) {
+                    return
+                  }
+                  if (value === '0') {
+                    dispatch(appActions.showLedger(false))
+                    dispatch(appActions.showJournal(false))
+                    router.push(
+                      `/${appState.selected_nendo}?${new URLSearchParams(search_params.toString())}`,
+                    )
+                  }
+                  if (value === '1') {
+                    dispatch(appActions.showLedger(true))
+                    dispatch(appActions.showJournal(false))
+                    if (appState.selected_ledger_cd) {
+                      router.push(
+                        `/${appState.selected_nendo}/ledger/${appState.selected_ledger_cd}?${new URLSearchParams(search_params.toString())}`,
+                      )
+                    }
+                  }
+                  if (value === '2') {
+                    dispatch(appActions.showLedger(false))
+                    dispatch(appActions.showJournal(true))
+                  }
+                }}
                 withAsterisk
               />
             </SimpleGrid>
           </Box>
           <Box w={200}>
             <NativeSelect
-              label="Account"
+              label="Account Code"
               withAsterisk
               disabled={!appState.is_ledger}
               value={appState.selected_ledger_cd}

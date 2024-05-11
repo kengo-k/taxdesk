@@ -17,7 +17,7 @@ type PageType = '' | 'Ledger' | 'Journal'
 
 export const SinglePage: FC<{
   page_type: PageType
-  nendo: string
+  nendo?: string
   ledger_cd?: string
   month?: string
   other_cd?: string
@@ -35,7 +35,7 @@ export const SinglePage: FC<{
   )
 
   const nendo_map = useSelector(selectNendoMap)
-  const nendo = Nendo.create(props.nendo, Array.from(nendo_map.keys()))
+  const nendo = Nendo.create(props.nendo ?? '', Array.from(nendo_map.keys()))
 
   const saimoku_map = useSelector(selectSaimokuMap)
   const [is_valid_ledger_cd, ledger_cd] = validateLedgerCd(
@@ -72,27 +72,33 @@ export const SinglePage: FC<{
     return <div>Now loading...</div>
   }
 
-  if (
-    !is_valid_month ||
-    !is_valid_ledger_cd ||
-    nendo === null ||
-    is_master_error
-  ) {
-    return <div>Error...</div>
+  if (props.page_type === '') {
+    return <Header />
   }
 
-  return (
-    <>
-      <Header />
-      <LedgerList
-        nendo={nendo}
-        ledger_cd={ledger_cd}
-        month={month}
-        page_no={page_no}
-        page_size={page_size}
-      />
-    </>
-  )
+  if (props.page_type === 'Ledger') {
+    if (
+      !is_valid_month ||
+      !is_valid_ledger_cd ||
+      nendo === null ||
+      is_master_error
+    ) {
+      return <div>Error...</div>
+    }
+
+    return (
+      <>
+        <Header />
+        <LedgerList
+          nendo={nendo}
+          ledger_cd={ledger_cd}
+          month={month}
+          page_no={page_no}
+          page_size={page_size}
+        />
+      </>
+    )
+  }
 }
 
 function validateLedgerCd(
