@@ -78,10 +78,9 @@ export const Header: FC = () => {
           <Box w={370}>
             <SimpleGrid cols={2}>
               <Select
-                w={150}
-                label="Fiscal Year"
                 value={appState.selected_nendo ?? ''}
                 data={nendo_list}
+                label="Fiscal Year"
                 onChange={(value) => {
                   if (value !== null) {
                     dispatch(
@@ -90,6 +89,7 @@ export const Header: FC = () => {
                     router.push(`/${value}`)
                   }
                 }}
+                w={150}
                 withAsterisk
               />
 
@@ -98,7 +98,6 @@ export const Header: FC = () => {
                 data={type_list}
                 disabled={appState.selected_nendo === undefined}
                 label="Document Type"
-                w={150}
                 onChange={(value) => {
                   if (value === null) {
                     return
@@ -124,6 +123,7 @@ export const Header: FC = () => {
                     dispatch(appActions.showJournal(true))
                   }
                 }}
+                w={150}
                 withAsterisk
               />
             </SimpleGrid>
@@ -132,9 +132,8 @@ export const Header: FC = () => {
             <Select
               value={appState.selected_ledger_cd ?? ''}
               data={saimoku_list}
-              label="Account Code"
-              withAsterisk
               disabled={!appState.is_ledger}
+              label="Account Code"
               onChange={(saimoku_cd) => {
                 if (saimoku_cd === null) {
                   return
@@ -152,14 +151,14 @@ export const Header: FC = () => {
                   router.push(`/${appState.selected_nendo}`)
                 }
               }}
+              withAsterisk
             />
           </Box>
           <Select
+            value={appState.selected_month ?? ''}
             data={month_list}
-            w={150}
             label={'Month'}
             disabled={!appState.is_ledger}
-            value={appState.selected_month ?? ''}
             onChange={(month) => {
               if (month === null) {
                 return
@@ -175,6 +174,7 @@ export const Header: FC = () => {
                 router.push(`${pathname}?${params.toString()}`)
               }
             }}
+            w={150}
           />
         </Stack>
       </Fieldset>
