@@ -3,14 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-import {
-  Box,
-  Fieldset,
-  NativeSelect,
-  Select,
-  SimpleGrid,
-  Stack,
-} from '@mantine/core'
+import { Box, Fieldset, Select, SimpleGrid, Stack } from '@mantine/core'
 
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
@@ -56,6 +49,27 @@ export const Header: FC = () => {
     }
     return '0'
   }, [appState.is_journal, appState.is_ledger])
+
+  const saimoku_list = useMemo(() => {
+    const list = masters.saimoku_list.map((s) => {
+      return {
+        value: `${s.saimoku_cd}`,
+        label: `${s.saimoku_cd}: ${s.saimoku_full_name}`,
+      }
+    })
+    return [{ value: '', label: 'Not Selected' }, ...list]
+  }, [masters.saimoku_list])
+
+  const month_list = useMemo(() => {
+    const list = [] as { value: string; label: string }[]
+    list.push(
+      ...[4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3].map((month) => ({
+        value: `${month}`,
+        label: `${month}月`,
+      })),
+    )
+    return [{ value: '', label: 'Not Selected' }, ...list]
+  }, [])
 
   return (
     <>
@@ -115,48 +129,42 @@ export const Header: FC = () => {
             </SimpleGrid>
           </Box>
           <Box w={200}>
-            <NativeSelect
+            <Select
+              value={appState.selected_ledger_cd ?? ''}
+              data={saimoku_list}
               label="Account Code"
               withAsterisk
               disabled={!appState.is_ledger}
-              value={appState.selected_ledger_cd}
-              onChange={(e) => {
+              onChange={(saimoku_cd) => {
+                if (saimoku_cd === null) {
+                  return
+                }
                 dispatch(
                   appActions.setLedgerCd(
-                    e.target.value != null ? e.target.value : undefined,
+                    saimoku_cd === '' ? undefined : saimoku_cd,
                   ),
                 )
-                if (e.target.value != '') {
+                if (saimoku_cd !== '') {
                   router.push(
-                    `/${appState.selected_nendo}/ledger/${e.target.value}`,
+                    `/${appState.selected_nendo}/ledger/${saimoku_cd}`,
                   )
                 } else {
                   router.push(`/${appState.selected_nendo}`)
                 }
               }}
-            >
-              <option value=""></option>
-              {masters.saimoku_list.map((s) => {
-                return (
-                  <option key={s.saimoku_cd} value={s.saimoku_cd}>
-                    {s.saimoku_cd}: {s.saimoku_full_name}
-                  </option>
-                )
-              })}
-            </NativeSelect>
+            />
           </Box>
-          <NativeSelect
-            w={100}
+          <Select
+            data={month_list}
+            w={150}
             label={'Month'}
             disabled={!appState.is_ledger}
-            value={appState.selected_month}
-            onChange={(e) => {
-              dispatch(
-                appActions.setMonth(
-                  e.target.value != null ? e.target.value : undefined,
-                ),
-              )
-              const month = e.currentTarget.value
+            value={appState.selected_month ?? ''}
+            onChange={(month) => {
+              if (month === null) {
+                return
+              }
+              dispatch(appActions.setMonth(month === '' ? undefined : month))
               if (month !== '') {
                 const params = new URLSearchParams(search_params.toString())
                 params.set('month', String(month))
@@ -167,16 +175,7 @@ export const Header: FC = () => {
                 router.push(`${pathname}?${params.toString()}`)
               }
             }}
-          >
-            <option value=""></option>
-            {[4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3].map((month) => {
-              return (
-                <option key={month} value={String(month)}>
-                  {month}月
-                </option>
-              )
-            })}
-          </NativeSelect>
+          />
         </Stack>
       </Fieldset>
     </>

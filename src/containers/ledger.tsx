@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-// FIXME:  dont use these packages directly
 import {
   Alert,
   Autocomplete,
@@ -13,6 +12,10 @@ import {
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
+
+import { AppDispatch, RootState } from '@/store'
+import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
+import { selectSaimokuMap } from '@/store/master'
 
 import { Amount } from '@/models/amount'
 import {
@@ -36,9 +39,6 @@ import {
   toPageNo,
   toPageSize,
 } from '@/models/paging'
-import { AppDispatch, RootState } from '@/store'
-import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
-import { selectSaimokuMap } from '@/store/master'
 
 export const LedgerList: FC<{
   nendo: Nendo
@@ -95,7 +95,7 @@ export const LedgerList: FC<{
       create_form.setFieldValue('date_yymm', '')
     }
     create_form.setFieldValue('nendo', toNendoString(nendo))
-  }, [dispatch, ledger_cd, month, nendo, page_no, page_size])
+  }, [dispatch, ledger_cd, month, nendo, page_no, page_size]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const page_count = getPageCount(ledger_state.all_count, page_size)
 
