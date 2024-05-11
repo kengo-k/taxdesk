@@ -11,6 +11,9 @@
     "^next",
     "<THIRD_PARTY_MODULES>",
     "^@(?!/)\\w+",
+    "^@/store",
+    "^@/models",
+    "^@/containers",
     "^@/"
   ],
   "importOrderSeparation": true,
