@@ -1,4 +1,4 @@
-import { FC, createRef, useEffect, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -243,35 +243,16 @@ export const LedgerListNewRow: FC<{
   pageSize: PageSize
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
-}> = ({
-  form,
-  nendo,
-  ledger_cd,
-  month,
-  pageNo,
-  pageSize,
-  saimoku_map,
-  saimoku_list,
-}) => {
+}> = (props) => {
   const dispatch = useDispatch<AppDispatch>()
 
-  //const { createLedger } = useActions();
-
-  const [dateStr, setDate] = useState('')
-
-  const [dateStrDD, setDateDD] = useState('')
-
-  const [note, setNote] = useState('')
-
-  const dateRef = createRef<HTMLInputElement>()
-
   const save = () => {
-    const { hasErrors } = form.validate()
+    const { hasErrors } = props.form.validate()
     if (hasErrors) {
       return
     }
     const { success, data } = LedgerCreateRequestFormSchema.safeParse(
-      form.values,
+      props.form.values,
     )
     if (success) {
       dispatch(
@@ -279,11 +260,11 @@ export const LedgerListNewRow: FC<{
           request: data,
           next: [
             loadLedgerList({
-              nendo: toNendoString(nendo),
-              ledger_cd,
-              month: toMonthString(month),
-              page_no: toPageNo(pageNo),
-              page_size: toPageSize(pageSize),
+              nendo: toNendoString(props.nendo),
+              ledger_cd: props.ledger_cd,
+              month: toMonthString(props.month),
+              page_no: toPageNo(props.pageNo),
+              page_size: toPageSize(props.pageSize),
             }),
           ],
         }),
@@ -302,11 +283,11 @@ export const LedgerListNewRow: FC<{
   return (
     <tr>
       <td>
-        {month !== null ? (
+        {props.month !== null ? (
           <>
             <TextInput
               maxLength={7}
-              {...form.getInputProps('date_yymm')}
+              {...props.form.getInputProps('date_yymm')}
               readOnly
               disabled
               styles={() => ({
@@ -314,21 +295,21 @@ export const LedgerListNewRow: FC<{
               })}
             />
             <TextInput
-              value={form.values.date_dd}
+              value={props.form.values.date_dd}
               maxLength={2}
-              {...form.getInputProps('date_dd')}
+              {...props.form.getInputProps('date_dd')}
               onKeyDown={onSave}
               onBlur={(e) => {
                 const day = e.currentTarget.value
                 if (day.length === 1) {
-                  setDateDD(`0${day}`)
+                  props.form.setFieldValue('date_dd', `0${day}`)
                 }
               }}
               error={null}
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
                 input: {
-                  ...(LedgerCreateRequestForm.hasError('date_dd', form)
+                  ...(LedgerCreateRequestForm.hasError('date_dd', props.form)
                     ? { borderColor: 'red' }
                     : {}),
                 },
@@ -338,7 +319,7 @@ export const LedgerListNewRow: FC<{
         ) : (
           <TextInput
             maxLength={8}
-            {...form.getInputProps('date')}
+            {...props.form.getInputProps('date')}
             styles={() => ({
               root: { width: '110px' },
             })}
@@ -348,32 +329,32 @@ export const LedgerListNewRow: FC<{
       <td>
         <div style={{ width: '100%', position: 'relative' }}>
           <Autocomplete
-            value={form.values.other_cd}
-            data={saimoku_list.map((s) => s.saimoku_cd)}
+            value={props.form.values.other_cd}
+            data={props.saimoku_list.map((s) => s.saimoku_cd)}
             filter={({ options, search }) => {
               return (options as ComboboxItem[]).filter((option) => {
                 const key = search.trim().toLowerCase()
                 if (key.length === 0) {
                   return true
                 }
-                const saimoku = saimoku_map.get(option.value)!
+                const saimoku = props.saimoku_map.get(option.value)!
                 const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
                 const kana = saimoku.saimoku_kana_name.toLowerCase()
                 return saimoku_cd.includes(key) || kana.includes(key)
               })
             }}
             renderOption={({ option }) => {
-              const saimoku = saimoku_map.get(option.value)!
+              const saimoku = props.saimoku_map.get(option.value)!
               return (
                 <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
               )
             }}
             onChange={(value: string) => {
-              LedgerCreateRequestForm.set('other_cd', form, value)
+              LedgerCreateRequestForm.set('other_cd', props.form, value)
             }}
             onBlur={(e) => {
               const keyword = e.currentTarget.value.toLowerCase()
-              const results = saimoku_list.filter((s) => {
+              const results = props.saimoku_list.filter((s) => {
                 const code = s.saimoku_cd.toLowerCase()
                 const kana = s.saimoku_kana_name
                 return code.includes(keyword) || kana.includes(keyword)
@@ -381,7 +362,7 @@ export const LedgerListNewRow: FC<{
               if (results.length === 1) {
                 LedgerCreateRequestForm.set(
                   'other_cd',
-                  form,
+                  props.form,
                   results[0].saimoku_cd,
                 )
                 setOtherCdName(results[0].saimoku_ryaku_name)
@@ -404,24 +385,21 @@ export const LedgerListNewRow: FC<{
       <td>
         <AmountInputForCreate
           input_key="karikata_value"
-          form={form}
+          form={props.form}
           onSave={onSave}
         />
       </td>
       <td>
         <AmountInputForCreate
           input_key="kasikata_value"
-          form={form}
+          form={props.form}
           onSave={onSave}
         />
       </td>
       <td>
         <TextInput
-          type="text"
-          value={note}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setNote(e.target.value)
-          }}
+          value={props.form.values.note}
+          {...props.form.getInputProps('note')}
           onKeyDown={onSave}
           onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
             save()
