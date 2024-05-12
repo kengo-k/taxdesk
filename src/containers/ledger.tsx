@@ -9,7 +9,9 @@ import {
   Button,
   ComboboxItem,
   Pagination,
+  Text,
   TextInput,
+  Title,
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
@@ -148,11 +150,11 @@ export const LedgerList: FC<{
 
   return (
     <div>
-      <h1>
+      <Title>
         台帳:
         {saimoku_map.get(ledger_cd)?.saimoku_full_name}
         {month !== null ? ` - ${month}月分 ` : ''}
-      </h1>
+      </Title>
       {Object.keys(create_form.errors).length > 0 && (
         <Alert
           variant="light"
@@ -195,12 +197,24 @@ export const LedgerList: FC<{
         <table>
           <thead>
             <tr>
-              <th>登録日</th>
-              <th colSpan={2}>相手科目</th>
-              <th>金額(借方)</th>
-              <th>金額(貸方)</th>
-              <th>備考</th>
-              <th>累計</th>
+              <th>
+                <Text>Date</Text>
+              </th>
+              <th colSpan={2}>
+                <Text>Counter Code</Text>
+              </th>
+              <th>
+                <Text>Debit</Text>
+              </th>
+              <th>
+                <Text>Credit</Text>
+              </th>
+              <th>
+                <Text>Note</Text>
+              </th>
+              <th>
+                <Text>Acc</Text>
+              </th>
               <th>
                 <br />
               </th>
@@ -541,7 +555,6 @@ const LedgerListRows: FC<{
         </td>
         <td>
           <TextInput
-            type="text"
             value={item.other_cd_name}
             className="w-16"
             disabled
@@ -565,7 +578,11 @@ const LedgerListRows: FC<{
           />
         </td>
         <td>
-          <TextInput className={'w-96'} />
+          <TextInput
+            value={item.note}
+            {...form.getInputProps(`items.${index}.note`)}
+            className={'w-96'}
+          />
         </td>
         <td>
           <TextInput
