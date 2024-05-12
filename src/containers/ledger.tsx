@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -70,10 +70,10 @@ export const LedgerList: FC<{
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
-      nendo: '', //toNendoString(nendo),
+      nendo: '',
       ledger_cd,
       date: '',
-      date_yymm: '', //month ? `${toNendoMonthString(nendo, month)}` : '',
+      date_yymm: '',
       date_dd: '',
       other_cd: '',
       karikata_value: '',
@@ -145,7 +145,10 @@ export const LedgerList: FC<{
   useEffect(() => {
     if (ledger_state.last_upserted !== null) {
       dispatch(ledgerActions.clearLastUpserted())
+      const current_values = create_form.values
       create_form.reset()
+      create_form.setFieldValue('nendo', current_values.nendo)
+      create_form.setFieldValue('date_yymm', current_values.date_yymm)
     }
   }, [dispatch, ledger_state.last_upserted]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -293,7 +296,10 @@ export const LedgerListNewRow: FC<{
     }
   }
 
-  const [other_cd_name, setOtherCdName] = useState('')
+  const other_cd_name = useMemo(() => {
+    const saimoku = props.saimoku_map.get(props.form.values.other_cd)
+    return saimoku === null ? '' : saimoku?.saimoku_ryaku_name ?? ''
+  }, [props.form.values.other_cd, props.saimoku_map])
 
   return (
     <tr>
@@ -380,7 +386,6 @@ export const LedgerListNewRow: FC<{
                   props.form,
                   results[0].saimoku_cd,
                 )
-                setOtherCdName(results[0].saimoku_ryaku_name)
               }
             }}
             className="w-14"
