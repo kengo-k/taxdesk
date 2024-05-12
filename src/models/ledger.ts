@@ -281,7 +281,7 @@ export interface LedgerSearchResponse {
   kasikata_value: number
   karikata_sum: number
   kasikata_sum: number
-  note: string
+  note: string | null
   acc: number
 }
 

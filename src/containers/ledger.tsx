@@ -135,6 +135,7 @@ export const LedgerList: FC<{
               ? ''
               : Amount.create(item.kasikata_value).toFormatedString(),
           other_cd_name: saimoku_map.get(item.other_cd)!.saimoku_ryaku_name,
+          note: item.note ?? '',
           acc: item.acc,
         }
       }),
