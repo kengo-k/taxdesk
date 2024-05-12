@@ -4,14 +4,10 @@ import 'reflect-metadata'
 import { Prisma, PrismaClient, journals } from '@prisma/client'
 
 import { Factory } from '@/dicontainer'
-import { NullableOptional } from '@/misc/types'
 
 export interface JournalService {
   create(entity: Prisma.journalsCreateInput): Promise<journals>
-  updateById(
-    id: number,
-    condition: NullableOptional<Omit<journals, 'id'>>,
-  ): Promise<journals>
+  updateById(id: number, entity: Prisma.journalsUpdateInput): Promise<journals>
   deleteById(id: number): Promise<journals>
 }
 
@@ -26,18 +22,11 @@ export class JournalServiceImpl implements JournalService {
   }
   public async updateById(
     id: number,
-    condition: NullableOptional<Omit<journals, 'id'>>,
+    entity: Prisma.journalsUpdateInput,
   ): Promise<journals> {
-    const new_condition = {} as { [key: string]: any }
-    for (const key in Object.keys(condition)) {
-      const value = condition[key as keyof typeof condition]
-      if (value !== undefined) {
-        new_condition[key] = value
-      }
-    }
     const updated = await this.prisma.journals.update({
       where: { id },
-      data: new_condition,
+      data: entity,
     })
     return updated
   }

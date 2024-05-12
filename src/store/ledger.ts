@@ -12,6 +12,7 @@ import {
   LedgerCreateRequest,
   LedgerSearchRequest,
   LedgerSearchResponse,
+  LedgerUpdateRequest,
 } from '@/models/ledger'
 
 import { createQueryString } from '@/misc/object'
@@ -51,10 +52,24 @@ export const loadLedgerList = createAsyncThunk<
 export const createLedger = createAsyncThunk<
   journals,
   { request: LedgerCreateRequest; next: NextActions }
->('ledger/createLedger', async ({ request, next }, { dispatch }) => {
+>('ledger/create', async ({ request, next }, { dispatch }) => {
   const { nendo, ledger_cd, ...requestBody } = request
   const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
     method: 'POST',
+    body: JSON.stringify(requestBody),
+  })
+  const data = await response.json()
+  callNextActions(dispatch, next)
+  return data
+})
+
+export const updateLedger = createAsyncThunk<
+  journals,
+  { request: LedgerUpdateRequest; next: NextActions }
+>('ledger/update', async ({ request, next }, { dispatch }) => {
+  const { nendo, ledger_cd, ...requestBody } = request
+  const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
+    method: 'PUT',
     body: JSON.stringify(requestBody),
   })
   const data = await response.json()

@@ -18,7 +18,12 @@ import { saimoku_masters } from '@prisma/client'
 
 import { AppDispatch, RootState } from '@/store'
 import { deleteJournal } from '@/store/journal'
-import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
+import {
+  createLedger,
+  ledgerActions,
+  loadLedgerList,
+  updateLedger,
+} from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
 import { Amount } from '@/models/amount'
@@ -34,7 +39,8 @@ import {
   LedgerCreateRequestForm,
   LedgerCreateRequestFormSchema,
   LedgerUpdateRequestForm,
-  LedgerUpdateRequestSchema,
+  LedgerUpdateRequestFormItem,
+  LedgerUpdateRequestFormSchema,
 } from '@/models/ledger'
 import {
   PageNo,
@@ -107,7 +113,7 @@ export const LedgerList: FC<{
     initialValues: {
       items: [],
     },
-    validate: zodResolver(LedgerUpdateRequestSchema),
+    validate: zodResolver(LedgerUpdateRequestFormSchema),
   })
 
   useEffect(() => {
@@ -421,7 +427,7 @@ export const LedgerListNewRow: FC<{
           value={props.form.values.note}
           {...props.form.getInputProps('note')}
           onKeyDown={onSave}
-          onBlur={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onBlur={() => {
             save()
           }}
           className="w-96"
@@ -455,21 +461,24 @@ const LedgerListRows: FC<{
 }) => {
   const dispatch = useDispatch<AppDispatch>()
 
-  const save = () => {
+  const save = (update_row: LedgerUpdateRequestFormItem) => {
     const { hasErrors } = form.validate()
     if (hasErrors) {
       return
     }
-    const { success, data } = LedgerUpdateRequestSchema.safeParse(form.values)
+    const { success, data } = LedgerUpdateRequestFormSchema.safeParse({
+      items: [update_row],
+    })
     if (success) {
-      //console.log('create: ', data)
-      //dispatch(createLedger(data))
+      dispatch(updateLedger({ request: data.items[0], next: [] }))
     }
   }
 
-  const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      save()
+  const onSave = (update_row: LedgerUpdateRequestFormItem) => {
+    return (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        save(update_row)
+      }
     }
   }
 
@@ -572,7 +581,7 @@ const LedgerListRows: FC<{
             input_key="karikata_value"
             form={form}
             index={index}
-            onSave={onSave}
+            onSave={onSave(item)}
           />
         </td>
         <td>
@@ -580,13 +589,17 @@ const LedgerListRows: FC<{
             input_key="kasikata_value"
             form={form}
             index={index}
-            onSave={onSave}
+            onSave={onSave(item)}
           />
         </td>
         <td>
           <TextInput
             value={item.note}
             {...form.getInputProps(`items.${index}.note`)}
+            onKeyDown={onSave(item)}
+            onBlur={() => {
+              save(item)
+            }}
             className={'w-96'}
           />
         </td>

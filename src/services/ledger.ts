@@ -3,17 +3,21 @@ import 'reflect-metadata'
 
 import { PrismaClient, journals } from '@prisma/client'
 
-import { Factory } from '@/dicontainer'
 import {
   LedgerCreateRequest,
   LedgerSearchRequest,
   LedgerSearchResponse,
+  LedgerUpdateRequest,
   toJournalCreateInput,
+  toJournalUpdateInput,
 } from '@/models/ledger'
 import { getPagingOffset } from '@/models/paging'
 
+import { Factory } from '@/dicontainer'
+
 export interface LedgerService {
   createLedger(req: LedgerCreateRequest): Promise<journals>
+  updateLedger(req: LedgerUpdateRequest): Promise<journals>
   selectLedgerList(req: LedgerSearchRequest): Promise<{
     all_count: number
     list: LedgerSearchResponse[]
@@ -26,6 +30,20 @@ export class LedgerServiceImpl implements LedgerService {
     @inject('PrismaClient') private prisma: PrismaClient,
     @inject('Factory') private factory: typeof Factory,
   ) {}
+  public async updateLedger(req: LedgerUpdateRequest): Promise<journals> {
+    const masterService = this.factory.getMasterService()
+    const journalService = this.factory.getJournalService()
+
+    const saimoku_detail = (
+      await masterService.selectSaimokuDetail({
+        saimoku_cd: req.ledger_cd,
+      })
+    )[0]
+
+    const entity = toJournalUpdateInput(req, saimoku_detail)
+    return journalService.updateById(req.journal_id, entity)
+  }
+
   public async createLedger(req: LedgerCreateRequest): Promise<journals> {
     const masterService = this.factory.getMasterService()
     const journalService = this.factory.getJournalService()

@@ -167,6 +167,14 @@ export function isValidLedgerCreateRequest(
   return LedgerCreateRequestSchema.safeParse(data)
 }
 
+export function isValidLedgerUpdateRequest(
+  data: unknown,
+):
+  | { success: true; data: LedgerUpdateRequest }
+  | { success: false; error: z.ZodError } {
+  return LedgerUpdateRequestSchema.safeParse(data)
+}
+
 export type LedgerSearchRequest = {
   nendo: string
   ledger_cd: string
@@ -174,6 +182,19 @@ export type LedgerSearchRequest = {
 } & PagingRequest
 
 export const LedgerUpdateRequestSchema = z.object({
+  journal_id: z.number(),
+  nendo: z.string(),
+  ledger_cd: z.string().length(3),
+  other_cd: z.string(),
+  date: z.string(),
+  karikata_value: z.number().nullable(),
+  kasikata_value: z.number().nullable(),
+  note: z.string().nullable(),
+})
+
+export type LedgerUpdateRequest = z.infer<typeof LedgerUpdateRequestSchema>
+
+export const LedgerUpdateRequestFormSchema = z.object({
   items: z.array(
     z
       .object({
@@ -193,7 +214,7 @@ export const LedgerUpdateRequestSchema = z.object({
         acc: z.number(),
       })
       .transform((data) => {
-        const ret: any = {
+        const ret = {
           ...data,
           date: getDateString(data.date_full, data.date_yymm, data.date_dd),
           karikata_value:
@@ -205,12 +226,12 @@ export const LedgerUpdateRequestSchema = z.object({
               ? null
               : numeral(data.kasikata_value).value(),
           note: data.note === '' ? null : data.note,
-        }
-        delete ret.date_full
-        delete ret.date_yymm
-        delete ret.date_dd
-        delete ret.other_cd_name
-        delete ret.acc
+        } as LedgerUpdateRequest
+        delete (ret as any).date_full
+        delete (ret as any).date_yymm
+        delete (ret as any).date_dd
+        delete (ret as any).other_cd_name
+        delete (ret as any).acc
         return ret
       })
       .refine(
@@ -232,12 +253,14 @@ export const LedgerUpdateRequestSchema = z.object({
   ),
 })
 
-export type LedgerUpdateRequest = z.infer<typeof LedgerUpdateRequestSchema>
+export type LedgerUpdateRequestForm = z.input<
+  typeof LedgerUpdateRequestFormSchema
+>
 
-export type LedgerUpdateRequestForm = z.input<typeof LedgerUpdateRequestSchema>
 export type LedgerUpdateRequestFormItem = ReturnType<
   () => LedgerUpdateRequestForm['items'][number]
 >
+
 export const LedgerUpdateRequestForm = {
   hasError: <K extends keyof LedgerUpdateRequestFormItem>(
     key: K,
@@ -322,6 +345,58 @@ export function toJournalCreateInput(
   }
   const now = DateTime.local().toISO()
   const entity = {
+    date: condition.date,
+    nendo: condition.nendo,
+    note: condition.note,
+    karikata_cd,
+    karikata_value: value,
+    kasikata_cd,
+    kasikata_value: value,
+    checked: '0',
+    created_at: now,
+    updated_at: now,
+  }
+
+  return entity
+}
+
+export function toJournalUpdateInput(
+  condition: LedgerUpdateRequest,
+  saimokuDetail: SaimokuSearchResponse,
+): Prisma.journalsUpdateInput {
+  let value: number
+  if (condition.karikata_value === null && condition.kasikata_value === null) {
+    throw new Error()
+  }
+  if (condition.karikata_value != null && condition.kasikata_value != null) {
+    throw new Error()
+  }
+  if (condition.karikata_value != null) {
+    value = condition.karikata_value
+  } else {
+    value = condition.kasikata_value!
+  }
+  let karikata_cd: string
+  let kasikata_cd: string
+  if (saimokuDetail.kamoku_bunrui_type === 'L') {
+    if (condition.karikata_value != null) {
+      karikata_cd = condition.ledger_cd
+      kasikata_cd = condition.other_cd
+    } else {
+      karikata_cd = condition.other_cd
+      kasikata_cd = condition.ledger_cd
+    }
+  } else {
+    if (condition.kasikata_value != null) {
+      karikata_cd = condition.other_cd
+      kasikata_cd = condition.ledger_cd
+    } else {
+      karikata_cd = condition.ledger_cd
+      kasikata_cd = condition.other_cd
+    }
+  }
+  const now = DateTime.local().toISO()
+  const entity: Prisma.journalsUpdateInput = {
     date: condition.date,
     nendo: condition.nendo,
     note: condition.note,

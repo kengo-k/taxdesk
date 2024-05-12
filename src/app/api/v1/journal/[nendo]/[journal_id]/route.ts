@@ -9,8 +9,8 @@ const cache = getDefault()
 export const revalidate = cache.revalidate
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { nendo: string; ledger_cd: string } },
+  _: NextRequest,
+  {}: { params: { nendo: string; ledger_cd: string } },
 ) {
   return NextResponse.json(
     {},
@@ -22,7 +22,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _: NextRequest,
   { params }: { params: { nendo: string; journal_id: number } },
 ) {
   const journal_id = numeral(params.journal_id).value()
