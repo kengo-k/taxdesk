@@ -53,7 +53,15 @@ export const LedgerCreateRequestFormSchema = z
     ledger_cd: z.string().length(3),
     date: z.string().regex(/^(\d{4}\/\d{2}\/\d{2})?$/),
     date_yymm: z.string().regex(/^(\d{4}\/\d{2})?$/),
-    date_dd: z.string().regex(/^(\d{2})?$/),
+    date_dd: z
+      .string()
+      .regex(/^(\d{1,2})?$/)
+      .transform((val) => {
+        if (val.length === 1) {
+          val = `0${val}`
+        }
+        return val
+      }),
     karikata_value: createAmountValidator(),
     kasikata_value: createAmountValidator(),
     note: z.string(),
