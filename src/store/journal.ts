@@ -1,3 +1,5 @@
+import { NextActions, callNextActions } from '.'
+
 import { journals } from '@prisma/client'
 import {
   SerializedError,
@@ -5,7 +7,7 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
-import { NextActions } from '@/store'
+import { JournalDeleteRequest } from '@/models/journal'
 
 export interface JournalState {
   data: {
@@ -30,13 +32,30 @@ export const updateJournal = createAsyncThunk<
   {
     id: number
     journal: Partial<Omit<journals, 'id'>>
-    nextActions: NextActions
   }
->('journal/updateJournal', async (request) => {
+>('journal/update', async (request) => {
   const response = await fetch(`/api/v1/journal/${request.id}`, {
     method: 'PUT',
   })
   const data = await response.json()
+  return data
+})
+
+export const deleteJournal = createAsyncThunk<
+  void,
+  {
+    request: JournalDeleteRequest
+    next: NextActions
+  }
+>('journal/delete', async ({ request, next }, { dispatch }) => {
+  const response = await fetch(
+    `/api/v1/journal/${request.nendo}/${request.journal_id}`,
+    {
+      method: 'DELETE',
+    },
+  )
+  const data = await response.json()
+  callNextActions(dispatch, next)
   return data
 })
 
@@ -45,31 +64,13 @@ export const journalSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(updateJournal.fulfilled, (state, action) => {
+    builder.addCase(deleteJournal.fulfilled, (state, action) => {
       state.loading = false
-      // const foo = updateJournal({ id: 1, journal: {}, nextActions: [] });
-      // for (const a in action.meta.arg.nextActions) {
-      //   store.dispatch(foo);
-      // }
     })
-    builder.addCase(updateJournal.pending, (state) => {
+    builder.addCase(deleteJournal.pending, (state) => {
       state.loading = true
     })
-    builder.addCase(updateJournal.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.error
-    })
-    builder.addCase(updateJournal.fulfilled, (state, action) => {
-      state.loading = false
-      // const foo = updateJournal({ id: 1, journal: {}, nextActions: [] });
-      // for (const a in action.meta.arg.nextActions) {
-      //   store.dispatch(foo);
-      // }
-    })
-    builder.addCase(updateJournal.pending, (state) => {
-      state.loading = true
-    })
-    builder.addCase(updateJournal.rejected, (state, action) => {
+    builder.addCase(deleteJournal.rejected, (state, action) => {
       state.loading = false
       state.error = action.error
     })

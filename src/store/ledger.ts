@@ -6,13 +6,15 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
-import { createQueryString } from '@/misc/object'
+import { NextActions, callNextActions } from '@/store'
+
 import {
   LedgerCreateRequest,
   LedgerSearchRequest,
   LedgerSearchResponse,
 } from '@/models/ledger'
-import { NextActions, callNextActions } from '@/store'
+
+import { createQueryString } from '@/misc/object'
 
 export interface LedgerState {
   data: {
@@ -49,15 +51,14 @@ export const loadLedgerList = createAsyncThunk<
 export const createLedger = createAsyncThunk<
   journals,
   { request: LedgerCreateRequest; next: NextActions }
->('ledger/createLedger', async (params, { dispatch }) => {
-  const request = params.request
+>('ledger/createLedger', async ({ request, next }, { dispatch }) => {
   const { nendo, ledger_cd, ...requestBody } = request
   const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
     method: 'POST',
     body: JSON.stringify(requestBody),
   })
   const data = await response.json()
-  callNextActions(dispatch, params.next)
+  callNextActions(dispatch, next)
   return data
 })
 

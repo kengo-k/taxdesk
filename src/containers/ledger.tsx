@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Alert,
   Autocomplete,
+  Button,
   ComboboxItem,
   Pagination,
   TextInput,
@@ -14,6 +15,7 @@ import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { saimoku_masters } from '@prisma/client'
 
 import { AppDispatch, RootState } from '@/store'
+import { deleteJournal } from '@/store/journal'
 import { createLedger, ledgerActions, loadLedgerList } from '@/store/ledger'
 import { selectSaimokuMap } from '@/store/master'
 
@@ -142,7 +144,7 @@ export const LedgerList: FC<{
       dispatch(ledgerActions.clearLastUpserted())
       create_form.reset()
     }
-  }, [ledger_state.last_upserted])
+  }, [dispatch, ledger_state.last_upserted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -600,13 +602,27 @@ const LedgerListRows: FC<{
           />
         </td>
         <td>
-          <button
+          <Button
+            color="red"
             onClick={() => {
-              //deleteJournal(props.ledger.journal_id, reloadLedger(false));
+              dispatch(
+                deleteJournal({
+                  request: { journal_id: item.journal_id, nendo: item.nendo },
+                  next: [
+                    loadLedgerList({
+                      nendo: toNendoString(nendo),
+                      ledger_cd,
+                      month: toMonthString(month),
+                      page_no: toPageNo(pageNo),
+                      page_size: toPageSize(pageSize),
+                    }),
+                  ],
+                }),
+              )
             }}
           >
-            削除
-          </button>
+            Delete
+          </Button>
         </td>
       </tr>
     )
