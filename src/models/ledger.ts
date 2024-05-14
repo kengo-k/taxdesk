@@ -38,7 +38,7 @@ function getDateString(
 export const LedgerCreateRequestSchema = z.object({
   nendo: z.string(),
   ledger_cd: z.string().length(3),
-  other_cd: z.string(),
+  other_cd: z.string().length(3),
   date: z.string(),
   karikata_value: z.number().nullable(),
   kasikata_value: z.number().nullable(),
@@ -65,7 +65,7 @@ export const LedgerCreateRequestFormSchema = z
     karikata_value: createAmountValidator(),
     kasikata_value: createAmountValidator(),
     note: z.string(),
-    other_cd: z.string(),
+    other_cd: z.string().length(3),
   })
   .refine(
     (data) => {
@@ -145,7 +145,6 @@ export const LedgerCreateRequestForm = {
     form: UseFormReturnType<LedgerCreateRequestForm>,
   ) => {
     return Object.keys(form.errors).some((error_id) => {
-      //console.log(`${error_id} includes ${key}= ${error_id.includes(key)}`)
       return error_id.includes(key)
     })
   },
@@ -185,7 +184,7 @@ export const LedgerUpdateRequestSchema = z.object({
   journal_id: z.number(),
   nendo: z.string(),
   ledger_cd: z.string().length(3),
-  other_cd: z.string(),
+  other_cd: z.string().length(3),
   date: z.string(),
   karikata_value: z.number().nullable(),
   kasikata_value: z.number().nullable(),
@@ -200,16 +199,14 @@ export const LedgerUpdateRequestFormSchema = z.object({
       .object({
         journal_id: z.number(),
         nendo: z.string(),
-        ledger_cd: z
-          .string()
-          .length(3, 'ledger cd must be exactly 3 characters long.'),
+        ledger_cd: z.string().length(3),
         date_full: z.string(),
         date_yymm: z.string(),
         date_dd: z.string(),
         karikata_value: createAmountValidator(),
         kasikata_value: createAmountValidator(),
         note: z.string(),
-        other_cd: z.string(),
+        other_cd: z.string().length(3),
         other_cd_name: z.string(),
         acc: z.number(),
       })
@@ -284,14 +281,6 @@ export const LedgerUpdateRequestForm = {
     form.setFieldValue(`items.${index}.${key}`, value as any)
   },
 }
-
-// export interface LedgerUpdateRequest {
-//   id: number
-//   ledger_cd: string
-//   other_cd: string
-//   karikata_value: number | null
-//   kasikata_value: number | null
-// }
 
 export interface LedgerSearchResponse {
   journal_id: number

@@ -173,7 +173,11 @@ export const LedgerList: FC<{
         >
           <ul>
             {Object.keys(create_form.errors).map((key) => {
-              return <li key={key}>{key}</li>
+              return (
+                <li key={key}>
+                  {key}: {create_form.errors[key]}
+                </li>
+              )
             })}
           </ul>
         </Alert>
@@ -272,12 +276,20 @@ export const LedgerListNewRow: FC<{
 
   const save = () => {
     const { hasErrors } = props.form.validate()
-    if (hasErrors) {
+    let hasManualErrors = false
+    const other_cd = props.form.values['other_cd']
+    if (!props.saimoku_map.has(other_cd)) {
+      props.form.setFieldError('other_cd', 'hello')
+      hasManualErrors = true
+    }
+    if (hasErrors || hasManualErrors) {
       return
     }
+
     const { success, data } = LedgerCreateRequestFormSchema.safeParse(
       props.form.values,
     )
+
     if (success) {
       dispatch(
         createLedger({
@@ -336,7 +348,7 @@ export const LedgerListNewRow: FC<{
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
                 input: {
-                  ...(LedgerCreateRequestForm.hasError('date_dd', props.form)
+                  ...(LedgerCreateRequestForm.hasError('date', props.form)
                     ? { borderColor: 'red' }
                     : {}),
                 },
@@ -563,6 +575,7 @@ const LedgerListRows: FC<{
                   )
                 }
               }}
+              onKeyDown={onSave(item)}
               className="w-14"
               comboboxProps={{ width: '180px' }}
             />
