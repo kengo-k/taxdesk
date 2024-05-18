@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo } from 'react'
+import { FC, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -280,6 +280,10 @@ export const LedgerListNewRow: FC<{
 }> = (props) => {
   const dispatch = useDispatch<AppDispatch>()
 
+  const date_ref = useRef<HTMLInputElement>(null)
+  const counter_cd_ref = useRef<HTMLInputElement>(null)
+  const note_ref = useRef<HTMLInputElement>(null)
+
   const save = () => {
     const { hasErrors } = props.form.validate()
     let hasManualErrors = false
@@ -311,6 +315,7 @@ export const LedgerListNewRow: FC<{
           ],
         }),
       )
+      date_ref.current?.focus()
     }
   }
 
@@ -340,6 +345,7 @@ export const LedgerListNewRow: FC<{
               })}
             />
             <TextInput
+              ref={date_ref}
               value={props.form.values.date_dd}
               maxLength={2}
               {...props.form.getInputProps('date_dd')}
@@ -349,6 +355,9 @@ export const LedgerListNewRow: FC<{
                 if (day.length === 1) {
                   props.form.setFieldValue('date_dd', `0${day}`)
                 }
+              }}
+              onFocus={() => {
+                date_ref.current?.select()
               }}
               error={null}
               styles={() => ({
@@ -363,6 +372,10 @@ export const LedgerListNewRow: FC<{
           </>
         ) : (
           <TextInput
+            ref={date_ref}
+            onFocus={() => {
+              date_ref.current?.select()
+            }}
             maxLength={8}
             {...props.form.getInputProps('date')}
             styles={() => ({
@@ -374,6 +387,7 @@ export const LedgerListNewRow: FC<{
       <td>
         <div style={{ width: '100%', position: 'relative' }}>
           <Autocomplete
+            ref={counter_cd_ref}
             value={props.form.values.other_cd}
             data={props.saimoku_list.map((s) => s.saimoku_cd)}
             filter={({ options, search }) => {
@@ -412,6 +426,9 @@ export const LedgerListNewRow: FC<{
                 )
               }
             }}
+            onFocus={() => {
+              counter_cd_ref.current?.select()
+            }}
             className="w-14"
             comboboxProps={{ width: '180px' }}
           />
@@ -442,11 +459,15 @@ export const LedgerListNewRow: FC<{
       </td>
       <td>
         <TextInput
+          ref={note_ref}
           value={props.form.values.note}
           {...props.form.getInputProps('note')}
           onKeyDown={onSave}
           onBlur={() => {
             save()
+          }}
+          onFocus={() => {
+            note_ref.current?.select()
           }}
           className="w-96"
         />
@@ -468,18 +489,47 @@ const LedgerListRows: FC<{
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
   fixed: boolean
+}> = (props) => {
+  return props.form.values.items.map((item, index) => {
+    return (
+      <LedgerListRowItem
+        key={item.journal_id}
+        {...props}
+        item={item}
+        index={index}
+      />
+    )
+  })
+}
+
+const LedgerListRowItem: FC<{
+  nendo: Nendo
+  ledger_cd: string
+  month: Month | null
+  form: UseFormReturnType<LedgerUpdateRequestForm>
+  item: LedgerUpdateRequestFormItem
+  index: number
+  saimoku_map: Map<string, saimoku_masters>
+  saimoku_list: saimoku_masters[]
+  fixed: boolean
+  pageNo: PageNo
+  pageSize: PageSize
 }> = ({
+  item,
+  index,
+  form,
+  saimoku_map,
+  saimoku_list,
+  fixed,
   nendo,
   ledger_cd,
   month,
   pageNo,
   pageSize,
-  form,
-  saimoku_map,
-  saimoku_list,
-  fixed,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
+  const date_ref = useRef<HTMLInputElement>(null)
+  const note_ref = useRef<HTMLInputElement>(null)
 
   const save = (update_row: LedgerUpdateRequestFormItem) => {
     const { hasErrors } = form.validate()
@@ -501,174 +551,183 @@ const LedgerListRows: FC<{
       }
     }
   }
-
-  return form.values.items.map((item, index) => {
-    return (
-      <tr key={item.journal_id}>
-        <td>
-          {month === null ? (
+  return (
+    <tr key={item.journal_id}>
+      <td>
+        {month === null ? (
+          <TextInput
+            ref={date_ref}
+            value={item.date_full}
+            onFocus={() => {
+              date_ref.current?.select()
+            }}
+            {...form.getInputProps(`items.${index}.date_full`)}
+            maxLength={8}
+            styles={() => ({
+              root: { width: '110px' },
+            })}
+            disabled={fixed}
+          />
+        ) : (
+          <>
             <TextInput
-              value={item.date_full}
-              {...form.getInputProps(`items.${index}.date_full`)}
-              maxLength={8}
+              value={item.date_yymm}
+              maxLength={6}
+              readOnly
+              disabled
               styles={() => ({
-                root: { width: '110px' },
+                root: { width: '80px', display: 'inline-block' },
+              })}
+            />
+            <TextInput
+              ref={date_ref}
+              value={item.date_dd}
+              {...form.getInputProps(`items.${index}.date_dd`)}
+              maxLength={2}
+              styles={() => ({
+                root: { width: '50px', display: 'inline-block' },
               })}
               disabled={fixed}
+              onFocus={() => {
+                date_ref.current?.select()
+              }}
             />
-          ) : (
-            <>
-              <TextInput
-                value={item.date_yymm}
-                maxLength={6}
-                readOnly
-                disabled
-                styles={() => ({
-                  root: { width: '80px', display: 'inline-block' },
-                })}
-              />
-              <TextInput
-                value={item.date_dd}
-                {...form.getInputProps(`items.${index}.date_dd`)}
-                maxLength={2}
-                styles={() => ({
-                  root: { width: '50px', display: 'inline-block' },
-                })}
-                disabled={fixed}
-              />
-            </>
-          )}
-        </td>
-        <td>
-          <div>
-            <Autocomplete
-              value={item.other_cd}
-              data={saimoku_list.map((s) => s.saimoku_cd)}
-              {...form.getInputProps(`items.${index}.other_cd`)}
-              filter={({ options, search }) => {
-                return (options as ComboboxItem[]).filter((option) => {
-                  const key = search.trim().toLowerCase()
-                  if (key.length === 0) {
-                    return true
-                  }
-                  const saimoku = saimoku_map.get(option.value)!
-                  const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-                  const kana = saimoku.saimoku_kana_name.toLowerCase()
-                  return saimoku_cd.includes(key) || kana.includes(key)
-                })
-              }}
-              renderOption={({ option }) => {
-                const saimoku = saimoku_map.get(option.value)!
-                return (
-                  <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
-                )
-              }}
-              onBlur={(e) => {
-                const keyword = e.currentTarget.value.toLowerCase()
-                const results = saimoku_list.filter((s) => {
-                  const code = s.saimoku_cd.toLowerCase()
-                  const kana = s.saimoku_kana_name
-                  return code.includes(keyword) || kana.includes(keyword)
-                })
-                if (results.length === 1) {
-                  LedgerUpdateRequestForm.set(
-                    'other_cd',
-                    form,
-                    index,
-                    results[0].saimoku_cd,
-                  )
-                  LedgerUpdateRequestForm.set(
-                    'other_cd_name',
-                    form,
-                    index,
-                    results[0].saimoku_ryaku_name,
-                  )
+          </>
+        )}
+      </td>
+      <td>
+        <div>
+          <Autocomplete
+            value={item.other_cd}
+            data={saimoku_list.map((s) => s.saimoku_cd)}
+            {...form.getInputProps(`items.${index}.other_cd`)}
+            filter={({ options, search }) => {
+              return (options as ComboboxItem[]).filter((option) => {
+                const key = search.trim().toLowerCase()
+                if (key.length === 0) {
+                  return true
                 }
-              }}
-              disabled={fixed}
-              onKeyDown={onSave(item)}
-              className="w-14"
-              comboboxProps={{ width: '180px' }}
-            />
-          </div>
-        </td>
-        <td>
-          <TextInput
-            value={item.other_cd_name}
-            className="w-16"
-            disabled
-            readOnly
-          />
-        </td>
-        <td>
-          <AmountInputForUpdate
-            input_key="karikata_value"
-            form={form}
-            index={index}
-            onSave={onSave(item)}
-            disabled={fixed}
-          />
-        </td>
-        <td>
-          <AmountInputForUpdate
-            input_key="kasikata_value"
-            form={form}
-            index={index}
-            onSave={onSave(item)}
-            disabled={fixed}
-          />
-        </td>
-        <td>
-          <TextInput
-            value={item.note}
-            {...form.getInputProps(`items.${index}.note`)}
-            onKeyDown={onSave(item)}
-            onBlur={() => {
-              save(item)
+                const saimoku = saimoku_map.get(option.value)!
+                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                const kana = saimoku.saimoku_kana_name.toLowerCase()
+                return saimoku_cd.includes(key) || kana.includes(key)
+              })
             }}
-            className={'w-96'}
-            disabled={fixed}
-          />
-        </td>
-        <td>
-          <TextInput
-            value={Amount.create(item.acc).toFormatedString()}
-            styles={() => ({
-              input: {
-                textAlign: 'right',
-              },
-            })}
-            disabled
-            className="w-28"
-          />
-        </td>
-        <td>
-          <Button
-            color="red"
-            disabled={fixed}
-            onClick={() => {
-              dispatch(
-                deleteJournal({
-                  request: { journal_id: item.journal_id, nendo: item.nendo },
-                  next: [
-                    loadLedgerList({
-                      nendo: toNendoString(nendo),
-                      ledger_cd,
-                      month: toMonthString(month),
-                      page_no: toPageNo(pageNo),
-                      page_size: toPageSize(pageSize),
-                    }),
-                  ],
-                }),
+            renderOption={({ option }) => {
+              const saimoku = saimoku_map.get(option.value)!
+              return (
+                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
               )
             }}
-          >
-            Delete
-          </Button>
-        </td>
-      </tr>
-    )
-  })
+            onBlur={(e) => {
+              const keyword = e.currentTarget.value.toLowerCase()
+              const results = saimoku_list.filter((s) => {
+                const code = s.saimoku_cd.toLowerCase()
+                const kana = s.saimoku_kana_name
+                return code.includes(keyword) || kana.includes(keyword)
+              })
+              if (results.length === 1) {
+                LedgerUpdateRequestForm.set(
+                  'other_cd',
+                  form,
+                  index,
+                  results[0].saimoku_cd,
+                )
+                LedgerUpdateRequestForm.set(
+                  'other_cd_name',
+                  form,
+                  index,
+                  results[0].saimoku_ryaku_name,
+                )
+              }
+            }}
+            disabled={fixed}
+            onKeyDown={onSave(item)}
+            className="w-14"
+            comboboxProps={{ width: '180px' }}
+          />
+        </div>
+      </td>
+      <td>
+        <TextInput
+          value={item.other_cd_name}
+          className="w-16"
+          disabled
+          readOnly
+        />
+      </td>
+      <td>
+        <AmountInputForUpdate
+          input_key="karikata_value"
+          form={form}
+          index={index}
+          onSave={onSave(item)}
+          disabled={fixed}
+        />
+      </td>
+      <td>
+        <AmountInputForUpdate
+          input_key="kasikata_value"
+          form={form}
+          index={index}
+          onSave={onSave(item)}
+          disabled={fixed}
+        />
+      </td>
+      <td>
+        <TextInput
+          ref={note_ref}
+          value={item.note}
+          {...form.getInputProps(`items.${index}.note`)}
+          onKeyDown={onSave(item)}
+          onBlur={() => {
+            save(item)
+          }}
+          onFocus={() => {
+            note_ref.current?.select()
+          }}
+          className={'w-96'}
+          disabled={fixed}
+        />
+      </td>
+      <td>
+        <TextInput
+          value={Amount.create(item.acc).toFormatedString()}
+          styles={() => ({
+            input: {
+              textAlign: 'right',
+            },
+          })}
+          disabled
+          className="w-28"
+        />
+      </td>
+      <td>
+        <Button
+          color="red"
+          disabled={fixed}
+          onClick={() => {
+            dispatch(
+              deleteJournal({
+                request: { journal_id: item.journal_id, nendo: item.nendo },
+                next: [
+                  loadLedgerList({
+                    nendo: toNendoString(nendo),
+                    ledger_cd,
+                    month: toMonthString(month),
+                    page_no: toPageNo(pageNo),
+                    page_size: toPageSize(pageSize),
+                  }),
+                ],
+              }),
+            )
+          }}
+        >
+          Delete
+        </Button>
+      </td>
+    </tr>
+  )
 }
 
 const AmountInputForCreate: FC<{
@@ -676,8 +735,10 @@ const AmountInputForCreate: FC<{
   form: UseFormReturnType<LedgerCreateRequestForm>
   onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
 }> = ({ input_key, form, onSave }) => {
+  const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
+      ref={ref}
       className={'w-24'}
       styles={() => ({
         input: {
@@ -707,6 +768,9 @@ const AmountInputForCreate: FC<{
         if (amount != null) {
           LedgerCreateRequestForm.set(input_key, form, amount.toRawString())
         }
+        setTimeout(() => {
+          ref.current?.select()
+        })
       }}
       onKeyDown={onSave}
     />
@@ -720,8 +784,10 @@ const AmountInputForUpdate: FC<{
   onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
   disabled: boolean
 }> = ({ input_key, form, index, onSave, disabled }) => {
+  const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
+      ref={ref}
       className={'w-24'}
       disabled={disabled}
       styles={() => ({
@@ -758,6 +824,9 @@ const AmountInputForUpdate: FC<{
             amount.toRawString(),
           )
         }
+        setTimeout(() => {
+          ref.current?.select()
+        })
       }}
       onKeyDown={onSave}
     />
