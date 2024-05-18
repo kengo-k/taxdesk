@@ -1,54 +1,109 @@
-import AWS from 'aws-sdk'
-import { exec } from 'child_process'
-import { DateTime } from 'luxon'
+'use client'
 
-const dbConfig = {
-  host: 'db',
-  port: 5432,
-  database: 'db',
-  user: 'postgres',
-  password: 'postgres',
+import { useEffect, useState } from 'react'
+
+import { Button, Radio, Table } from '@mantine/core'
+
+export default function Page() {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/v1/settings/backup')
+        if (!response.ok) {
+          throw new Error('Failed to fetch data')
+        }
+        const jsonData = await response.json()
+        setData(jsonData.data)
+      } catch (error) {}
+    }
+    fetchData()
+  }, [])
+
+  const [data, setData] = useState<
+    { key: string; size: number; createdAt: number }[]
+  >([])
+
+  const [selected_row, set_selected_row] = useState<string | null>(null)
+
+  return (
+    <div>
+      <Button
+        onClick={async () => {
+          const response = await fetch('/api/v1/settings/backup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+          })
+        }}
+      >
+        Create Backup
+      </Button>
+
+      <Button
+        color="red"
+        disabled={selected_row === null}
+        onClick={async () => {
+          if (selected_row === null) {
+            return
+          }
+          const backup_id = getTimestamp(selected_row)
+          if (backup_id === null) {
+            return null
+          }
+          const response = await fetch(`/api/v1/settings/backup/${backup_id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+          })
+        }}
+      >
+        Restore Backup
+      </Button>
+
+      <Table>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Check</Table.Th>
+            <Table.Th>File</Table.Th>
+            <Table.Th>Size</Table.Th>
+            <Table.Th>CreatedAt</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {data.map((item) => {
+            return (
+              <Table.Tr key={item.key}>
+                <Table.Td>
+                  <Radio
+                    checked={selected_row === item.key}
+                    onChange={() => {
+                      set_selected_row(item.key)
+                    }}
+                  />
+                </Table.Td>
+                <Table.Td>{item.key}</Table.Td>
+                <Table.Td>{item.size}</Table.Td>
+                <Table.Td>{item.createdAt}</Table.Td>
+              </Table.Tr>
+            )
+          })}
+        </Table.Tbody>
+      </Table>
+    </div>
+  )
 }
 
-function dumpDatabase(): Promise<string> {
-  process.env.PGPASSWORD = dbConfig.password
-  return new Promise((resolve, reject) => {
-    const command = `pg_dump -U ${dbConfig.user} -h ${dbConfig.host} -p ${dbConfig.port} -d ${dbConfig.database}`
-    exec(command, (error, stdout, stderr) => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve(stdout)
-      }
-    })
-  })
-}
+function getTimestamp(fileName: string): string | null {
+  const regex = /.*-(\d{14})\.sql$/
+  const match = fileName.match(regex)
 
-//import { createApiClient } from 'dots-wrapper'
-
-export default async function Page() {
-  AWS.config.update({
-    region: 'ap-northeast-1', // 例: 'us-west-2'
-  })
-  const s3 = new AWS.S3()
-  const Bucket = process.env.BACKUP_BUCKETS ?? ''
-
-  const backups = await dumpDatabase()
-
-  const params = {
-    Bucket,
-    Key: `tax-accounting-backup-${DateTime.local().toFormat('yyyyMMddHHmmss')}.sql`,
-    Body: backups,
+  if (match) {
+    return match[1]
+  } else {
+    return null
   }
-
-  const response = await s3.upload(params).promise()
-
-  const objects = await s3.listObjects({ Bucket }).promise()
-  //const response = await s3.listBuckets().promise()
-  //console.log(objects)
-  // const token = process.env.DIGITALOCEAN_API_TOKEN ?? ''
-  // const dots = createApiClient({ token })
-  // const result = await dots.projects.list()
-  // console.log(account)
-  return <div>HELLO</div>
 }
