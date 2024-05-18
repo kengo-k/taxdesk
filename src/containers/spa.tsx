@@ -26,6 +26,8 @@ export const SinglePage: FC<{
 }> = (props) => {
   const dispatch = useDispatch<AppDispatch>()
 
+  const appState = useSelector((state: RootState) => state.app)
+
   useEffect(() => {
     dispatch(loadMasters())
   }, [dispatch])
@@ -66,10 +68,26 @@ export const SinglePage: FC<{
     if (props.month) {
       dispatch(appActions.setMonth(props.month))
     }
-  }, [dispatch, props.ledger_cd, props.month, props.nendo, props.page_type])
+  }, [
+    dispatch,
+    props.ledger_cd,
+    props.month,
+    props.nendo,
+    props.page_type,
+    appState.is_ledger,
+  ])
 
   if (is_master_loading) {
     return <div>Now loading...</div>
+  }
+
+  if (
+    !is_valid_month ||
+    !is_valid_ledger_cd ||
+    nendo === null ||
+    is_master_error
+  ) {
+    return <div>Error...</div>
   }
 
   if (props.page_type === '') {
@@ -77,13 +95,8 @@ export const SinglePage: FC<{
   }
 
   if (props.page_type === 'Ledger') {
-    if (
-      !is_valid_month ||
-      !is_valid_ledger_cd ||
-      nendo === null ||
-      is_master_error
-    ) {
-      return <div>Error...</div>
+    if (ledger_cd === null) {
+      return <Header />
     }
 
     return (
@@ -104,7 +117,10 @@ export const SinglePage: FC<{
 function validateLedgerCd(
   ledger_cd: string | undefined,
   saimoku_map: Map<string, saimoku_masters>,
-): [boolean, string] {
+): [boolean, string | null] {
+  if (ledger_cd === undefined) {
+    return [true, null]
+  }
   const exists = saimoku_map.has(ledger_cd ?? '')
-  return [exists, ledger_cd ?? '']
+  return [exists, exists ? ledger_cd : null]
 }

@@ -135,18 +135,9 @@ export const Header: FC = () => {
                 if (saimoku_cd === null) {
                   return
                 }
-                dispatch(
-                  appActions.setLedgerCd(
-                    saimoku_cd === '' ? undefined : saimoku_cd,
-                  ),
-                )
-                if (saimoku_cd !== '') {
-                  router.push(
-                    `/${appState.selected_nendo}/ledger/${saimoku_cd}`,
-                  )
-                } else {
-                  router.push(`/${appState.selected_nendo}`)
-                }
+                const ledger_cd = saimoku_cd === '' ? undefined : saimoku_cd
+                dispatch(appActions.setLedgerCd(ledger_cd))
+                rebuildRoute({ ledger_cd })
               }}
               withAsterisk
             />
@@ -181,19 +172,35 @@ export const Header: FC = () => {
 
 const useRouteBuilder = (router: ReturnType<typeof useRouter>) => {
   const search_params = useSearchParams()
-  const query_string = new URLSearchParams(search_params.toString())
   const appState = useSelector((state: RootState) => state.app)
   const rebuildRoute = (options: {
-    nendo?: string
-    ledger_cd?: string
-    month?: string
-    is_journal?: boolean
-    is_ledger?: boolean
+    nendo?: string | null
+    ledger_cd?: string | null
+    month?: string | null
+    is_journal?: boolean | null
+    is_ledger?: boolean | null
   }) => {
-    const nendo = options.nendo ?? appState.selected_nendo
-    const ledger_cd = options.ledger_cd ?? appState.selected_ledger_cd
-    const is_journal = options.is_journal ?? appState.is_journal ?? false
-    const is_ledger = options.is_ledger ?? appState.is_ledger ?? false
+    const default_options = {
+      nendo: null,
+      ledger_cd: null,
+      month: null,
+      is_journal: null,
+      is_ledger: null,
+    }
+    options = { ...default_options, ...options }
+    const nendo =
+      options.nendo === null ? appState.selected_nendo : options.nendo
+    const ledger_cd =
+      options.ledger_cd === null
+        ? appState.selected_ledger_cd
+        : options.ledger_cd
+    const month =
+      options.month === null ? appState.selected_month : options.month
+    const is_journal =
+      options.is_journal === null ? appState.is_journal : options.is_journal
+    const is_ledger =
+      options.is_ledger === null ? appState.is_ledger : options.is_ledger
+
     if (!nendo) {
       router.push('/')
       return
@@ -203,9 +210,15 @@ const useRouteBuilder = (router: ReturnType<typeof useRouter>) => {
       return
     }
     if (is_ledger) {
+      if (!ledger_cd) {
+        router.push(`/${nendo}/ledger`)
+        return
+      }
       const paths = [`/${nendo}/ledger`]
-      if (ledger_cd) {
-        paths.push(`${ledger_cd}`)
+      paths.push(`${ledger_cd}`)
+      const query_string = new URLSearchParams(search_params.toString())
+      if (month) {
+        query_string.set('month', month)
       }
       const path = `${paths.join('/')}?${query_string}`
       router.push(path)
