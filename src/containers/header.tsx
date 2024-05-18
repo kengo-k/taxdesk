@@ -18,6 +18,8 @@ export const Header: FC = () => {
   const pathname = usePathname()
   const search_params = useSearchParams()
 
+  const { rebuildRoute } = useRouteBuilder(router)
+
   const nendo_list = useMemo(() => {
     const list = masters.nendo_list.map((n) => {
       return {
@@ -86,7 +88,7 @@ export const Header: FC = () => {
                     dispatch(
                       appActions.setNendo(value === '' ? undefined : value),
                     )
-                    router.push(`/${value}`)
+                    rebuildRoute({ nendo: value })
                   }
                 }}
                 w={150}
@@ -105,22 +107,17 @@ export const Header: FC = () => {
                   if (value === '0') {
                     dispatch(appActions.showLedger(false))
                     dispatch(appActions.showJournal(false))
-                    router.push(
-                      `/${appState.selected_nendo}?${new URLSearchParams(search_params.toString())}`,
-                    )
+                    rebuildRoute({ is_ledger: false, is_journal: false })
                   }
                   if (value === '1') {
                     dispatch(appActions.showLedger(true))
                     dispatch(appActions.showJournal(false))
-                    if (appState.selected_ledger_cd) {
-                      router.push(
-                        `/${appState.selected_nendo}/ledger/${appState.selected_ledger_cd}?${new URLSearchParams(search_params.toString())}`,
-                      )
-                    }
+                    rebuildRoute({ is_ledger: true, is_journal: false })
                   }
                   if (value === '2') {
                     dispatch(appActions.showLedger(false))
                     dispatch(appActions.showJournal(true))
+                    rebuildRoute({ is_ledger: false, is_journal: true })
                   }
                 }}
                 w={150}
@@ -180,4 +177,41 @@ export const Header: FC = () => {
       </Fieldset>
     </>
   )
+}
+
+const useRouteBuilder = (router: ReturnType<typeof useRouter>) => {
+  const search_params = useSearchParams()
+  const query_string = new URLSearchParams(search_params.toString())
+  const appState = useSelector((state: RootState) => state.app)
+  const rebuildRoute = (options: {
+    nendo?: string
+    ledger_cd?: string
+    month?: string
+    is_journal?: boolean
+    is_ledger?: boolean
+  }) => {
+    const nendo = options.nendo ?? appState.selected_nendo
+    const ledger_cd = options.ledger_cd ?? appState.selected_ledger_cd
+    const is_journal = options.is_journal ?? appState.is_journal ?? false
+    const is_ledger = options.is_ledger ?? appState.is_ledger ?? false
+    if (!nendo) {
+      router.push('/')
+      return
+    }
+    if (is_journal) {
+      router.push(`/${nendo}/journal`)
+      return
+    }
+    if (is_ledger) {
+      const paths = [`/${nendo}/ledger`]
+      if (ledger_cd) {
+        paths.push(`${ledger_cd}`)
+      }
+      const path = `${paths.join('/')}?${query_string}`
+      router.push(path)
+      return
+    }
+    router.push(`/${nendo}`)
+  }
+  return { rebuildRoute }
 }
