@@ -323,6 +323,15 @@ export const LedgerListNewRow: FC<{
     if (e.key === 'Enter') {
       save()
     }
+    if (
+      e.key === 'Tab' &&
+      !e.shiftKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !e.metaKey
+    ) {
+      save()
+    }
   }
 
   const other_cd_name = useMemo(() => {
@@ -349,7 +358,6 @@ export const LedgerListNewRow: FC<{
               value={props.form.values.date_dd}
               maxLength={2}
               {...props.form.getInputProps('date_dd')}
-              onKeyDown={onSave}
               onBlur={(e) => {
                 const day = e.currentTarget.value
                 if (day.length === 1) {
@@ -357,6 +365,9 @@ export const LedgerListNewRow: FC<{
                 }
               }}
               onFocus={() => {
+                date_ref.current?.select()
+              }}
+              onMouseUp={() => {
                 date_ref.current?.select()
               }}
               error={null}
@@ -376,6 +387,10 @@ export const LedgerListNewRow: FC<{
             onFocus={() => {
               date_ref.current?.select()
             }}
+            onMouseUp={() => {
+              date_ref.current?.select()
+            }}
+            error={null}
             maxLength={8}
             {...props.form.getInputProps('date')}
             styles={() => ({
@@ -429,6 +444,9 @@ export const LedgerListNewRow: FC<{
             onFocus={() => {
               counter_cd_ref.current?.select()
             }}
+            onMouseUp={() => {
+              counter_cd_ref.current?.select()
+            }}
             className="w-14"
             comboboxProps={{ width: '180px' }}
           />
@@ -444,18 +462,10 @@ export const LedgerListNewRow: FC<{
         />
       </td>
       <td>
-        <AmountInputForCreate
-          input_key="karikata_value"
-          form={props.form}
-          onSave={onSave}
-        />
+        <AmountInputForCreate input_key="karikata_value" form={props.form} />
       </td>
       <td>
-        <AmountInputForCreate
-          input_key="kasikata_value"
-          form={props.form}
-          onSave={onSave}
-        />
+        <AmountInputForCreate input_key="kasikata_value" form={props.form} />
       </td>
       <td>
         <TextInput
@@ -463,10 +473,10 @@ export const LedgerListNewRow: FC<{
           value={props.form.values.note}
           {...props.form.getInputProps('note')}
           onKeyDown={onSave}
-          onBlur={() => {
-            save()
-          }}
           onFocus={() => {
+            note_ref.current?.select()
+          }}
+          onMouseUp={() => {
             note_ref.current?.select()
           }}
           className="w-96"
@@ -529,6 +539,7 @@ const LedgerListRowItem: FC<{
 }) => {
   const dispatch = useDispatch<AppDispatch>()
   const date_ref = useRef<HTMLInputElement>(null)
+  const counter_cd_ref = useRef<HTMLInputElement>(null)
   const note_ref = useRef<HTMLInputElement>(null)
 
   const save = (update_row: LedgerUpdateRequestFormItem) => {
@@ -546,7 +557,17 @@ const LedgerListRowItem: FC<{
 
   const onSave = (update_row: LedgerUpdateRequestFormItem) => {
     return (e: React.KeyboardEvent<HTMLInputElement>) => {
+      console.log(e.key)
       if (e.key === 'Enter') {
+        save(update_row)
+      }
+      if (
+        e.key === 'Tab' &&
+        !e.shiftKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.metaKey
+      ) {
         save(update_row)
       }
     }
@@ -559,6 +580,9 @@ const LedgerListRowItem: FC<{
             ref={date_ref}
             value={item.date_full}
             onFocus={() => {
+              date_ref.current?.select()
+            }}
+            onMouseUp={() => {
               date_ref.current?.select()
             }}
             {...form.getInputProps(`items.${index}.date_full`)}
@@ -591,6 +615,9 @@ const LedgerListRowItem: FC<{
               onFocus={() => {
                 date_ref.current?.select()
               }}
+              onMouseUp={() => {
+                date_ref.current?.select()
+              }}
             />
           </>
         )}
@@ -598,6 +625,7 @@ const LedgerListRowItem: FC<{
       <td>
         <div>
           <Autocomplete
+            ref={counter_cd_ref}
             value={item.other_cd}
             data={saimoku_list.map((s) => s.saimoku_cd)}
             {...form.getInputProps(`items.${index}.other_cd`)}
@@ -641,8 +669,13 @@ const LedgerListRowItem: FC<{
                 )
               }
             }}
+            onFocus={() => {
+              counter_cd_ref.current?.select()
+            }}
+            onMouseUp={() => {
+              counter_cd_ref.current?.select()
+            }}
             disabled={fixed}
-            onKeyDown={onSave(item)}
             className="w-14"
             comboboxProps={{ width: '180px' }}
           />
@@ -661,7 +694,6 @@ const LedgerListRowItem: FC<{
           input_key="karikata_value"
           form={form}
           index={index}
-          onSave={onSave(item)}
           disabled={fixed}
         />
       </td>
@@ -670,7 +702,6 @@ const LedgerListRowItem: FC<{
           input_key="kasikata_value"
           form={form}
           index={index}
-          onSave={onSave(item)}
           disabled={fixed}
         />
       </td>
@@ -680,10 +711,10 @@ const LedgerListRowItem: FC<{
           value={item.note}
           {...form.getInputProps(`items.${index}.note`)}
           onKeyDown={onSave(item)}
-          onBlur={() => {
-            save(item)
-          }}
           onFocus={() => {
+            note_ref.current?.select()
+          }}
+          onMouseUp={() => {
             note_ref.current?.select()
           }}
           className={'w-96'}
@@ -733,8 +764,8 @@ const LedgerListRowItem: FC<{
 const AmountInputForCreate: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerCreateRequestForm>
-  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
-}> = ({ input_key, form, onSave }) => {
+  //onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+}> = ({ input_key, form /*onSave*/ }) => {
   const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
@@ -772,7 +803,12 @@ const AmountInputForCreate: FC<{
           ref.current?.select()
         })
       }}
-      onKeyDown={onSave}
+      onMouseUp={() => {
+        setTimeout(() => {
+          ref.current?.select()
+        })
+      }}
+      //onKeyDown={onSave}
     />
   )
 }
@@ -781,9 +817,9 @@ const AmountInputForUpdate: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerUpdateRequestForm>
   index: number
-  onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  //onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
   disabled: boolean
-}> = ({ input_key, form, index, onSave, disabled }) => {
+}> = ({ input_key, form, index, /*onSave,*/ disabled }) => {
   const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
@@ -828,7 +864,12 @@ const AmountInputForUpdate: FC<{
           ref.current?.select()
         })
       }}
-      onKeyDown={onSave}
+      onMouseUp={() => {
+        setTimeout(() => {
+          ref.current?.select()
+        })
+      }}
+      //onKeyDown={onSave}
     />
   )
 }
