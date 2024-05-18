@@ -24,7 +24,7 @@ import {
   loadLedgerList,
   updateLedger,
 } from '@/store/ledger'
-import { selectSaimokuMap } from '@/store/master'
+import { selectNendoMap, selectSaimokuMap } from '@/store/master'
 
 import { Amount } from '@/models/amount'
 import {
@@ -73,6 +73,9 @@ export const LedgerList: FC<{
       (saimoku) => saimoku.saimoku_cd !== ledger_cd,
     )
   }, [masters_state.saimoku_list, ledger_cd])
+
+  const nendo_map = useSelector(selectNendoMap)
+  const fixed = nendo_map.get(nendo.toString())?.fixed === '1'
 
   const create_form = useForm<LedgerCreateRequestForm>({
     initialValues: {
@@ -235,16 +238,18 @@ export const LedgerList: FC<{
             </tr>
           </thead>
           <tbody>
-            <LedgerListNewRow
-              form={create_form}
-              nendo={nendo}
-              ledger_cd={ledger_cd}
-              month={month}
-              pageNo={page_no}
-              pageSize={page_size}
-              saimoku_map={saimoku_map}
-              saimoku_list={saimoku_list}
-            />
+            {!fixed && (
+              <LedgerListNewRow
+                form={create_form}
+                nendo={nendo}
+                ledger_cd={ledger_cd}
+                month={month}
+                pageNo={page_no}
+                pageSize={page_size}
+                saimoku_map={saimoku_map}
+                saimoku_list={saimoku_list}
+              />
+            )}
             <LedgerListRows
               nendo={nendo}
               ledger_cd={ledger_cd}
@@ -254,6 +259,7 @@ export const LedgerList: FC<{
               form={update_form}
               saimoku_map={saimoku_map}
               saimoku_list={saimoku_list}
+              fixed={fixed}
             />
           </tbody>
         </table>
@@ -461,6 +467,7 @@ const LedgerListRows: FC<{
   form: UseFormReturnType<LedgerUpdateRequestForm>
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
+  fixed: boolean
 }> = ({
   nendo,
   ledger_cd,
@@ -470,6 +477,7 @@ const LedgerListRows: FC<{
   form,
   saimoku_map,
   saimoku_list,
+  fixed,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
 
@@ -506,6 +514,7 @@ const LedgerListRows: FC<{
               styles={() => ({
                 root: { width: '110px' },
               })}
+              disabled={fixed}
             />
           ) : (
             <>
@@ -525,6 +534,7 @@ const LedgerListRows: FC<{
                 styles={() => ({
                   root: { width: '50px', display: 'inline-block' },
                 })}
+                disabled={fixed}
               />
             </>
           )}
@@ -575,6 +585,7 @@ const LedgerListRows: FC<{
                   )
                 }
               }}
+              disabled={fixed}
               onKeyDown={onSave(item)}
               className="w-14"
               comboboxProps={{ width: '180px' }}
@@ -595,6 +606,7 @@ const LedgerListRows: FC<{
             form={form}
             index={index}
             onSave={onSave(item)}
+            disabled={fixed}
           />
         </td>
         <td>
@@ -603,6 +615,7 @@ const LedgerListRows: FC<{
             form={form}
             index={index}
             onSave={onSave(item)}
+            disabled={fixed}
           />
         </td>
         <td>
@@ -614,6 +627,7 @@ const LedgerListRows: FC<{
               save(item)
             }}
             className={'w-96'}
+            disabled={fixed}
           />
         </td>
         <td>
@@ -631,6 +645,7 @@ const LedgerListRows: FC<{
         <td>
           <Button
             color="red"
+            disabled={fixed}
             onClick={() => {
               dispatch(
                 deleteJournal({
@@ -703,10 +718,12 @@ const AmountInputForUpdate: FC<{
   form: UseFormReturnType<LedgerUpdateRequestForm>
   index: number
   onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
-}> = ({ input_key, form, index, onSave }) => {
+  disabled: boolean
+}> = ({ input_key, form, index, onSave, disabled }) => {
   return (
     <TextInput
       className={'w-24'}
+      disabled={disabled}
       styles={() => ({
         input: {
           textAlign: 'right',
