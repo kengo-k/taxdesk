@@ -5,22 +5,8 @@ import * as z from 'zod'
 import { UseFormReturnType } from '@mantine/form'
 import { Prisma } from '@prisma/client'
 
-import { JournalDate, Nendo } from '@/models/date'
 import { SaimokuSearchResponse } from '@/models/master'
 import { PagingRequest } from '@/models/paging'
-
-function createAmountValidator() {
-  return z.string().refine(
-    (value) => {
-      if (value.trim().length === 0) {
-        return true
-      }
-      const num = numeral(value)
-      return num.value() != null
-    },
-    { message: 'must be a number' },
-  )
-}
 
 function getDateString(
   date_full: string,
@@ -47,35 +33,108 @@ export const LedgerCreateRequestSchema = z.object({
 
 export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
 
+function createAmountValidator() {
+  return z.string().refine(
+    (value) => {
+      if (value.trim().length === 0) {
+        return true
+      }
+      const num = numeral(value)
+      return num.value() != null
+    },
+    { message: 'Must be a number.' },
+  )
+}
+
+function day() {
+  return (data: string, ctx: z.RefinementCtx) => {
+    if (!data) {
+      return
+    }
+    const value = numeral(data)
+    if (value.value() == null || ![1, 2].includes(data.length)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['format'],
+        message: 'Must be a two-digit number.',
+      })
+    }
+  }
+}
+
+function date() {
+  return (data: string, ctx: z.RefinementCtx) => {
+    if (!data) {
+      return
+    }
+    if (!/^(\d{4}\/\d{2}\/\d{2})$/.test(data)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['format'],
+        message: 'Must be a yyyy/mm/dd.',
+      })
+    }
+  }
+}
+
+function yyyymm() {
+  return (data: string, ctx: z.RefinementCtx) => {
+    if (!data) {
+      return
+    }
+    if (!/^(\d{4}\/\d{2})$/.test(data)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['format'],
+        message: 'Must be a yyyy/mm.',
+      })
+    }
+  }
+}
+
+function amount() {
+  return (data: string, ctx: z.RefinementCtx) => {
+    if (!data) {
+      return
+    }
+    const value = numeral(data)
+    if (value.value() == null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['number'],
+        message: 'Must be a number',
+      })
+    }
+  }
+}
+
+function length(length: number) {
+  return (data: string, ctx: z.RefinementCtx) => {
+    if (!data) {
+      return
+    }
+    if (data.length !== length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['length'],
+        message: `Length must be ${length}`,
+      })
+    }
+  }
+}
+
 export const LedgerCreateRequestFormSchema = z
   .object({
     nendo: z.string().regex(/^\d{4}$/),
-    ledger_cd: z.string().length(3),
-    date: z.string().regex(/^(\d{4}\/\d{2}\/\d{2})?$/),
-    date_yymm: z.string().regex(/^(\d{4}\/\d{2})?$/),
-    date_dd: z
-      .string()
-      .regex(/^(\d{1,2})?$/)
-      .transform((val) => {
-        if (val.length === 1) {
-          val = `0${val}`
-        }
-        return val
-      }),
-    karikata_value: createAmountValidator(),
-    kasikata_value: createAmountValidator(),
+    ledger_cd: z.string().superRefine(length(3)),
+    date: z.string().superRefine(date()),
+    date_yymm: z.string().superRefine(yyyymm()),
+    date_dd: z.string().superRefine(day()),
+    karikata_value: z.string().superRefine(amount()),
+    kasikata_value: z.string().superRefine(amount()),
     note: z.string(),
-    other_cd: z.string().length(3),
+    other_cd: z.string().superRefine(length(3)),
   })
-  .refine(
-    (data) => {
-      return (
-        (data.date !== '' && data.date_yymm + data.date_dd === '') ||
-        (data.date === '' && data.date_yymm + data.date_dd !== '')
-      )
-    },
-    { message: 'invalid date', path: ['date'] },
-  )
   .transform((data) => {
     const date =
       data.date !== '' ? data.date : `${data.date_yymm}/${data.date_dd}`
@@ -97,44 +156,6 @@ export const LedgerCreateRequestFormSchema = z
     delete (ret as any).date_dd
     return ret
   })
-  .superRefine((data, ctx) => {
-    const nendo = Nendo.create(data.nendo, [data.nendo])
-    const issue = {
-      code: z.ZodIssueCode.custom,
-      path: ['date'],
-    }
-    const date = JournalDate.create(data.date)
-    if (date == null) {
-      ctx.addIssue({ ...issue, message: `invalid date: ${data.date}` })
-      return
-    }
-    if (nendo != null && !nendo.isInNendo(date)) {
-      const [start, end] = nendo.getRange('yyyy/MM/dd')
-      ctx.addIssue({
-        ...issue,
-        message: `invalid date: ${data.date} must be in a range between ${start} and ${end}`,
-      })
-    }
-  })
-  .transform((data) => {
-    return { ...data, date: data.date.replaceAll('/', '') }
-  })
-  .refine(
-    (data) => {
-      const { karikata_value, kasikata_value } = data
-      const isKarikataNull = karikata_value === null
-      const isKasikataNull = kasikata_value === null
-      return (
-        (isKarikataNull && !isKasikataNull) ||
-        (!isKarikataNull && isKasikataNull)
-      )
-    },
-    {
-      message:
-        'Either karikata_value or kasikata_value must be a number, and the other must be null.',
-      path: ['karikata_value', 'kasikata_value'],
-    },
-  )
 
 export type LedgerCreateRequestForm = z.input<
   typeof LedgerCreateRequestFormSchema

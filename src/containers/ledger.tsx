@@ -278,45 +278,74 @@ export const LedgerListNewRow: FC<{
   saimoku_map: Map<string, saimoku_masters>
   saimoku_list: saimoku_masters[]
 }> = (props) => {
-  const dispatch = useDispatch<AppDispatch>()
-
-  const date_ref = useRef<HTMLInputElement>(null)
-  const counter_cd_ref = useRef<HTMLInputElement>(null)
-  const note_ref = useRef<HTMLInputElement>(null)
-
   const save = () => {
     const { hasErrors } = props.form.validate()
-    let hasManualErrors = false
-    const other_cd = props.form.values['other_cd']
-    if (!props.saimoku_map.has(other_cd)) {
-      props.form.setFieldError('other_cd', 'hello')
-      hasManualErrors = true
-    }
-    if (hasErrors || hasManualErrors) {
+    if (hasErrors) {
       return
     }
 
+    // Parse the input form and convert it into a request to be passed to the API.
     const { success, data } = LedgerCreateRequestFormSchema.safeParse(
       props.form.values,
     )
 
-    if (success) {
-      dispatch(
-        createLedger({
-          request: data,
-          next: [
-            loadLedgerList({
-              nendo: toNendoString(props.nendo),
-              ledger_cd: props.ledger_cd,
-              month: toMonthString(props.month),
-              page_no: toPageNo(props.pageNo),
-              page_size: toPageSize(props.pageSize),
-            }),
-          ],
-        }),
-      )
-      date_ref.current?.focus()
+    if (!success) {
+      return
     }
+
+    let hasAdditionalErrors = false
+
+    // Additional validation for date format.
+    const date = data['date']
+    if (!/^(\d{4}\/\d{2}\/\d{2})$/.test(date)) {
+      props.form.setFieldError('date.format', 'Must be a yyyy/mm/dd.')
+      hasAdditionalErrors = true
+    }
+
+    data.date = date.replaceAll('/', '')
+
+    // Additional validation for existence checks on the master data.
+    const other_cd = data['other_cd']
+    if (!props.saimoku_map.has(other_cd)) {
+      props.form.setFieldError(
+        'other_cd.existance',
+        `Account code \`${other_cd}\` does not exist in master.`,
+      )
+      hasAdditionalErrors = true
+    }
+
+    // Additional validation for amount.
+    const debit = data['karikata_value']
+    const credit = data['kasikata_value']
+    const both_null = debit === null && credit === null
+    const both_notnull = debit !== null && credit !== null
+    if (both_null || both_notnull) {
+      props.form.setFieldError(
+        'karikata_value|kasikata_value',
+        `Either karikata_value or kasikata_value must be filled, but not both.`,
+      )
+      hasAdditionalErrors = true
+    }
+
+    if (hasAdditionalErrors) {
+      return
+    }
+
+    dispatch(
+      createLedger({
+        request: data,
+        next: [
+          loadLedgerList({
+            nendo: toNendoString(props.nendo),
+            ledger_cd: props.ledger_cd,
+            month: toMonthString(props.month),
+            page_no: toPageNo(props.pageNo),
+            page_size: toPageSize(props.pageSize),
+          }),
+        ],
+      }),
+    )
+    date_ref.current?.focus()
   }
 
   const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -334,10 +363,16 @@ export const LedgerListNewRow: FC<{
     }
   }
 
+  const dispatch = useDispatch<AppDispatch>()
+
   const other_cd_name = useMemo(() => {
     const saimoku = props.saimoku_map.get(props.form.values.other_cd)
     return saimoku === null ? '' : saimoku?.saimoku_ryaku_name ?? ''
   }, [props.form.values.other_cd, props.saimoku_map])
+
+  const date_ref = useRef<HTMLInputElement>(null)
+  const counter_cd_ref = useRef<HTMLInputElement>(null)
+  const note_ref = useRef<HTMLInputElement>(null)
 
   return (
     <tr>
@@ -359,6 +394,10 @@ export const LedgerListNewRow: FC<{
               maxLength={2}
               {...props.form.getInputProps('date_dd')}
               onBlur={(e) => {
+                const { hasErrors } = props.form.validate()
+                if (hasErrors) {
+                  return
+                }
                 const day = e.currentTarget.value
                 if (day.length === 1) {
                   props.form.setFieldValue('date_dd', `0${day}`)
@@ -384,6 +423,12 @@ export const LedgerListNewRow: FC<{
         ) : (
           <TextInput
             ref={date_ref}
+            onBlur={() => {
+              const { hasErrors } = props.form.validate()
+              if (hasErrors) {
+                return
+              }
+            }}
             onFocus={() => {
               date_ref.current?.select()
             }}
@@ -440,6 +485,10 @@ export const LedgerListNewRow: FC<{
                   results[0].saimoku_cd,
                 )
               }
+              const { hasErrors } = props.form.validate()
+              if (hasErrors) {
+                return
+              }
             }}
             onFocus={() => {
               counter_cd_ref.current?.select()
@@ -448,6 +497,13 @@ export const LedgerListNewRow: FC<{
               counter_cd_ref.current?.select()
             }}
             className="w-14"
+            styles={() => ({
+              input: {
+                ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
+                  ? { borderColor: 'red' }
+                  : {}),
+              },
+            })}
             comboboxProps={{ width: '180px' }}
           />
         </div>
@@ -557,7 +613,6 @@ const LedgerListRowItem: FC<{
 
   const onSave = (update_row: LedgerUpdateRequestFormItem) => {
     return (e: React.KeyboardEvent<HTMLInputElement>) => {
-      console.log(e.key)
       if (e.key === 'Enter') {
         save(update_row)
       }
@@ -783,6 +838,10 @@ const AmountInputForCreate: FC<{
       value={form.values[input_key]}
       error={null}
       onBlur={(e) => {
+        const { hasErrors } = form.validate()
+        if (hasErrors) {
+          return
+        }
         if (!LedgerCreateRequestForm.hasError(input_key, form)) {
           const amount = Amount.fromString(e.currentTarget.value)
           if (amount != null) {
