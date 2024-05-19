@@ -8,19 +8,6 @@ import { Prisma } from '@prisma/client'
 import { SaimokuSearchResponse } from '@/models/master'
 import { PagingRequest } from '@/models/paging'
 
-function getDateString(
-  date_full: string,
-  date_yymm: string,
-  date_dd: string,
-): string {
-  let date_str = date_full
-  if (date_yymm.length > 0) {
-    date_str = `${date_yymm}/${date_dd}`
-  }
-  const date = numeral(date_str)
-  return `${date.value()}`
-}
-
 export const LedgerCreateRequestSchema = z.object({
   nendo: z.string(),
   ledger_cd: z.string().length(3),
@@ -32,19 +19,6 @@ export const LedgerCreateRequestSchema = z.object({
 })
 
 export type LedgerCreateRequest = z.infer<typeof LedgerCreateRequestSchema>
-
-function createAmountValidator() {
-  return z.string().refine(
-    (value) => {
-      if (value.trim().length === 0) {
-        return true
-      }
-      const num = numeral(value)
-      return num.value() != null
-    },
-    { message: 'Must be a number.' },
-  )
-}
 
 function day() {
   return (data: string, ctx: z.RefinementCtx) => {
@@ -71,7 +45,7 @@ function date() {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['format'],
-        message: 'Must be a yyyy/mm/dd.',
+        message: `Must be a yyyy/mm/dd, input value=\`${data}\``,
       })
     }
   }
@@ -219,55 +193,40 @@ export const LedgerUpdateRequestFormSchema = z.object({
     z
       .object({
         journal_id: z.number(),
-        nendo: z.string(),
-        ledger_cd: z.string().length(3),
-        date_full: z.string(),
-        date_yymm: z.string(),
-        date_dd: z.string(),
-        karikata_value: createAmountValidator(),
-        kasikata_value: createAmountValidator(),
+        nendo: z.string().regex(/^\d{4}$/),
+        ledger_cd: z.string().superRefine(length(3)),
+        date: z.string().superRefine(date()),
+        date_yymm: z.string().superRefine(yyyymm()),
+        date_dd: z.string().superRefine(day()),
+        karikata_value: z.string().superRefine(amount()),
+        kasikata_value: z.string().superRefine(amount()),
         note: z.string(),
-        other_cd: z.string().length(3),
+        other_cd: z.string().superRefine(length(3)),
         other_cd_name: z.string(),
         acc: z.number(),
       })
       .transform((data) => {
+        const date =
+          data.date !== '' ? data.date : `${data.date_yymm}/${data.date_dd}`
         const ret = {
           ...data,
-          date: getDateString(data.date_full, data.date_yymm, data.date_dd),
+          date,
           karikata_value:
-            data.karikata_value === ''
+            data.karikata_value === '' || data.karikata_value === null
               ? null
               : numeral(data.karikata_value).value(),
           kasikata_value:
-            data.kasikata_value === ''
+            data.kasikata_value === '' || data.karikata_value === null
               ? null
               : numeral(data.kasikata_value).value(),
           note: data.note === '' ? null : data.note,
         } as LedgerUpdateRequest
-        delete (ret as any).date_full
         delete (ret as any).date_yymm
         delete (ret as any).date_dd
         delete (ret as any).other_cd_name
         delete (ret as any).acc
         return ret
-      })
-      .refine(
-        (data) => {
-          const { karikata_value, kasikata_value } = data
-          const isKarikataNull = karikata_value === null
-          const isKasikataNull = kasikata_value === null
-          const is_valid =
-            (isKarikataNull && !isKasikataNull) ||
-            (!isKarikataNull && isKasikataNull)
-          return is_valid
-        },
-        {
-          message:
-            'Either karikata_value or kasikata_value must be a number, and the other must be null.',
-          path: ['karikata_value', 'kasikata_value'],
-        },
-      ),
+      }),
   ),
 })
 

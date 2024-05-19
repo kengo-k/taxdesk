@@ -131,8 +131,8 @@ export const LedgerList: FC<{
         const date_dd = date === null ? '' : date.format('dd')
         return {
           ...item,
+          date: date_full,
           ledger_cd,
-          date_full,
           date_yymm,
           date_dd,
           karikata_value:
@@ -193,7 +193,11 @@ export const LedgerList: FC<{
         >
           <ul>
             {Object.keys(update_form.errors).map((key) => {
-              return <li key={key}>{key}</li>
+              return (
+                <li key={key}>
+                  {key}: {update_form.errors[key]}
+                </li>
+              )
             })}
           </ul>
         </Alert>
@@ -301,7 +305,6 @@ export const LedgerListNewRow: FC<{
       props.form.setFieldError('date.format', 'Must be a yyyy/mm/dd.')
       hasAdditionalErrors = true
     }
-
     data.date = date.replaceAll('/', '')
 
     // Additional validation for existence checks on the master data.
@@ -599,16 +602,59 @@ const LedgerListRowItem: FC<{
   const note_ref = useRef<HTMLInputElement>(null)
 
   const save = (update_row: LedgerUpdateRequestFormItem) => {
-    const { hasErrors } = form.validate()
+    const { hasErrors, errors } = form.validate()
     if (hasErrors) {
       return
     }
+
+    // Parse the input form and convert it into a request to be passed to the API.
     const { success, data } = LedgerUpdateRequestFormSchema.safeParse({
       items: [update_row],
     })
-    if (success) {
-      dispatch(updateLedger({ request: data.items[0], next: [] }))
+
+    if (!success) {
+      return
     }
+
+    const request = data.items[0]
+
+    let hasAdditionalErrors = false
+    // Additional validation for date format.
+    const date = request.date
+    if (!/^(\d{4}\/\d{2}\/\d{2})$/.test(date)) {
+      form.setFieldError(`date.${index}.format`, 'Must be a yyyy/mm/dd.')
+      hasAdditionalErrors = true
+    }
+    request.date = date.replaceAll('/', '')
+
+    // Additional validation for existence checks on the master data.
+    const other_cd = request.other_cd
+    if (!saimoku_map.has(other_cd)) {
+      form.setFieldError(
+        `items.${index}.other_cd.existance`,
+        `Account code \`${other_cd}\` does not exist in master.`,
+      )
+      hasAdditionalErrors = true
+    }
+
+    // Additional validation for amount.
+    const debit = request.karikata_value
+    const credit = request.kasikata_value
+    const both_null = debit === null && credit === null
+    const both_notnull = debit !== null && credit !== null
+    if (both_null || both_notnull) {
+      form.setFieldError(
+        `items.${index}.karikata_value|kasikata_value`,
+        `Either karikata_value or kasikata_value must be filled, but not both.`,
+      )
+      hasAdditionalErrors = true
+    }
+
+    if (hasAdditionalErrors) {
+      return
+    }
+
+    dispatch(updateLedger({ request: data.items[0], next: [] }))
   }
 
   const onSave = (update_row: LedgerUpdateRequestFormItem) => {
@@ -633,14 +679,14 @@ const LedgerListRowItem: FC<{
         {month === null ? (
           <TextInput
             ref={date_ref}
-            value={item.date_full}
+            value={item.date}
             onFocus={() => {
               date_ref.current?.select()
             }}
             onMouseUp={() => {
               date_ref.current?.select()
             }}
-            {...form.getInputProps(`items.${index}.date_full`)}
+            {...form.getInputProps(`items.${index}.date`)}
             maxLength={8}
             styles={() => ({
               root: { width: '110px' },
@@ -665,8 +711,23 @@ const LedgerListRowItem: FC<{
               maxLength={2}
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
+                input: {
+                  ...(LedgerUpdateRequestForm.hasError('date', form, index)
+                    ? { borderColor: 'red' }
+                    : {}),
+                },
               })}
               disabled={fixed}
+              onBlur={(e) => {
+                const { hasErrors } = form.validate()
+                if (hasErrors) {
+                  return
+                }
+                const day = e.currentTarget.value
+                if (day.length === 1) {
+                  form.setFieldValue(`items.${index}.date_dd`, `0${day}`)
+                }
+              }}
               onFocus={() => {
                 date_ref.current?.select()
               }}
@@ -723,6 +784,10 @@ const LedgerListRowItem: FC<{
                   results[0].saimoku_ryaku_name,
                 )
               }
+              const { hasErrors } = form.validate()
+              if (hasErrors) {
+                return
+              }
             }}
             onFocus={() => {
               counter_cd_ref.current?.select()
@@ -732,6 +797,13 @@ const LedgerListRowItem: FC<{
             }}
             disabled={fixed}
             className="w-14"
+            styles={() => ({
+              input: {
+                ...(LedgerUpdateRequestForm.hasError('other_cd', form, index)
+                  ? { borderColor: 'red' }
+                  : {}),
+              },
+            })}
             comboboxProps={{ width: '180px' }}
           />
         </div>
@@ -897,6 +969,10 @@ const AmountInputForUpdate: FC<{
       value={form.values.items[index][input_key]}
       error={null}
       onBlur={(e) => {
+        const { hasErrors } = form.validate()
+        if (hasErrors) {
+          return
+        }
         if (!LedgerUpdateRequestForm.hasError(input_key, form, index)) {
           const amount = Amount.fromString(e.currentTarget.value)
           if (amount != null) {
