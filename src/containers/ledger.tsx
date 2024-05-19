@@ -602,7 +602,7 @@ const LedgerListRowItem: FC<{
   const note_ref = useRef<HTMLInputElement>(null)
 
   const save = (update_row: LedgerUpdateRequestFormItem) => {
-    const { hasErrors, errors } = form.validate()
+    const { hasErrors } = form.validate()
     if (hasErrors) {
       return
     }
@@ -654,7 +654,20 @@ const LedgerListRowItem: FC<{
       return
     }
 
-    dispatch(updateLedger({ request: data.items[0], next: [] }))
+    dispatch(
+      updateLedger({
+        request: data.items[0],
+        next: [
+          loadLedgerList({
+            nendo: toNendoString(nendo),
+            ledger_cd: ledger_cd,
+            month: toMonthString(month),
+            page_no: toPageNo(pageNo),
+            page_size: toPageSize(pageSize),
+          }),
+        ],
+      }),
+    )
   }
 
   const onSave = (update_row: LedgerUpdateRequestFormItem) => {
