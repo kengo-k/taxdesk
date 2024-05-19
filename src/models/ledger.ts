@@ -202,7 +202,6 @@ export const LedgerUpdateRequestFormSchema = z.object({
         kasikata_value: z.string().superRefine(amount()),
         note: z.string(),
         other_cd: z.string().superRefine(length(3)),
-        other_cd_name: z.string(),
         acc: z.number(),
       })
       .transform((data) => {
@@ -223,7 +222,6 @@ export const LedgerUpdateRequestFormSchema = z.object({
         } as LedgerUpdateRequest
         delete (ret as any).date_yymm
         delete (ret as any).date_dd
-        delete (ret as any).other_cd_name
         delete (ret as any).acc
         return ret
       }),

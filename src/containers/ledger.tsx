@@ -686,6 +686,12 @@ const LedgerListRowItem: FC<{
       }
     }
   }
+
+  const other_cd_name = useMemo(() => {
+    const saimoku = saimoku_map.get(item.other_cd)
+    return saimoku === null ? '' : saimoku?.saimoku_ryaku_name ?? ''
+  }, [item.other_cd, saimoku_map])
+
   return (
     <tr key={item.journal_id}>
       <td>
@@ -790,12 +796,6 @@ const LedgerListRowItem: FC<{
                   index,
                   results[0].saimoku_cd,
                 )
-                LedgerUpdateRequestForm.set(
-                  'other_cd_name',
-                  form,
-                  index,
-                  results[0].saimoku_ryaku_name,
-                )
               }
               const { hasErrors } = form.validate()
               if (hasErrors) {
@@ -822,12 +822,7 @@ const LedgerListRowItem: FC<{
         </div>
       </td>
       <td>
-        <TextInput
-          value={item.other_cd_name}
-          className="w-16"
-          disabled
-          readOnly
-        />
+        <TextInput value={other_cd_name} className="w-16" disabled readOnly />
       </td>
       <td>
         <AmountInputForUpdate
