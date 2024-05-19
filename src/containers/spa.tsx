@@ -1,13 +1,12 @@
 import { FC, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { saimoku_masters } from '@prisma/client'
-
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
 import { loadMasters, selectNendoMap, selectSaimokuMap } from '@/store/master'
 
 import { Month, Nendo } from '@/models/date'
+import { SaimokuWithSummary } from '@/models/master'
 import { PageNo, PageSize } from '@/models/paging'
 
 import { Header } from '@/containers/header'
@@ -29,8 +28,8 @@ export const SinglePage: FC<{
   const appState = useSelector((state: RootState) => state.app)
 
   useEffect(() => {
-    dispatch(loadMasters())
-  }, [dispatch])
+    dispatch(loadMasters(props.nendo))
+  }, [dispatch, props.nendo])
 
   const { loading: is_master_loading, error: is_master_error } = useSelector(
     (state: RootState) => state.masters,
@@ -116,7 +115,7 @@ export const SinglePage: FC<{
 
 function validateLedgerCd(
   ledger_cd: string | undefined,
-  saimoku_map: Map<string, saimoku_masters>,
+  saimoku_map: Map<string, SaimokuWithSummary>,
 ): [boolean, string | null] {
   if (ledger_cd === undefined) {
     return [true, null]

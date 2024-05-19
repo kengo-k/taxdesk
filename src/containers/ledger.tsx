@@ -14,7 +14,6 @@ import {
   Title,
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
-import { saimoku_masters } from '@prisma/client'
 
 import { AppDispatch, RootState } from '@/store'
 import { deleteJournal } from '@/store/journal'
@@ -42,6 +41,7 @@ import {
   LedgerUpdateRequestFormItem,
   LedgerUpdateRequestFormSchema,
 } from '@/models/ledger'
+import { SaimokuWithSummary } from '@/models/master'
 import {
   PageNo,
   PageSize,
@@ -73,6 +73,8 @@ export const LedgerList: FC<{
       (saimoku) => saimoku.saimoku_cd !== ledger_cd,
     )
   }, [masters_state.saimoku_list, ledger_cd])
+
+  const target_account = saimoku_map.get(ledger_cd)!
 
   const nendo_map = useSelector(selectNendoMap)
   const fixed = nendo_map.get(nendo.toString())?.fixed === '1'
@@ -225,10 +227,16 @@ export const LedgerList: FC<{
                 <Text>Counter Code</Text>
               </th>
               <th>
-                <Text>Debit</Text>
+                <Text>
+                  Debit
+                  {target_account.kamoku_bunrui_type === 'L' ? ' [+]' : ' [-]'}
+                </Text>
               </th>
               <th>
-                <Text>Credit</Text>
+                <Text>
+                  Credit
+                  {target_account.kamoku_bunrui_type === 'R' ? ' [+]' : ' [-]'}
+                </Text>
               </th>
               <th>
                 <Text>Note</Text>
@@ -279,8 +287,8 @@ export const LedgerListNewRow: FC<{
   month: Month | null
   pageNo: PageNo
   pageSize: PageSize
-  saimoku_map: Map<string, saimoku_masters>
-  saimoku_list: saimoku_masters[]
+  saimoku_map: Map<string, SaimokuWithSummary>
+  saimoku_list: SaimokuWithSummary[]
 }> = (props) => {
   const save = () => {
     const { hasErrors } = props.form.validate()
@@ -555,8 +563,8 @@ const LedgerListRows: FC<{
   pageNo: PageNo
   pageSize: PageSize
   form: UseFormReturnType<LedgerUpdateRequestForm>
-  saimoku_map: Map<string, saimoku_masters>
-  saimoku_list: saimoku_masters[]
+  saimoku_map: Map<string, SaimokuWithSummary>
+  saimoku_list: SaimokuWithSummary[]
   fixed: boolean
 }> = (props) => {
   return props.form.values.items.map((item, index) => {
@@ -578,8 +586,8 @@ const LedgerListRowItem: FC<{
   form: UseFormReturnType<LedgerUpdateRequestForm>
   item: LedgerUpdateRequestFormItem
   index: number
-  saimoku_map: Map<string, saimoku_masters>
-  saimoku_list: saimoku_masters[]
+  saimoku_map: Map<string, SaimokuWithSummary>
+  saimoku_list: SaimokuWithSummary[]
   fixed: boolean
   pageNo: PageNo
   pageSize: PageSize

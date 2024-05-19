@@ -56,7 +56,7 @@ export const Header: FC = () => {
     const list = masters.saimoku_list.map((s) => {
       return {
         value: `${s.saimoku_cd}`,
-        label: `${s.saimoku_cd}: ${s.saimoku_full_name}`,
+        label: `${s.saimoku_cd}: ${s.saimoku_full_name} (${s.count})`,
       }
     })
     return [{ value: '', label: 'Not Selected' }, ...list]

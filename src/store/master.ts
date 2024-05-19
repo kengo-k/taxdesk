@@ -1,4 +1,4 @@
-import { kamoku_masters, nendo_masters, saimoku_masters } from '@prisma/client'
+import { kamoku_masters, nendo_masters } from '@prisma/client'
 import {
   SerializedError,
   createAsyncThunk,
@@ -8,11 +8,13 @@ import {
 
 import { RootState } from '@/store'
 
+import { SaimokuWithSummary } from '@/models/master'
+
 export interface MasterState {
   data: {
     nendo_list: nendo_masters[]
     kamoku_list: kamoku_masters[]
-    saimoku_list: saimoku_masters[]
+    saimoku_list: SaimokuWithSummary[]
   }
   loading: boolean
   error: SerializedError | null
@@ -28,11 +30,16 @@ const initialState: MasterState = {
   error: null,
 }
 
-export const loadMasters = createAsyncThunk('masters/loadMasters', async () => {
-  const response = await fetch('/api/v1/masters')
-  const data = await response.json()
-  return data
-})
+export const loadMasters = createAsyncThunk(
+  'masters/loadMasters',
+  async (nendo: string | undefined) => {
+    const response = await fetch(
+      `/api/v1/masters${nendo ? `?nendo=${nendo}` : ''}`,
+    )
+    const data = await response.json()
+    return data
+  },
+)
 
 export const masterSlice = createSlice({
   name: 'masters',
@@ -61,7 +68,7 @@ const selectNendoList = (state: RootState) => state.masters.data.nendo_list
 export const selectSaimokuMap = createSelector(
   [selectSaimokuList],
   (saimoku_list) => {
-    const map: Map<string, saimoku_masters> = new Map()
+    const map: Map<string, SaimokuWithSummary> = new Map()
     for (const saimoku of saimoku_list) {
       if (saimoku.id != null) {
         map.set(saimoku.saimoku_cd, saimoku)
