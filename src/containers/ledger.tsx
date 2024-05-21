@@ -444,21 +444,35 @@ export const LedgerListNewRow: FC<{
         ) : (
           <TextInput
             ref={date_ref}
-            onBlur={() => {
-              const { hasErrors } = props.form.validate()
-              if (hasErrors) {
-                return
+            {...props.form.getInputProps('date')}
+            onFocus={(e) => {
+              const date = JournalDate.create(e.currentTarget.value)
+              if (date !== null) {
+                LedgerCreateRequestForm.set(
+                  'date',
+                  props.form,
+                  date.format('yyyyMMdd'),
+                )
               }
+              setTimeout(() => {
+                date_ref.current?.select()
+              })
             }}
-            onFocus={() => {
-              date_ref.current?.select()
-            }}
-            onMouseUp={() => {
-              date_ref.current?.select()
+            onBlur={(e) => {
+              const date = JournalDate.create(e.currentTarget.value)
+              if (date !== null) {
+                LedgerCreateRequestForm.set(
+                  'date',
+                  props.form,
+                  date.format('yyyy/MM/dd'),
+                )
+              }
+              setTimeout(() => {
+                props.form.validate()
+              })
             }}
             error={null}
             maxLength={10}
-            {...props.form.getInputProps('date')}
             styles={() => ({
               root: { width: '110px' },
               input: {
@@ -733,13 +747,35 @@ const LedgerListRowItem: FC<{
           <TextInput
             ref={date_ref}
             value={item.date}
-            onFocus={() => {
-              date_ref.current?.select()
-            }}
-            onMouseUp={() => {
-              date_ref.current?.select()
-            }}
             {...form.getInputProps(`items.${index}.date`)}
+            onFocus={(e) => {
+              const date = JournalDate.create(e.currentTarget.value)
+              if (date !== null) {
+                LedgerUpdateRequestForm.set(
+                  'date',
+                  form,
+                  index,
+                  date.format('yyyyMMdd'),
+                )
+              }
+              setTimeout(() => {
+                date_ref.current?.select()
+              })
+            }}
+            onBlur={(e) => {
+              const date = JournalDate.create(e.currentTarget.value)
+              if (date !== null) {
+                LedgerUpdateRequestForm.set(
+                  'date',
+                  form,
+                  index,
+                  date.format('yyyy/MM/dd'),
+                )
+              }
+              setTimeout(() => {
+                form.validate()
+              })
+            }}
             maxLength={10}
             styles={() => ({
               root: { width: '110px' },
