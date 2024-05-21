@@ -55,8 +55,8 @@ export class Nendo {
     const start = `${this._value}0401`
     const end = `${this._value + 1}0331`
     return [
-      JournalDate.create(start)!.format('yyyy/MM/dd'),
-      JournalDate.create(end)!.format('yyyy/MM/dd'),
+      JournalDate.create(start)!.format(format),
+      JournalDate.create(end)!.format(format),
     ]
   }
   public toString(): string {

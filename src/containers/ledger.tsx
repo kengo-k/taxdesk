@@ -313,6 +313,17 @@ export const LedgerListNewRow: FC<{
       props.form.setFieldError('date.format', 'Must be a yyyy/mm/dd.')
       hasAdditionalErrors = true
     }
+
+    const journal_date = JournalDate.create(date)
+    if (journal_date == null || !props.nendo.isInNendo(journal_date)) {
+      const [from, to] = props.nendo.getRange('yyyy/MM/dd')
+      props.form.setFieldError(
+        'date.range',
+        `Must be within the range ${from} to ${to}.`,
+      )
+      hasAdditionalErrors = true
+    }
+
     data.date = date.replaceAll('/', '')
 
     // Additional validation for existence checks on the master data.
@@ -360,9 +371,9 @@ export const LedgerListNewRow: FC<{
   }
 
   const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      save()
-    }
+    // if (e.key === 'Enter') {
+    //   save()
+    // }
     if (
       e.key === 'Tab' &&
       !e.shiftKey &&
@@ -391,7 +402,6 @@ export const LedgerListNewRow: FC<{
         {props.month !== null ? (
           <>
             <TextInput
-              maxLength={7}
               {...props.form.getInputProps('date_yymm')}
               readOnly
               disabled
@@ -447,10 +457,15 @@ export const LedgerListNewRow: FC<{
               date_ref.current?.select()
             }}
             error={null}
-            maxLength={8}
+            maxLength={10}
             {...props.form.getInputProps('date')}
             styles={() => ({
               root: { width: '110px' },
+              input: {
+                ...(LedgerCreateRequestForm.hasError('date', props.form)
+                  ? { borderColor: 'red' }
+                  : {}),
+              },
             })}
           />
         )}
@@ -630,9 +645,20 @@ const LedgerListRowItem: FC<{
     // Additional validation for date format.
     const date = request.date
     if (!/^(\d{4}\/\d{2}\/\d{2})$/.test(date)) {
-      form.setFieldError(`date.${index}.format`, 'Must be a yyyy/mm/dd.')
+      form.setFieldError(`items.${index}.date.format`, 'Must be a yyyy/mm/dd.')
       hasAdditionalErrors = true
     }
+
+    const journal_date = JournalDate.create(date)
+    if (journal_date == null || !nendo.isInNendo(journal_date)) {
+      const [from, to] = nendo.getRange('yyyy/MM/dd')
+      form.setFieldError(
+        `items.${index}.date.range`,
+        `Must be within the range ${from} to ${to}.`,
+      )
+      hasAdditionalErrors = true
+    }
+
     request.date = date.replaceAll('/', '')
 
     // Additional validation for existence checks on the master data.
@@ -680,9 +706,9 @@ const LedgerListRowItem: FC<{
 
   const onSave = (update_row: LedgerUpdateRequestFormItem) => {
     return (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
-        save(update_row)
-      }
+      // if (e.key === 'Enter') {
+      //   save(update_row)
+      // }
       if (
         e.key === 'Tab' &&
         !e.shiftKey &&
@@ -714,9 +740,14 @@ const LedgerListRowItem: FC<{
               date_ref.current?.select()
             }}
             {...form.getInputProps(`items.${index}.date`)}
-            maxLength={8}
+            maxLength={10}
             styles={() => ({
               root: { width: '110px' },
+              input: {
+                ...(LedgerUpdateRequestForm.hasError('date', form, index)
+                  ? { borderColor: 'red' }
+                  : {}),
+              },
             })}
             disabled={fixed}
           />
@@ -724,7 +755,6 @@ const LedgerListRowItem: FC<{
           <>
             <TextInput
               value={item.date_yymm}
-              maxLength={6}
               readOnly
               disabled
               styles={() => ({
