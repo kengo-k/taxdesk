@@ -290,6 +290,8 @@ export const LedgerListNewRow: FC<{
   saimoku_map: Map<string, SaimokuWithSummary>
   saimoku_list: SaimokuWithSummary[]
 }> = (props) => {
+  fetch(`/api/v1/summary/${props.nendo}/4`)
+  fetch(`/api/v1/summary/${props.nendo}/5`)
   const save = () => {
     const { hasErrors } = props.form.validate()
     if (hasErrors) {
