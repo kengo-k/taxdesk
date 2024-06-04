@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  // Uncomment the next line if you're using a Mac with an Apple Silicon chip (e.g., M1, M2)
+  // binaryTargets = ["native", "darwin-arm64"]
 }
 
 datasource db {
