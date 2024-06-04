@@ -15,37 +15,38 @@ function main() {
     let fullpath = path.resolve(`seed/${f}`)
     executeStatement(`truncate table ${table}`)
     executeStatement(
-      `\\copy ${table} FROM '${fullpath}' DELIMITER ',' CSV HEADER`
+      `\\copy ${table} FROM '${fullpath}' DELIMITER ',' CSV HEADER`,
     )
   })
 }
 
 function createClient() {
-  const url = process.env.DATABASE_URL
+  const [user, password, host, port, db] = [
+    process.env.POSTGRES_USER,
+    process.env.POSTGRES_PASSWORD,
+    process.env.POSTGRES_HOST,
+    process.env.POSTGRES_PORT,
+    process.env.POSTGRES_DB,
+  ]
 
-  const pattern = /^postgresql:\/\/(.+):(.+)@(.+):(\d+)\/(.+?)(?:\?.*)?$/
-  const matches = url.match(pattern)
+  /* eslint-disable no-console */
+  console.log('user:', user)
+  console.log('password:', password)
+  console.log('host:', host)
+  console.log('port:', port)
+  console.log('database:', db)
+  /* eslint-enable no-console */
 
-  if (matches) {
-    const [, user, password, host, port, db] = matches
-    console.log('user:', user)
-    console.log('password:', password)
-    console.log('host:', host)
-    console.log('port:', port)
-    console.log('database:', db)
-    process.env.PGPASSWORD = password
-    return function (statement) {
-      execSync(`
+  process.env.PGPASSWORD = password
+  return function (statement) {
+    execSync(`
         psql \
           -U ${user} \
           -d ${db} \
           -h ${host} \
           -p ${port} \
           -c "${statement}"`)
-    }
   }
-
-  throw new Error()
 }
 
 main()

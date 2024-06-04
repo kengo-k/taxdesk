@@ -4,19 +4,11 @@ import AWS from 'aws-sdk'
 import { exec } from 'child_process'
 import { DateTime } from 'luxon'
 
+import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
 
 const cache = getDefault()
 export const revalidate = cache.revalidate
-
-const dbConfig = {
-  host: 'db',
-  port: 5432,
-  database: 'db',
-  user: 'postgres',
-  password: 'postgres',
-}
-process.env.PGPASSWORD = dbConfig.password
 
 AWS.config.update({
   region: 'ap-northeast-1',
@@ -26,9 +18,10 @@ const s3 = new AWS.S3()
 const Bucket = process.env.BACKUP_BUCKETS ?? ''
 
 function dumpDatabase(): Promise<string> {
-  process.env.PGPASSWORD = dbConfig.password
+  const { user, password, host, port, database } = ConnectionSetting.get()
+  process.env.PGPASSWORD = password
   return new Promise((resolve, reject) => {
-    const command = `pg_dump -U ${dbConfig.user} -h ${dbConfig.host} -p ${dbConfig.port} -d ${dbConfig.database} --inserts --clean --if-exists`
+    const command = `pg_dump -U ${user} -h ${host} -p ${port} -d ${database} --inserts --clean --if-exists`
     exec(command, (error, stdout, stderr) => {
       if (error) {
         reject(error)

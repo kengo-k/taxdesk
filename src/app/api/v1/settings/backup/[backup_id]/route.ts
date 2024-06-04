@@ -6,19 +6,11 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
+import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
 
 const cache = getDefault()
 export const revalidate = cache.revalidate
-
-const dbConfig = {
-  host: 'db',
-  port: 5432,
-  database: 'db',
-  user: 'postgres',
-  password: 'postgres',
-}
-process.env.PGPASSWORD = dbConfig.password
 
 AWS.config.update({
   region: 'ap-northeast-1',
@@ -47,10 +39,13 @@ export async function POST(
   const backup_path = path.join(temp_dir, backup_file)
   fs.writeFileSync(backup_path, restore_sql)
   // `pg_dump -U ${dbConfig.user} -h ${dbConfig.host} -p ${dbConfig.port} -d ${dbConfig.database} --clean --if-exists`
-  process.env.PGPASSWORD = dbConfig.password
-  const command = `psql -U ${dbConfig.user} -h ${dbConfig.host} -p ${dbConfig.port} -d ${dbConfig.database} -f "${backup_path}"`
+  const { user, password, host, port, database } = ConnectionSetting.get()
+  process.env.PGPASSWORD = password
+  const command = `psql -U ${user} -h ${host} -p ${port} -d ${database} -f "${backup_path}"`
+
+  console.log('command: ', command)
   const result = execSync(command)
-  //console.log(result)
+  console.log(result)
 
   return NextResponse.json(
     {},
