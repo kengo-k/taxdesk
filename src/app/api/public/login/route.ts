@@ -37,20 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     const token = session.access_token
-
-    // クッキーにトークンを設定
-    const response = NextResponse.json({ message: 'Login successful' })
-    response.cookies.set('tax_account_app_auth_token', token, {
-      httpOnly: true,
-      maxAge: 60 * 60 * 24, // 1日
-      path: '/',
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
+    const response = NextResponse.json({
+      message: 'Login successful',
+      auth: token,
     })
-
     return response
   } catch (error) {
-    console.error('Login error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },
