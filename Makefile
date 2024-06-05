@@ -15,3 +15,6 @@ clean:
 
 prune:
 	docker volume rm $$(docker volume ls -q)
+
+migrate:
+	DATABASE_URL=postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB) npx prisma migrate deploy
