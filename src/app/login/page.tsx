@@ -4,6 +4,8 @@ import { useState } from 'react'
 
 import { useRouter } from 'next/navigation'
 
+import { AUTH_KEY } from '@/constants/storage'
+
 export default function Page() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -24,15 +26,13 @@ export default function Page() {
 
       if (response.ok) {
         const data = await response.json()
-        console.log('Login successful:', data)
-        // ログイン成功後の処理を追加（例: ホームページにリダイレクトなど）
+        localStorage.setItem(AUTH_KEY, data.auth)
         router.push('/')
       } else {
         const errorData = await response.json()
         setError(errorData.error)
       }
     } catch (error) {
-      console.error('Login error:', error)
       setError('An error occurred during login.')
     }
   }
