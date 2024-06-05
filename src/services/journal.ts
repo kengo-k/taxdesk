@@ -79,8 +79,6 @@ export class JournalServiceImpl implements JournalService {
       j2.karikata_kamoku_bunrui_cd = ${category}
       or j2.kasikata_kamoku_bunrui_cd = ${category}`
 
-    console.log(rows)
-
     return {}
   }
 }
