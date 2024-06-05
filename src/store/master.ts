@@ -10,6 +10,8 @@ import { RootState } from '@/store'
 
 import { SaimokuWithSummary } from '@/models/master'
 
+import { fetchWithAuth } from '@/misc/fetch'
+
 export interface MasterState {
   data: {
     nendo_list: nendo_masters[]
@@ -33,7 +35,7 @@ const initialState: MasterState = {
 export const loadMasters = createAsyncThunk(
   'masters/loadMasters',
   async (nendo: string | undefined) => {
-    const response = await fetch(
+    const response = await fetchWithAuth(
       `/api/v1/masters${nendo ? `?nendo=${nendo}` : ''}`,
     )
     const data = await response.json()
