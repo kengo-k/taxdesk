@@ -1,0 +1,14 @@
+name: Create branch on issue created.
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Create branch
+        uses: kengo-k/actions-create-issue-branch@main
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
