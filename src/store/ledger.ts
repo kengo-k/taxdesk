@@ -15,6 +15,7 @@ import {
   LedgerUpdateRequest,
 } from '@/models/ledger'
 
+import { fetchWithAuth } from '@/misc/fetch'
 import { createQueryString } from '@/misc/object'
 
 export interface LedgerState {
@@ -42,7 +43,7 @@ export const loadLedgerList = createAsyncThunk<
   LedgerSearchRequest
 >('ledger/loadLedgerList', async (request) => {
   const qs = createQueryString(request, ['month', 'page_no', 'page_size'])
-  const response = await fetch(
+  const response = await fetchWithAuth(
     `/api/v1/ledger/${request.nendo}/${request.ledger_cd}${qs.length === 0 ? '' : `?${qs}`}`,
   )
   const data = await response.json()
@@ -54,7 +55,7 @@ export const createLedger = createAsyncThunk<
   { request: LedgerCreateRequest; next: NextActions }
 >('ledger/create', async ({ request, next }, { dispatch }) => {
   const { nendo, ledger_cd, ...requestBody } = request
-  const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
+  const response = await fetchWithAuth(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
     method: 'POST',
     body: JSON.stringify(requestBody),
   })
@@ -68,7 +69,7 @@ export const updateLedger = createAsyncThunk<
   { request: LedgerUpdateRequest; next: NextActions }
 >('ledger/update', async ({ request, next }, { dispatch }) => {
   const { nendo, ledger_cd, ...requestBody } = request
-  const response = await fetch(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
+  const response = await fetchWithAuth(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
     method: 'PUT',
     body: JSON.stringify(requestBody),
   })

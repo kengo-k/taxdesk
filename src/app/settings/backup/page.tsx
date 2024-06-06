@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 
 import { Button, Radio, Table } from '@mantine/core'
 
+import { fetchWithAuth } from '@/misc/fetch'
+
 export default function Page() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/v1/settings/backup')
+        const response = await fetchWithAuth('/api/v1/settings/backup')
         if (!response.ok) {
           throw new Error('Failed to fetch data')
         }
@@ -29,7 +31,7 @@ export default function Page() {
     <div>
       <Button
         onClick={async () => {
-          const response = await fetch('/api/v1/settings/backup', {
+          const response = await fetchWithAuth('/api/v1/settings/backup', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -52,13 +54,16 @@ export default function Page() {
           if (backup_id === null) {
             return null
           }
-          const response = await fetch(`/api/v1/settings/backup/${backup_id}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const response = await fetchWithAuth(
+            `/api/v1/settings/backup/${backup_id}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({}),
             },
-            body: JSON.stringify({}),
-          })
+          )
         }}
       >
         Restore Backup

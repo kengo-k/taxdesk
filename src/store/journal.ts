@@ -9,6 +9,8 @@ import {
 
 import { JournalDeleteRequest } from '@/models/journal'
 
+import { fetchWithAuth } from '@/misc/fetch'
+
 export interface JournalState {
   data: {
     journal_list: journals[]
@@ -34,7 +36,7 @@ export const updateJournal = createAsyncThunk<
     journal: Partial<Omit<journals, 'id'>>
   }
 >('journal/update', async (request) => {
-  const response = await fetch(`/api/v1/journal/${request.id}`, {
+  const response = await fetchWithAuth(`/api/v1/journal/${request.id}`, {
     method: 'PUT',
   })
   const data = await response.json()
@@ -48,7 +50,7 @@ export const deleteJournal = createAsyncThunk<
     next: NextActions
   }
 >('journal/delete', async ({ request, next }, { dispatch }) => {
-  const response = await fetch(
+  const response = await fetchWithAuth(
     `/api/v1/journal/${request.nendo}/${request.journal_id}`,
     {
       method: 'DELETE',
