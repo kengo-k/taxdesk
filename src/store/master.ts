@@ -7,6 +7,7 @@ import {
 } from '@reduxjs/toolkit'
 
 import { RootState } from '@/store'
+import { appActions } from '@/store/app'
 
 import { SaimokuWithSummary } from '@/models/master'
 
@@ -34,12 +35,18 @@ const initialState: MasterState = {
 
 export const loadMasters = createAsyncThunk(
   'masters/loadMasters',
-  async (nendo: string | undefined) => {
+  async (nendo: string | undefined, { dispatch, rejectWithValue }) => {
     const response = await fetchWithAuth(
       `/api/v1/masters${nendo ? `?nendo=${nendo}` : ''}`,
     )
-    const data = await response.json()
-    return data
+    if (response.ok) {
+      return await response.json()
+    } else if (response.status === 401) {
+      dispatch(appActions.setUnauthorized(true))
+      return rejectWithValue('Unauthorized')
+    } else {
+      throw new Error()
+    }
   },
 )
 
@@ -59,7 +66,6 @@ export const masterSlice = createSlice({
     })
     builder.addCase(loadMasters.rejected, (state, action) => {
       state.loading = false
-      state.error = action.error
     })
   },
 })

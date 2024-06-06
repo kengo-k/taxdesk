@@ -6,6 +6,7 @@ export interface AppState {
   is_ledger: boolean
   selected_ledger_cd: string | undefined
   selected_month: string | undefined
+  unauthorized: boolean
 }
 
 const initialState: AppState = {
@@ -14,6 +15,7 @@ const initialState: AppState = {
   is_ledger: false,
   selected_ledger_cd: undefined,
   selected_month: undefined,
+  unauthorized: false,
 }
 
 export const appSlice = createSlice({
@@ -44,6 +46,9 @@ export const appSlice = createSlice({
     },
     setMonth: (state, action: PayloadAction<string | undefined>) => {
       state.selected_month = action.payload
+    },
+    setUnauthorized: (state, action: PayloadAction<boolean>) => {
+      state.unauthorized = action.payload
     },
   },
 })

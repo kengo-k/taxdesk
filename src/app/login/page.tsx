@@ -49,7 +49,7 @@ export default function Page() {
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
+            autoComplete="email"
           />
         </div>
         <div>
@@ -59,7 +59,7 @@ export default function Page() {
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+            autoComplete="current-password"
           />
         </div>
         <button type="submit">Login</button>

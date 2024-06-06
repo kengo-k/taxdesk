@@ -14,6 +14,8 @@ import '@mantine/core/styles.css'
 
 import { store } from '@/store'
 
+import { RootComponent } from '@/components/RootComponent'
+
 const theme = createTheme({
   spacing: {
     sm: '8px',
@@ -39,7 +41,9 @@ export default function RootLayout({
       <body>
         <MantineProvider theme={theme}>
           <Box maw={1600} mx={'auto'} p={20}>
-            <Provider store={store}>{children}</Provider>
+            <Provider store={store}>
+              <RootComponent>{children}</RootComponent>
+            </Provider>
           </Box>
         </MantineProvider>
       </body>
