@@ -32,6 +32,7 @@ const initialState: MasterState = {
   error: null,
 }
 
+// TODO remove this api
 export const loadMasters = createAsyncThunk(
   'masters/loadMasters',
   async (nendo: string | undefined, { dispatch, rejectWithValue }) => {
@@ -47,6 +48,16 @@ export const loadNendo = createAsyncThunk(
   async (_, { dispatch, rejectWithValue }) => {
     return await fetchWithAuth(
       `/api/v1/masters/nendo`,
+      error_handler(dispatch, rejectWithValue),
+    )
+  },
+)
+
+export const loadSaimoku = createAsyncThunk(
+  'masters/loadSaimokku',
+  async (nendo: string, { dispatch, rejectWithValue }) => {
+    return await fetchWithAuth(
+      `/api/v1/masters/saimoku/${nendo}`,
       error_handler(dispatch, rejectWithValue),
     )
   },
@@ -79,6 +90,18 @@ export const masterSlice = createSlice({
       state.loading = true
     })
     builder.addCase(loadNendo.rejected, (state, action) => {
+      state.loading = false
+    })
+
+    // loadSaimoku
+    builder.addCase(loadSaimoku.fulfilled, (state, action) => {
+      state.loading = false
+      state.data.saimoku_list = action.payload.data
+    })
+    builder.addCase(loadSaimoku.pending, (state) => {
+      state.loading = true
+    })
+    builder.addCase(loadSaimoku.rejected, (state, action) => {
       state.loading = false
     })
   },
