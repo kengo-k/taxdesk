@@ -6,6 +6,8 @@ export interface AppState {
   is_ledger: boolean
   selected_ledger_cd: string | undefined
   selected_month: string | undefined
+  page_no: number
+  page_size: number
   unauthorized: boolean
 }
 
@@ -15,6 +17,8 @@ const initialState: AppState = {
   is_ledger: false,
   selected_ledger_cd: undefined,
   selected_month: undefined,
+  page_no: 1,
+  page_size: 10,
   unauthorized: false,
 }
 
@@ -46,6 +50,12 @@ export const appSlice = createSlice({
     },
     setMonth: (state, action: PayloadAction<string | undefined>) => {
       state.selected_month = action.payload
+    },
+    setPageNo: (state, action: PayloadAction<number>) => {
+      state.page_no = action.payload
+    },
+    setPageSize: (state, action: PayloadAction<number>) => {
+      state.page_size = action.payload
     },
     setUnauthorized: (state, action: PayloadAction<boolean>) => {
       state.unauthorized = action.payload
