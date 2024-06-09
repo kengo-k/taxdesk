@@ -1,43 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { Button, Radio, Table } from '@mantine/core'
 
-import { fetchWithAuth } from '@/misc/fetch'
+import { AppDispatch, RootState } from '@/store'
+import {
+  createBackup,
+  loadBackupList,
+  restoreFromBackup,
+} from '@/store/settings'
 
 export default function Page() {
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetchWithAuth('/api/v1/settings/backup')
-        if (!response.ok) {
-          throw new Error('Failed to fetch data')
-        }
-        const jsonData = await response.json()
-        setData(jsonData.data)
-      } catch (error) {}
-    }
-    fetchData()
-  }, [])
+  const dispatch = useDispatch<AppDispatch>()
+  const settings_state = useSelector((state: RootState) => state.settings)
+  const backup_list = settings_state.backup_list.error
+    ? []
+    : settings_state.backup_list.data
 
-  const [data, setData] = useState<
-    { key: string; size: number; createdAt: number }[]
-  >([])
+  useEffect(() => {
+    dispatch(loadBackupList())
+  }, [dispatch])
 
   const [selected_row, set_selected_row] = useState<string | null>(null)
 
   return (
     <div>
       <Button
-        onClick={async () => {
-          const response = await fetchWithAuth('/api/v1/settings/backup', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}),
-          })
+        onClick={() => {
+          dispatch(createBackup())
         }}
       >
         Create Backup
@@ -54,16 +46,7 @@ export default function Page() {
           if (backup_id === null) {
             return null
           }
-          const response = await fetchWithAuth(
-            `/api/v1/settings/backup/${backup_id}`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({}),
-            },
-          )
+          dispatch(restoreFromBackup(backup_id))
         }}
       >
         Restore Backup
@@ -79,23 +62,24 @@ export default function Page() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {data.map((item) => {
-            return (
-              <Table.Tr key={item.key}>
-                <Table.Td>
-                  <Radio
-                    checked={selected_row === item.key}
-                    onChange={() => {
-                      set_selected_row(item.key)
-                    }}
-                  />
-                </Table.Td>
-                <Table.Td>{item.key}</Table.Td>
-                <Table.Td>{item.size}</Table.Td>
-                <Table.Td>{item.createdAt}</Table.Td>
-              </Table.Tr>
-            )
-          })}
+          {backup_list &&
+            backup_list.map((item) => {
+              return (
+                <Table.Tr key={item.key}>
+                  <Table.Td>
+                    <Radio
+                      checked={selected_row === item.key}
+                      onChange={() => {
+                        set_selected_row(item.key)
+                      }}
+                    />
+                  </Table.Td>
+                  <Table.Td>{item.key}</Table.Td>
+                  <Table.Td>{item.size}</Table.Td>
+                  <Table.Td>{item.createdAt}</Table.Td>
+                </Table.Tr>
+              )
+            })}
         </Table.Tbody>
       </Table>
     </div>

@@ -1,4 +1,5 @@
 import { journalSlice } from './journal'
+import { settingsSlice } from './settings'
 
 import { configureStore } from '@reduxjs/toolkit'
 
@@ -12,6 +13,7 @@ export const store = configureStore({
     ledger: ledgerSlice.reducer,
     journal: journalSlice.reducer,
     masters: masterSlice.reducer,
+    settings: settingsSlice.reducer,
   },
 })
 

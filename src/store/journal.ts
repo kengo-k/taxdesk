@@ -9,7 +9,7 @@ import {
 
 import { JournalDeleteRequest } from '@/models/journal'
 
-import { fetchWithAuth } from '@/misc/fetch'
+import { error_handler, fetchWithAuth } from '@/misc/fetch'
 
 export interface JournalState {
   data: {
@@ -35,12 +35,14 @@ export const updateJournal = createAsyncThunk<
     id: number
     journal: Partial<Omit<journals, 'id'>>
   }
->('journal/update', async (request) => {
-  const response = await fetchWithAuth(`/api/v1/journal/${request.id}`, {
-    method: 'PUT',
-  })
-  const data = await response.json()
-  return data
+>('journal/update', async (request, { dispatch, rejectWithValue }) => {
+  return await fetchWithAuth(
+    `/api/v1/journal/${request.id}`,
+    error_handler(dispatch, rejectWithValue),
+    {
+      method: 'PUT',
+    },
+  )
 })
 
 export const deleteJournal = createAsyncThunk<
@@ -49,17 +51,20 @@ export const deleteJournal = createAsyncThunk<
     request: JournalDeleteRequest
     next: NextActions
   }
->('journal/delete', async ({ request, next }, { dispatch }) => {
-  const response = await fetchWithAuth(
-    `/api/v1/journal/${request.nendo}/${request.journal_id}`,
-    {
-      method: 'DELETE',
-    },
-  )
-  const data = await response.json()
-  callNextActions(dispatch, next)
-  return data
-})
+>(
+  'journal/delete',
+  async ({ request, next }, { dispatch, rejectWithValue }) => {
+    const json = await fetchWithAuth(
+      `/api/v1/journal/${request.nendo}/${request.journal_id}`,
+      error_handler(dispatch, rejectWithValue),
+      {
+        method: 'DELETE',
+      },
+    )
+    callNextActions(dispatch, next)
+    return json
+  },
+)
 
 export const journalSlice = createSlice({
   name: 'journal',
