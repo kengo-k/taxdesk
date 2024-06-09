@@ -1,7 +1,13 @@
 'use client'
 
-import { SinglePage } from '@/containers/spa'
+import { useEffect } from 'react'
+
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
-  return <SinglePage page_type="" />
+  const router = useRouter()
+  useEffect(() => {
+    router.push('/ledger')
+  }, [router])
+  return <></>
 }
