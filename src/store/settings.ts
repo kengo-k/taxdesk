@@ -83,7 +83,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(createBackup.rejected, (state, action) => {
       const payload = action.payload as any // TODO FIXME
-      console.log(payload)
       state.create_backup = { ...payload, loading: false }
     })
 
