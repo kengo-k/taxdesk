@@ -15,7 +15,8 @@ export const error_handler = (
       dispatch(appActions.setUnauthorized(true))
       return reject('Unauthorized')
     } else {
-      throw new Error()
+      const json = await response.json()
+      return reject(json)
     }
   }
 }
