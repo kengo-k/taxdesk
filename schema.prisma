@@ -70,3 +70,12 @@ model saimoku_masters {
   created_at         DateTime @db.Timestamp(6)
   updated_at         DateTime @db.Timestamp(6)
 }
+
+model backups {
+  id                 Int      @id @default(autoincrement())
+  backup_id          String
+  version            String
+  note               String?
+  created_at         DateTime @db.Timestamp(6)
+  updated_at         DateTime @db.Timestamp(6)
+}

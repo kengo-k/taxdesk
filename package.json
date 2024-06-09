@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "watch": "tsc --noEmit --watch",
     "build": "next build",
+    "watch": "tsc --noEmit --watch",
     "start": "next start",
+    "migrate:generate": "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB} prisma generate",
+    "migrate:deploy": "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB} prisma migrate deploy",
+    "migrate:dev": "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB} prisma migrate dev",
     "lint": "next lint"
   },
   "prisma": {
