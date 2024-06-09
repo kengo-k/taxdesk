@@ -60,15 +60,16 @@ model nendo_masters {
 }
 
 model saimoku_masters {
-  id                 Int      @id @default(autoincrement())
-  kamoku_cd          String   @db.VarChar(2)
-  saimoku_cd         String   @db.VarChar(3)
+  id                 Int                      @id @default(autoincrement())
+  kamoku_cd          String                   @db.VarChar(2)
+  saimoku_cd         String                   @db.VarChar(3)
   saimoku_full_name  String
   saimoku_ryaku_name String
   saimoku_kana_name  String
   description        String?
-  created_at         DateTime @db.Timestamp(6)
-  updated_at         DateTime @db.Timestamp(6)
+  transaction        Unsupported("tstzrange")
+  created_at         DateTime                 @db.Timestamp(6)
+  updated_at         DateTime                 @db.Timestamp(6)
 }
 
 model backups {
