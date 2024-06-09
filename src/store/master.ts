@@ -7,11 +7,10 @@ import {
 } from '@reduxjs/toolkit'
 
 import { RootState } from '@/store'
-import { appActions } from '@/store/app'
 
 import { SaimokuWithSummary } from '@/models/master'
 
-import { fetchWithAuth } from '@/misc/fetch'
+import { error_handler, fetchWithAuth } from '@/misc/fetch'
 
 export interface MasterState {
   data: {
@@ -33,20 +32,34 @@ const initialState: MasterState = {
   error: null,
 }
 
+// TODO remove this api
 export const loadMasters = createAsyncThunk(
   'masters/loadMasters',
   async (nendo: string | undefined, { dispatch, rejectWithValue }) => {
-    const response = await fetchWithAuth(
+    return await fetchWithAuth(
       `/api/v1/masters${nendo ? `?nendo=${nendo}` : ''}`,
+      error_handler(dispatch, rejectWithValue),
     )
-    if (response.ok) {
-      return await response.json()
-    } else if (response.status === 401) {
-      dispatch(appActions.setUnauthorized(true))
-      return rejectWithValue('Unauthorized')
-    } else {
-      throw new Error()
-    }
+  },
+)
+
+export const loadNendo = createAsyncThunk(
+  'masters/loadNendo',
+  async (_, { dispatch, rejectWithValue }) => {
+    return await fetchWithAuth(
+      `/api/v1/masters/nendo`,
+      error_handler(dispatch, rejectWithValue),
+    )
+  },
+)
+
+export const loadSaimoku = createAsyncThunk(
+  'masters/loadSaimokku',
+  async (nendo: string, { dispatch, rejectWithValue }) => {
+    return await fetchWithAuth(
+      `/api/v1/masters/saimoku/${nendo}`,
+      error_handler(dispatch, rejectWithValue),
+    )
   },
 )
 
@@ -65,6 +78,30 @@ export const masterSlice = createSlice({
       state.loading = true
     })
     builder.addCase(loadMasters.rejected, (state, action) => {
+      state.loading = false
+    })
+
+    // loadNendo
+    builder.addCase(loadNendo.fulfilled, (state, action) => {
+      state.loading = false
+      state.data.nendo_list = action.payload.data
+    })
+    builder.addCase(loadNendo.pending, (state) => {
+      state.loading = true
+    })
+    builder.addCase(loadNendo.rejected, (state, action) => {
+      state.loading = false
+    })
+
+    // loadSaimoku
+    builder.addCase(loadSaimoku.fulfilled, (state, action) => {
+      state.loading = false
+      state.data.saimoku_list = action.payload.data
+    })
+    builder.addCase(loadSaimoku.pending, (state) => {
+      state.loading = true
+    })
+    builder.addCase(loadSaimoku.rejected, (state, action) => {
       state.loading = false
     })
   },

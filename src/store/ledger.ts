@@ -15,7 +15,7 @@ import {
   LedgerUpdateRequest,
 } from '@/models/ledger'
 
-import { fetchWithAuth } from '@/misc/fetch'
+import { error_handler, fetchWithAuth } from '@/misc/fetch'
 import { createQueryString } from '@/misc/object'
 
 export interface LedgerState {
@@ -41,41 +41,46 @@ const initialState: LedgerState = {
 export const loadLedgerList = createAsyncThunk<
   { all_count: number; list: LedgerSearchResponse[] },
   LedgerSearchRequest
->('ledger/loadLedgerList', async (request) => {
+>('ledger/loadLedgerList', async (request, { dispatch, rejectWithValue }) => {
   const qs = createQueryString(request, ['month', 'page_no', 'page_size'])
-  const response = await fetchWithAuth(
+  return await fetchWithAuth(
     `/api/v1/ledger/${request.nendo}/${request.ledger_cd}${qs.length === 0 ? '' : `?${qs}`}`,
+    error_handler(dispatch, rejectWithValue),
   )
-  const data = await response.json()
-  return data
 })
 
 export const createLedger = createAsyncThunk<
   journals,
   { request: LedgerCreateRequest; next: NextActions }
->('ledger/create', async ({ request, next }, { dispatch }) => {
+>('ledger/create', async ({ request, next }, { dispatch, rejectWithValue }) => {
   const { nendo, ledger_cd, ...requestBody } = request
-  const response = await fetchWithAuth(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
-    method: 'POST',
-    body: JSON.stringify(requestBody),
-  })
-  const data = await response.json()
+  const json = await fetchWithAuth(
+    `/api/v1/ledger/${nendo}/${ledger_cd}`,
+    error_handler(dispatch, rejectWithValue),
+    {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+    },
+  )
   callNextActions(dispatch, next)
-  return data
+  return json
 })
 
 export const updateLedger = createAsyncThunk<
   journals,
   { request: LedgerUpdateRequest; next: NextActions }
->('ledger/update', async ({ request, next }, { dispatch }) => {
+>('ledger/update', async ({ request, next }, { dispatch, rejectWithValue }) => {
   const { nendo, ledger_cd, ...requestBody } = request
-  const response = await fetchWithAuth(`/api/v1/ledger/${nendo}/${ledger_cd}`, {
-    method: 'PUT',
-    body: JSON.stringify(requestBody),
-  })
-  const data = await response.json()
+  const json = await fetchWithAuth(
+    `/api/v1/ledger/${nendo}/${ledger_cd}`,
+    error_handler(dispatch, rejectWithValue),
+    {
+      method: 'PUT',
+      body: JSON.stringify(requestBody),
+    },
+  )
   callNextActions(dispatch, next)
-  return data
+  return json
 })
 
 export const ledgerSlice = createSlice({
