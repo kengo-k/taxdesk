@@ -6,9 +6,9 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-async function signUpUser(email, password) {
+async function signup(email, password) {
   try {
-    const { user, session, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     })
@@ -16,16 +16,12 @@ async function signUpUser(email, password) {
     if (error) {
       throw error
     }
-
-    console.log('User signed up successfully:')
-    console.log('User:', user)
-    console.log('Session:', session)
-  } catch (error) {
-    console.error('Error signing up:', error.message)
+  } catch (e) {
+    console.error('Error signing up:', e.message)
+    return
   }
 }
 
-// コマンドライン引数からユーザー名とパスワードを取得
 const email = process.argv[2]
 const password = process.argv[3]
 
@@ -36,4 +32,4 @@ if (!email || !password) {
   process.exit(1)
 }
 
-signUpUser(email, password)
+signup(email, password)
