@@ -59,7 +59,7 @@ async function main() {
 
   const { data, error } = await enablemfa(email, password, name)
   if (error) {
-    console.error('Error: MFA enrollment failed.')
+    console.error('Error: MFA enrollment failed, message: ', error)
     process.exit(2)
   }
 
