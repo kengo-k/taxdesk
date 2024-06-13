@@ -1,4 +1,4 @@
-// signUpTool.js
+/* eslint-disable no-console */
 const { createClient } = require('@supabase/supabase-js')
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
