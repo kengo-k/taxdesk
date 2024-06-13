@@ -1,4 +1,4 @@
-import { NextActions, callNextActions } from '.'
+import { NextActions } from '.'
 
 import { journals } from '@prisma/client'
 import {
@@ -61,7 +61,9 @@ export const deleteJournal = createAsyncThunk<
         method: 'DELETE',
       },
     )
-    callNextActions(dispatch, next)
+    for (const action of next) {
+      return dispatch(action)
+    }
     return json
   },
 )

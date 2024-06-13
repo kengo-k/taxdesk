@@ -6,7 +6,7 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
-import { NextActions, callNextActions } from '@/store'
+import { NextActions } from '@/store'
 
 import {
   LedgerCreateRequest,
@@ -62,7 +62,9 @@ export const createLedger = createAsyncThunk<
       body: JSON.stringify(requestBody),
     },
   )
-  callNextActions(dispatch, next)
+  for (const action of next) {
+    return dispatch(action)
+  }
   return json
 })
 
@@ -79,7 +81,9 @@ export const updateLedger = createAsyncThunk<
       body: JSON.stringify(requestBody),
     },
   )
-  callNextActions(dispatch, next)
+  for (const action of next) {
+    return dispatch(action)
+  }
   return json
 })
 
