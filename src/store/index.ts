@@ -21,11 +21,17 @@ export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch
 
 export type NextActions = any[]
-export const callNextActions = (
-  dispatch: (action: any) => void,
-  nextActions: NextActions,
-) => {
-  for (const action of nextActions) {
-    return dispatch(action)
-  }
-}
+
+// FIXME
+//
+// Calling this function in the createAsyncThunk method causes a build error.
+// But if I paste the code inside directly into createAsyncThunk, no error occurs.
+//
+// export const callNextActions = (
+//   dispatch: (action: any) => void,
+//   nextActions: NextActions,
+// ) => {
+//   for (const action of nextActions) {
+//     return dispatch(action)
+//   }
+// }
