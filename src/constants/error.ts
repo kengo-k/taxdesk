@@ -1,11 +1,17 @@
 export type ApplicationErrorCode =
   | 'REQUEST_ERROR'
+  | 'AUTH_ERROR'
   | 'DUMP_ERROR'
   | 'RESTORE_ERROR'
 
 export const REQUEST_ERROR: ApplicationError = {
   code: 'REQUEST_ERROR',
   message: 'Invalid Request.',
+}
+
+export const AUTH_ERROR: ApplicationError = {
+  code: 'AUTH_ERROR',
+  message: 'Login Failed.',
 }
 
 export const DUMP_ERROR: ApplicationError = {

@@ -400,7 +400,7 @@ const LedgerList: FC<{
   )
 }
 
-export const LedgerListNewRow: FC<{
+const LedgerListNewRow: FC<{
   form: UseFormReturnType<LedgerCreateRequestForm>
   nendo: Nendo
   ledger_cd: string

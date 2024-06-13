@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
@@ -8,30 +9,41 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname
-  if (path.startsWith('/api/public')) {
-    return NextResponse.next()
-  }
-
-  if (path.startsWith('/api')) {
-    const authorizationHeader = request.headers.get('authorization')
-    if (!authorizationHeader) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    // Skip authentication for public api
+    const path = request.nextUrl.pathname
+    if (path.startsWith('/api/public')) {
+      return NextResponse.next()
     }
 
-    const token = authorizationHeader.replace('Bearer ', '')
-    try {
-      const { error } = await supabase.auth.getUser(token)
-      if (error) {
+    if (path.startsWith('/api')) {
+      // If Authorization header is present, validate it first
+      const auth_header = request.headers.get('authorization')
+      if (auth_header) {
+        const sign = auth_header.replace('Bearer ', '')
+        const { data: user_data } = await supabase.auth.getUser(sign)
+        if (user_data.user) {
+          return NextResponse.next()
+        }
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
-      return NextResponse.next()
-    } catch (error) {
+
+      // If Authorization header does not exist, get token from cookie
+      const cookie = cookies()
+      const sign = cookie.get('sign')
+      if (!sign) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const { data: user_data } = await supabase.auth.getUser(sign.value)
+      if (user_data.user) {
+        return NextResponse.next()
+      }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    return NextResponse.next()
+  } catch (e: any) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 500 })
   }
-
-  return NextResponse.next()
 }
 
 export const config = {

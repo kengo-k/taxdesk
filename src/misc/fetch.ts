@@ -1,8 +1,8 @@
+import Cookies from 'js-cookie'
+
 import { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit'
 
 import { appActions } from '@/store/app'
-
-import { AUTH_KEY } from '@/constants/storage'
 
 export const error_handler = (
   dispatch: ThunkDispatch<unknown, unknown, UnknownAction>,
@@ -26,11 +26,12 @@ export async function fetchWithAuth(
   _error_handler: ReturnType<typeof error_handler>,
   options: RequestInit = {},
 ): Promise<any> {
-  const token = localStorage.getItem(AUTH_KEY)
-  if (token) {
+  // Cookie is httpOnly, so Authorization header is never sent
+  const sign = Cookies.get('sign')
+  if (sign) {
     options.headers = {
       ...options.headers,
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${sign}`,
     }
   }
 

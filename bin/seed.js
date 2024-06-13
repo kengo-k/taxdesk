@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const fs = require('fs')
 const path = require('path')
 const { execSync } = require('child_process')
@@ -29,13 +30,11 @@ function createClient() {
     process.env.POSTGRES_DB,
   ]
 
-  /* eslint-disable no-console */
   console.log('user:', user)
   console.log('password:', password)
   console.log('host:', host)
   console.log('port:', port)
   console.log('database:', db)
-  /* eslint-enable no-console */
 
   process.env.PGPASSWORD = password
   return function (statement) {
