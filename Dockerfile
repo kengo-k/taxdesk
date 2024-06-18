@@ -6,6 +6,6 @@ RUN apt-get update && apt-get install -y postgresql-client
 
 COPY . .
 
-RUN npm ci
+RUN npm ci && npx prisma generate
 
 CMD ["/bin/bash"]
