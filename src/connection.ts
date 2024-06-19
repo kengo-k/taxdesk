@@ -11,6 +11,8 @@ class _ConnectionSetting {
   }
   public getDatabaseURL() {
     const { user, password, host, port, database } = this.get()
+    console.log(`user: ${user}`)
+    console.log(`env: ${process.env.NODE_ENV}`)
     return `postgresql://${user}:${password}@${host}:${port}/${database}`
   }
 }
