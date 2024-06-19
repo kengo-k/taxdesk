@@ -9,6 +9,8 @@ import {
 import { getDefault } from '@/constants/cache'
 import { Factory } from '@/dicontainer'
 
+export const dynamic = 'force-dynamic'
+
 const cache = getDefault()
 export const revalidate = cache.revalidate
 

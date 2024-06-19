@@ -12,6 +12,8 @@ import { REQUEST_ERROR, RESTORE_ERROR } from '@/constants/error'
 import { isAWSError } from '@/misc/aws'
 import { ApiResponse } from '@/misc/types'
 
+export const dynamic = 'force-dynamic'
+
 const cache = getDefault()
 export const revalidate = cache.revalidate
 
