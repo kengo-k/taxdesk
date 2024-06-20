@@ -8,4 +8,6 @@ COPY . .
 
 RUN npm ci && npx prisma generate && npm run build
 
-CMD ["/bin/bash"]
+EXPOSE 3000
+
+CMD ["npm", "start"]
