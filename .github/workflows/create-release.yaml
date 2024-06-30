@@ -1,6 +1,10 @@
 name: Create release tag
 
 on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'release/**'
   push:
     branches:
       - 'release/**'
