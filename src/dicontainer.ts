@@ -10,6 +10,7 @@ let prisma = getConnection()
 
 function getConnection(): PrismaClient {
   let prisma: PrismaClient
+  console.log(`databaseurl: ${process.env.DATABASE_URL}`)
   if (process.env.NODE_ENV === 'production') {
     prisma = new PrismaClient()
   } else {
