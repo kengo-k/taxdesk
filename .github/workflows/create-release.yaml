@@ -44,3 +44,5 @@ jobs:
           git config user.email github-actions@github.com
           git tag ${{ steps.get_version.outputs.VERSION }}
           git push origin ${{ steps.get_version.outputs.VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
