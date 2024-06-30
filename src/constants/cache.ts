@@ -8,7 +8,7 @@ export function getDefault(): CacheSettings {
     revalidate: 60,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=60',
+      'Cache-Control': 'no-store, max-age=0',
     },
   }
 }

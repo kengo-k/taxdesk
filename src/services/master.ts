@@ -65,7 +65,7 @@ export class MasterServiceImpl implements MasterService {
             left join journals j on
               (s.saimoku_cd = j.karikata_cd or s.saimoku_cd = j.kasikata_cd)
               and j.nendo = ${nendo ?? '-'}
-      )
+      ) as saimoku
     group by
       saimoku_cd
     order by

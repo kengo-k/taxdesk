@@ -2,14 +2,11 @@ import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { getSupabaseClient } from '@/misc/supabase'
 
 export async function middleware(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient()
     // Skip authentication for public api
     const path = request.nextUrl.pathname
     if (path.startsWith('/api/public')) {

@@ -1,16 +1,12 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createClient } from '@supabase/supabase-js'
-
 import { AUTH_ERROR, REQUEST_ERROR } from '@/constants/error'
+import { getSupabaseClient } from '@/misc/supabase'
 import { ApiResponse } from '@/misc/types'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
-
 export async function POST(request: NextRequest) {
+  const supabase = getSupabaseClient()
   const { code, email, password } = await request.json()
   if (!code || !email || !password) {
     return NextResponse.json(ApiResponse.failureWithAppError(REQUEST_ERROR), {
