@@ -1,0 +1,42 @@
+name: Create release tag
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Read VERSION file
+        id: get_version
+        run: echo "::set-output name=VERSION::$(cat VERSION)"
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "::set-output name=exists::true"
+          else
+            echo "::set-output name=exists::false"
+          fi
+
+      - name: Fail if tag exists
+        if: steps.check_tag.outputs.exists == 'true'
+        run: |
+          echo "Error: Tag ${{ steps.get_version.outputs.VERSION }} already exists."
+          exit 1
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag ${{ steps.get_version.outputs.VERSION }}
+          git push origin ${{ steps.get_version.outputs.VERSION }}
