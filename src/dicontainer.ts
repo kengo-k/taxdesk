@@ -2,7 +2,6 @@ import { Container } from 'inversify'
 
 import { PrismaClient } from '@prisma/client'
 
-import { ConnectionSetting } from '@/connection'
 import { JournalService, JournalServiceImpl } from '@/services/journal'
 import { LedgerService, LedgerServiceImpl } from '@/services/ledger'
 import { MasterService, MasterServiceImpl } from '@/services/master'
@@ -11,7 +10,6 @@ let prisma = getConnection()
 
 function getConnection(): PrismaClient {
   let prisma: PrismaClient
-  process.env.DATABASE_URL = ConnectionSetting.getDatabaseURL()
   if (process.env.NODE_ENV === 'production') {
     prisma = new PrismaClient()
   } else {
