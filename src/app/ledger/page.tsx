@@ -401,6 +401,21 @@ const LedgerListNewRow: FC<{
   saimoku_list: SaimokuWithSummary[]
 }> = (props) => {
   const save = () => {
+    // If all input fields are empty, end the process without doing anything.
+    let canceled = true
+    const excepts = ['date_yymm', 'nendo', 'ledger_cd']
+    const values = props.form.getValues()
+    for (const [key, value] of Object.entries(values)) {
+      if (!excepts.includes(key) && value !== '') {
+        canceled = false
+        break
+      }
+    }
+
+    if (canceled) {
+      return
+    }
+
     const { hasErrors } = props.form.validate()
     if (hasErrors) {
       return
