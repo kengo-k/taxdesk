@@ -30,8 +30,16 @@ jobs:
             echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Check if PR exists
+        id: check_pr
+        run: |
+          pr_exists=$(gh pr list --base main --head main --json number --jq 'length')
+          echo "PR_EXISTS=$pr_exists" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
       - name: Create PR from main to release
-        if: steps.check_tag.outputs.TAG_EXISTS == 'false'
+        if: steps.check_tag.outputs.TAG_EXISTS == 'false' && steps.check_pr.outputs.PR_EXISTS == '0'
         run: |
           gh pr create --base release --head main \
             --title "Release ${{ steps.version.outputs.VERSION }}" \
