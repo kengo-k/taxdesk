@@ -275,16 +275,6 @@ const LedgerList: FC<{
     })
   }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (ledger_state.last_upserted !== null) {
-      dispatch(ledgerActions.clearLastUpserted())
-      const current_values = create_form.values
-      create_form.reset()
-      create_form.setFieldValue('nendo', current_values.nendo)
-      create_form.setFieldValue('date_yymm', current_values.date_yymm)
-    }
-  }, [dispatch, ledger_state.last_upserted]) // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <div>
       <Title>
@@ -411,6 +401,21 @@ const LedgerListNewRow: FC<{
   saimoku_list: SaimokuWithSummary[]
 }> = (props) => {
   const save = () => {
+    // If all input fields are empty, end the process without doing anything.
+    let canceled = true
+    const excepts = ['date_yymm', 'nendo', 'ledger_cd']
+    const values = props.form.getValues()
+    for (const [key, value] of Object.entries(values)) {
+      if (!excepts.includes(key) && value !== '') {
+        canceled = false
+        break
+      }
+    }
+
+    if (canceled) {
+      return
+    }
+
     const { hasErrors } = props.form.validate()
     if (hasErrors) {
       return
@@ -487,7 +492,6 @@ const LedgerListNewRow: FC<{
         ],
       }),
     )
-    date_ref.current?.focus()
   }
 
   const onSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -515,6 +519,21 @@ const LedgerListNewRow: FC<{
   const date_ref = useRef<HTMLInputElement>(null)
   const counter_cd_ref = useRef<HTMLInputElement>(null)
   const note_ref = useRef<HTMLInputElement>(null)
+
+  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
+
+  useEffect(() => {
+    if (ledger_state.last_upserted !== null) {
+      dispatch(ledgerActions.clearLastUpserted())
+      const current_values = props.form.values
+      props.form.reset()
+      props.form.setFieldValue('nendo', current_values.nendo)
+      props.form.setFieldValue('date_yymm', current_values.date_yymm)
+      setTimeout(() => {
+        date_ref.current?.focus()
+      }, 0)
+    }
+  }, [dispatch, ledger_state.last_upserted, date_ref]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <tr>

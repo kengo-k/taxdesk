@@ -1,0 +1,48 @@
+name: Create Release PR on Main Merge
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'main'
+
+jobs:
+  create-release-pr:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Read VERSION file
+        id: version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists on release branch
+        id: check_tag
+        run: |
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.VERSION }}"; then
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if PR exists
+        id: check_pr
+        run: |
+          pr_exists=$(gh pr list --base main --head main --json number --jq 'length')
+          echo "PR_EXISTS=$pr_exists" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Create PR from main to release
+        if: steps.check_tag.outputs.TAG_EXISTS == 'false' && steps.check_pr.outputs.PR_EXISTS == '0'
+        run: |
+          gh pr create --base release --head main \
+            --title "Release ${{ steps.version.outputs.VERSION }}" \
+            --body "Automated PR for releasing version ${{ steps.version.outputs.VERSION }} from main to release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
