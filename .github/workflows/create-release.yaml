@@ -1,47 +1,40 @@
-name: Create release tag
+name: Create Release PR on Main Merge
 
 on:
   pull_request:
-    types: [closed]
+    types:
+      - closed
     branches:
-      - 'release'
-  push:
-    branches:
-      - 'release'
+      - 'main'
 
 jobs:
-  create-tag:
+  create-release-pr:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          token: ${{ secrets.GHCR_TOKEN }}
 
       - name: Read VERSION file
-        id: get_version
-        run: echo "::set-output name=VERSION::$(cat VERSION)"
+        id: version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_OUTPUT
 
-      - name: Check if tag exists
+      - name: Check if tag exists on release branch
         id: check_tag
         run: |
-          if git rev-parse "${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
-            echo "::set-output name=exists::true"
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ steps.version.outputs.VERSION }}"; then
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=exists::false"
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Fail if tag exists
-        if: steps.check_tag.outputs.exists == 'true'
+      - name: Create PR from main to release
+        if: steps.check_tag.outputs.TAG_EXISTS == 'false'
         run: |
-          echo "Error: Tag ${{ steps.get_version.outputs.VERSION }} already exists."
-          exit 1
-
-      - name: Create and push tag
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git tag ${{ steps.get_version.outputs.VERSION }}
-          git push origin ${{ steps.get_version.outputs.VERSION }}
+          gh pr create --base release --head main \
+            --title "Release ${{ steps.version.outputs.VERSION }}" \
+            --body "Automated PR for releasing version ${{ steps.version.outputs.VERSION }} from main to release"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
