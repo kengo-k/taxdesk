@@ -1,47 +1,24 @@
 import { kamoku_masters, nendo_masters } from '@prisma/client'
-import {
-  SerializedError,
-  createAsyncThunk,
-  createSelector,
-  createSlice,
-} from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 
 import { RootState } from '@/store'
 
 import { SaimokuWithSummary } from '@/models/master'
 
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
+import { ApiResState, initApiResState } from '@/misc/types'
 
 export interface MasterState {
-  data: {
-    nendo_list: nendo_masters[]
-    kamoku_list: kamoku_masters[]
-    saimoku_list: SaimokuWithSummary[]
-  }
-  loading: boolean
-  error: SerializedError | null
+  nendo_list: ApiResState<nendo_masters[]>
+  kamoku_list: ApiResState<kamoku_masters[]>
+  saimoku_list: ApiResState<SaimokuWithSummary[]>
 }
 
 const initialState: MasterState = {
-  data: {
-    nendo_list: [],
-    kamoku_list: [],
-    saimoku_list: [],
-  },
-  loading: true,
-  error: null,
+  nendo_list: initApiResState([]),
+  kamoku_list: initApiResState([]),
+  saimoku_list: initApiResState([]),
 }
-
-// TODO remove this api
-export const loadMasters = createAsyncThunk(
-  'masters/loadMasters',
-  async (nendo: string | undefined, { dispatch, rejectWithValue }) => {
-    return await fetchWithAuth(
-      `/api/v1/masters${nendo ? `?nendo=${nendo}` : ''}`,
-      error_handler(dispatch, rejectWithValue),
-    )
-  },
-)
 
 export const loadNendo = createAsyncThunk(
   'masters/loadNendo',
@@ -68,53 +45,49 @@ export const masterSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(loadMasters.fulfilled, (state, action) => {
-      state.loading = false
-      state.data.nendo_list = action.payload.nendo_list
-      state.data.kamoku_list = action.payload.kamoku_list
-      state.data.saimoku_list = action.payload.saimoku_list
-    })
-    builder.addCase(loadMasters.pending, (state) => {
-      state.loading = true
-    })
-    builder.addCase(loadMasters.rejected, (state, action) => {
-      state.loading = false
-    })
-
     // loadNendo
     builder.addCase(loadNendo.fulfilled, (state, action) => {
-      state.loading = false
-      state.data.nendo_list = action.payload.data
+      state.nendo_list = {
+        error: false,
+        loading: false,
+        data: action.payload.data,
+      }
     })
     builder.addCase(loadNendo.pending, (state) => {
-      state.loading = true
+      state.nendo_list.loading = true
     })
     builder.addCase(loadNendo.rejected, (state, action) => {
-      state.loading = false
+      state.nendo_list.loading = false
     })
 
     // loadSaimoku
     builder.addCase(loadSaimoku.fulfilled, (state, action) => {
-      state.loading = false
-      state.data.saimoku_list = action.payload.data
+      state.saimoku_list = {
+        error: false,
+        loading: false,
+        data: action.payload.data,
+      }
     })
     builder.addCase(loadSaimoku.pending, (state) => {
-      state.loading = true
+      state.saimoku_list.loading = true
     })
     builder.addCase(loadSaimoku.rejected, (state, action) => {
-      state.loading = false
+      state.saimoku_list.loading = false
     })
   },
 })
 
-const selectSaimokuList = (state: RootState) => state.masters.data.saimoku_list
-const selectNendoList = (state: RootState) => state.masters.data.nendo_list
+const selectSaimokuList = (state: RootState) => state.masters.saimoku_list
+const selectNendoList = (state: RootState) => state.masters.nendo_list
 
 export const selectSaimokuMap = createSelector(
   [selectSaimokuList],
   (saimoku_list) => {
     const map: Map<string, SaimokuWithSummary> = new Map()
-    for (const saimoku of saimoku_list) {
+    if (saimoku_list.error) {
+      return map
+    }
+    for (const saimoku of saimoku_list.data) {
       if (saimoku.id != null) {
         map.set(saimoku.saimoku_cd, saimoku)
       }
@@ -127,7 +100,10 @@ export const selectNendoMap = createSelector(
   [selectNendoList],
   (nendo_list) => {
     const map: Map<string, nendo_masters> = new Map()
-    for (const nendo of nendo_list) {
+    if (nendo_list.error) {
+      return map
+    }
+    for (const nendo of nendo_list.data) {
       map.set(nendo.nendo, nendo)
     }
     return map
