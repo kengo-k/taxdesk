@@ -3,6 +3,7 @@ export type ApplicationErrorCode =
   | 'AUTH_ERROR'
   | 'DUMP_ERROR'
   | 'RESTORE_ERROR'
+  | 'UNEXPECTED_ERROR'
 
 export const REQUEST_ERROR: ApplicationError = {
   code: 'REQUEST_ERROR',
@@ -22,6 +23,11 @@ export const DUMP_ERROR: ApplicationError = {
 export const RESTORE_ERROR: ApplicationError = {
   code: 'RESTORE_ERROR',
   message: 'Execution of restore failed.',
+}
+
+export const UNEXPECTED_ERROR: ApplicationError = {
+  code: 'UNEXPECTED_ERROR',
+  message: 'Unexpected error occured.',
 }
 
 export interface ApplicationError {
