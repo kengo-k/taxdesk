@@ -1,22 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-import { getDefault } from '@/constants/cache'
 import { Factory } from '@/dicontainer'
+import { ApiResponse, execApi } from '@/misc/types'
 
-const cache = getDefault()
-export const revalidate = cache.revalidate
+export const dynamic = 'force-dynamic'
 
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { nendo: string } },
-) {
+export const GET = execApi(async (_, params: { nendo: string }) => {
   const service = Factory.getMasterService()
   const saimoku_list = await service.selectSaimokuList(params.nendo)
-  return NextResponse.json(
-    { data: saimoku_list },
-    {
-      status: 200,
-      headers: cache.headers,
-    },
-  )
-}
+  return ApiResponse.success(saimoku_list)
+})
