@@ -2,8 +2,8 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { BackupItem } from '@/models/backup'
 
+import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
-import { ApiResState, ApiResponse, initApiResState } from '@/misc/types'
 
 export interface SettingsState {
   backup_list: ApiResState<BackupItem[]>

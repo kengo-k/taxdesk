@@ -9,8 +9,8 @@ import path from 'path'
 import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
 import { REQUEST_ERROR, RESTORE_ERROR } from '@/constants/error'
+import { ApiResponse } from '@/misc/api'
 import { isAWSError } from '@/misc/aws'
-import { ApiResponse } from '@/misc/types'
 
 export const dynamic = 'force-dynamic'
 

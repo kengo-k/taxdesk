@@ -2,8 +2,8 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { AUTH_ERROR, REQUEST_ERROR } from '@/constants/error'
+import { ApiResponse } from '@/misc/api'
 import { getSupabaseClient } from '@/misc/supabase'
-import { ApiResponse } from '@/misc/types'
 
 export async function POST(request: NextRequest) {
   const supabase = getSupabaseClient()

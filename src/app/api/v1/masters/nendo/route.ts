@@ -1,5 +1,5 @@
 import { Factory } from '@/dicontainer'
-import { ApiResponse, execApi } from '@/misc/types'
+import { ApiResponse, execApi } from '@/misc/api'
 
 export const dynamic = 'force-dynamic'
 
