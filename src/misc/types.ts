@@ -1,4 +1,7 @@
-import { ApplicationError } from '@/constants/error'
+import { NextRequest, NextResponse } from 'next/server'
+
+import { getDefault } from '@/constants/cache'
+import { ApplicationError, UNEXPECTED_ERROR } from '@/constants/error'
 
 export type Nullable<T> = { [K in keyof T]: T[K] | null }
 export type NullableOptional<T> = Partial<Nullable<T>>
@@ -47,5 +50,37 @@ export function initApiResState<T>(init: T): ApiResState<T> {
     data: init,
     error: false,
     loading: false,
+  }
+}
+
+type ApiMainResponse = ApiResponse<any> | [ApiResponse<any>, ResponseInit]
+
+const cache = getDefault()
+export const execApi = (
+  main: (request: NextRequest, params?: any) => Promise<ApiMainResponse>,
+) => {
+  return async (
+    request: NextRequest,
+    { params }: { params: any },
+  ): Promise<NextResponse<any>> => {
+    try {
+      const response = await main(request, params)
+      if (response instanceof Array) {
+        return NextResponse.json(response[0], response[1])
+      } else {
+        return NextResponse.json(response, {
+          status: 200,
+          headers: cache.headers,
+        })
+      }
+    } catch {
+      return NextResponse.json(
+        ApiResponse.failureWithAppError(UNEXPECTED_ERROR),
+        {
+          status: 500,
+          headers: cache.headers,
+        },
+      )
+    }
   }
 }
