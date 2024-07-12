@@ -5,8 +5,8 @@ import { RootState } from '@/store'
 
 import { SaimokuWithSummary } from '@/models/master'
 
+import { ApiResState, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
-import { ApiResState, initApiResState } from '@/misc/types'
 
 export interface MasterState {
   nendo_list: ApiResState<nendo_masters[]>
@@ -54,10 +54,20 @@ export const masterSlice = createSlice({
       }
     })
     builder.addCase(loadNendo.pending, (state) => {
-      state.nendo_list.loading = true
+      state.nendo_list = {
+        error: false,
+        loading: true,
+        data: [],
+      }
     })
     builder.addCase(loadNendo.rejected, (state, action) => {
-      state.nendo_list.loading = false
+      state.nendo_list = {
+        error: true,
+        loading: false,
+        message: '',
+        errorCode: null,
+        externalErrorCode: null,
+      }
     })
 
     // loadSaimoku
