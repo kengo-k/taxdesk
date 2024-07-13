@@ -1,15 +1,11 @@
-import { NextResponse } from 'next/server'
-
 import AWS from 'aws-sdk'
 import { exec } from 'child_process'
 import { DateTime } from 'luxon'
 
-import { BackupItem } from '@/models/backup'
-
 import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
 import { DUMP_ERROR, UNEXPECTED_ERROR } from '@/constants/error'
-import { ApiResponse } from '@/misc/api'
+import { ApiResponse, execApi } from '@/misc/api'
 import { isAWSError } from '@/misc/aws'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +20,7 @@ AWS.config.update({
 const s3 = new AWS.S3()
 const Bucket = process.env.BACKUP_BUCKETS ?? ''
 
-export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
+export const GET = execApi(async () => {
   let backup_list: AWS.S3.ObjectList | undefined = undefined
 
   // Get list of backup objects from s3
@@ -38,54 +34,38 @@ export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(UNEXPECTED_ERROR())
   }
 
   if (backup_list === undefined) {
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
-      status: 500,
-    })
+    return ApiResponse.failure(UNEXPECTED_ERROR())
   }
 
   try {
-    return NextResponse.json(
-      ApiResponse.success(
-        backup_list.map((obj) => {
-          if (!obj.Key || !obj.Size || !obj.LastModified) {
-            throw new Error()
-          }
-          return {
-            key: obj.Key,
-            size: obj.Size,
-            createdAt: obj.LastModified.toISOString(),
-          }
-        }),
-      ),
-      {
-        status: 200,
-        headers: cache.headers,
-      },
+    return ApiResponse.success(
+      backup_list.map((obj) => {
+        if (!obj.Key || !obj.Size || !obj.LastModified) {
+          throw new Error()
+        }
+        return {
+          key: obj.Key,
+          size: obj.Size,
+          createdAt: obj.LastModified.toISOString(),
+        }
+      }),
     )
   } catch {
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
-      status: 500,
-    })
+    return ApiResponse.failure(UNEXPECTED_ERROR())
   }
-}
+})
 
-export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
+export const POST = execApi(async () => {
   let backups: string | null = null
 
   try {
     backups = await dumpDatabase()
   } catch (e: any) {
-    return NextResponse.json(ApiResponse.failure(DUMP_ERROR()), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(DUMP_ERROR())
   }
 
   const params = {
@@ -96,10 +76,7 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
 
   try {
     await s3.upload(params).promise()
-    return NextResponse.json(ApiResponse.success(null), {
-      status: 200,
-      headers: cache.headers,
-    })
+    return ApiResponse.success(null)
   } catch (e) {
     let message = 'Upload failed'
     let code = null
@@ -107,12 +84,9 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(UNEXPECTED_ERROR())
   }
-}
+})
 
 function dumpDatabase(): Promise<string> {
   const { user, password, host, port, database } = ConnectionSetting.get()
