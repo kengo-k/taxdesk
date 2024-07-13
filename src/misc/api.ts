@@ -12,8 +12,9 @@ export type ApiResponse<T> =
   | {
       error: true
       message: string
-      errorCode: string | null // Error code generated inside the application
+      errorCode: ApplicationError | null // Error code generated inside the application
       externalErrorCode: string | null // Error codes received from external systems
+      errorDetail: Error | null
     }
 
 // Constructor for ApiResponse
@@ -23,17 +24,19 @@ export const ApiResponse = {
   },
   failure(
     message: string,
-    errorCode: string | null = null,
+    errorCode: ApplicationError | null = null,
     externalErrorCode: string | null = null,
+    errorDetail: Error | null = null,
   ): ApiResponse<never> {
-    return { error: true, message, errorCode, externalErrorCode }
+    return { error: true, message, errorCode, externalErrorCode, errorDetail }
   },
   failureWithAppError(apperror: ApplicationError): ApiResponse<never> {
     return {
       error: true,
       message: apperror.message,
-      errorCode: apperror.code,
+      errorCode: apperror,
       externalErrorCode: null,
+      errorDetail: null,
     }
   },
 } as const
@@ -64,8 +67,12 @@ export const execApi = (
       if (response instanceof Array) {
         return NextResponse.json(response[0], response[1])
       } else {
+        let status = 200
+        if (response.error && response.errorCode) {
+          status = response.errorCode.statusCode
+        }
         return NextResponse.json(response, {
-          status: 200,
+          status,
           headers: cache.headers,
         })
       }

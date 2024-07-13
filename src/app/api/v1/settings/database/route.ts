@@ -29,7 +29,7 @@ export async function PUT(request: NextRequest) {
   const backup_id = searchParams.get('backup_id')
   if (backup_id === null) {
     return NextResponse.json(
-      ApiResponse.failure('backup_id is required', REQUEST_ERROR.code),
+      ApiResponse.failure('backup_id is required', REQUEST_ERROR),
       {
         status: 500,
         headers: cache.headers,

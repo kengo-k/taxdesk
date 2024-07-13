@@ -38,29 +38,26 @@ export const GET = execApi(
   },
 )
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { nendo: string; ledger_cd: string } },
-) {
-  const service = Factory.getLedgerService()
-  const body = await request.json()
-
-  const create_request = { ...params, ...body }
-  const is_valid = isValidLedgerCreateRequest(create_request)
-  if (is_valid.success) {
-    const response = await service.createLedger(is_valid.data)
-    return NextResponse.json(response, {
-      status: 200,
-      headers: cache.headers,
-    })
-  } else {
-    const error = is_valid.error
-    return NextResponse.json(
-      { message: 'Missing require fields', error },
-      { status: 400 },
-    )
-  }
-}
+export const POST = execApi(
+  async (request, params: { nendo: string; ledger_cd: string }) => {
+    const service = Factory.getLedgerService()
+    const body = await request.json()
+    const create_request = { ...params, ...body }
+    const is_valid = isValidLedgerCreateRequest(create_request)
+    if (is_valid.success) {
+      const last_upserted = await service.createLedger(is_valid.data)
+      return ApiResponse.success(last_upserted)
+    } else {
+      const error = is_valid.error
+      return ApiResponse.failure(
+        'Missing require fields',
+        REQUEST_ERROR,
+        null,
+        error,
+      )
+    }
+  },
+)
 
 export async function PUT(
   request: NextRequest,

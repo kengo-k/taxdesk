@@ -67,6 +67,7 @@ export const masterSlice = createSlice({
         message: '',
         errorCode: null,
         externalErrorCode: null,
+        errorDetail: null,
       }
     })
 

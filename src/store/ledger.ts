@@ -109,6 +109,7 @@ export const ledgerSlice = createSlice({
         message: '',
         errorCode: null,
         externalErrorCode: null,
+        errorDetail: null,
       }
     })
 
@@ -137,6 +138,7 @@ export const ledgerSlice = createSlice({
         message: '',
         errorCode: null,
         externalErrorCode: null,
+        errorDetail: null,
       }
     })
   },
