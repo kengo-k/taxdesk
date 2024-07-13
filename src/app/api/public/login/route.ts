@@ -2,15 +2,15 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 import { AUTH_ERROR, REQUEST_ERROR } from '@/constants/error'
+import { ApiResponse } from '@/misc/api'
 import { getSupabaseClient } from '@/misc/supabase'
-import { ApiResponse } from '@/misc/types'
 
 export async function POST(request: NextRequest) {
   const supabase = getSupabaseClient()
   const { email, password } = await request.json()
 
   if (!email || !password) {
-    return NextResponse.json(ApiResponse.failureWithAppError(REQUEST_ERROR), {
+    return NextResponse.json(ApiResponse.failure(REQUEST_ERROR()), {
       status: 400,
     })
   }
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (error) {
-      return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+      return NextResponse.json(ApiResponse.failure(AUTH_ERROR()), {
         status: 401,
       })
     }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
     if (mfaError) {
-      return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+      return NextResponse.json(ApiResponse.failure(AUTH_ERROR()), {
         status: 401,
       })
     }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         }),
       )
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

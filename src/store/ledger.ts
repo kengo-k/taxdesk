@@ -1,10 +1,5 @@
 import { journals } from '@prisma/client'
-import {
-  PayloadAction,
-  SerializedError,
-  createAsyncThunk,
-  createSlice,
-} from '@reduxjs/toolkit'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { NextActions } from '@/store'
 
@@ -15,31 +10,22 @@ import {
   LedgerUpdateRequest,
 } from '@/models/ledger'
 
+import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
 import { createQueryString } from '@/misc/object'
 
 export interface LedgerState {
-  data: {
-    last_upserted: journals | null
-    ledger_list: LedgerSearchResponse[]
-    all_count: number
-  }
-  loading: boolean
-  error: SerializedError | null
+  last_upserted: ApiResState<journals | null>
+  ledger_list: ApiResState<{ all_count: number; list: LedgerSearchResponse[] }>
 }
 
 const initialState: LedgerState = {
-  data: {
-    last_upserted: null,
-    ledger_list: [],
-    all_count: 0,
-  },
-  loading: true,
-  error: null,
+  last_upserted: initApiResState(null),
+  ledger_list: initApiResState({ all_count: 0, list: [] }),
 }
 
 export const loadLedgerList = createAsyncThunk<
-  { all_count: number; list: LedgerSearchResponse[] },
+  ApiResponse<{ all_count: number; list: LedgerSearchResponse[] }>,
   LedgerSearchRequest
 >('ledger/loadLedgerList', async (request, { dispatch, rejectWithValue }) => {
   const qs = createQueryString(request, ['month', 'page_no', 'page_size'])
@@ -50,7 +36,7 @@ export const loadLedgerList = createAsyncThunk<
 })
 
 export const createLedger = createAsyncThunk<
-  journals,
+  ApiResponse<journals>,
   { request: LedgerCreateRequest; next: NextActions }
 >('ledger/create', async ({ request, next }, { dispatch, rejectWithValue }) => {
   const { nendo, ledger_cd, ...requestBody } = request
@@ -91,44 +77,33 @@ export const ledgerSlice = createSlice({
   name: 'ledger',
   initialState,
   reducers: {
-    setLedgerList: (
-      state,
-      action: PayloadAction<{
-        ledger_list: LedgerSearchResponse[]
-        all_count: number
-      }>,
-    ) => {
-      state.data.all_count = action.payload.all_count
-      state.data.ledger_list = action.payload.ledger_list
-    },
     clearLastUpserted: (state) => {
-      state.data.last_upserted = null
+      if (!state.last_upserted.error) {
+        state.last_upserted.data = null
+      }
     },
   },
   extraReducers: (builder) => {
     builder.addCase(loadLedgerList.fulfilled, (state, action) => {
-      state.loading = false
-      state.data.ledger_list = action.payload.list
-      state.data.all_count = action.payload.all_count
+      state.ledger_list = {
+        ...action.payload,
+        loading: false,
+      }
     })
+
     builder.addCase(loadLedgerList.pending, (state) => {
-      state.loading = true
-    })
-    builder.addCase(loadLedgerList.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.error
+      state.ledger_list.loading = true
     })
 
     builder.addCase(createLedger.fulfilled, (state, action) => {
-      state.loading = false
-      state.data.last_upserted = action.payload
+      state.last_upserted = {
+        ...action.payload,
+        loading: false,
+      }
     })
+
     builder.addCase(createLedger.pending, (state) => {
-      state.loading = true
-    })
-    builder.addCase(createLedger.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.error
+      state.last_upserted.loading = true
     })
   },
 })

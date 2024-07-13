@@ -2,8 +2,8 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { BackupItem } from '@/models/backup'
 
+import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
-import { ApiResState, ApiResponse, initApiResState } from '@/misc/types'
 
 export interface SettingsState {
   backup_list: ApiResState<BackupItem[]>
@@ -66,11 +66,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(loadBackupList.pending, (state) => {
       state.backup_list.loading = true
-      state.backup_list.error = false
-    })
-    builder.addCase(loadBackupList.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.backup_list = { ...payload, loading: false }
     })
 
     // createBackup
@@ -79,11 +74,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(createBackup.pending, (state) => {
       state.create_backup.loading = true
-      state.create_backup.error = false
-    })
-    builder.addCase(createBackup.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.create_backup = { ...payload, loading: false }
     })
 
     // restoreFromBackup
@@ -92,11 +82,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(restoreFromBackup.pending, (state) => {
       state.restore_from_backup.loading = true
-      state.restore_from_backup.error = false
-    })
-    builder.addCase(restoreFromBackup.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.restore_from_backup = { ...payload, loading: false }
     })
   },
 })

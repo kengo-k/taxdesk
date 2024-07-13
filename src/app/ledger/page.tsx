@@ -3,13 +3,13 @@
 import { FC, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-
 import {
   Alert,
   Autocomplete,
+  Box,
   Button,
   ComboboxItem,
+  LoadingOverlay,
   Pagination,
   Select,
   Text,
@@ -62,28 +62,36 @@ import {
 export default function Page() {
   const dispatch = useDispatch<AppDispatch>()
 
-  const appState = useSelector((state: RootState) => state.app)
-  const { data: masters } = useSelector((state: RootState) => state.masters)
+  const app_state = useSelector((state: RootState) => state.app)
+  const masters_state = useSelector((state: RootState) => state.masters)
 
   const nendo_list = useMemo(() => {
-    const list = masters.nendo_list.map((n) => {
+    const init = [{ value: '', label: 'Not selected' }]
+    if (masters_state.nendo_list.error) {
+      return init
+    }
+    const nendo_list = masters_state.nendo_list.data.map((n) => {
       return {
         value: n.nendo,
         label: n.nendo,
       }
     })
-    return [{ value: '', label: 'Not selected' }, ...list]
-  }, [masters.nendo_list])
+    return [...init, ...nendo_list]
+  }, [masters_state.nendo_list])
 
-  const saimoku_list = useMemo(() => {
-    const list = masters.saimoku_list.map((s) => {
+  const saimoku_list_options = useMemo(() => {
+    const init = [{ value: '', label: 'Not Selected' }]
+    if (masters_state.saimoku_list.error) {
+      return init
+    }
+    const saimoku_list = masters_state.saimoku_list.data.map((s) => {
       return {
         value: `${s.saimoku_cd}`,
         label: `${s.saimoku_cd}: ${s.saimoku_full_name} (${s.count})`,
       }
     })
-    return [{ value: '', label: 'Not Selected' }, ...list]
-  }, [masters.saimoku_list])
+    return [...init, ...saimoku_list]
+  }, [masters_state.saimoku_list])
 
   const month_list = useMemo(() => {
     const list = [] as { value: string; label: string }[]
@@ -98,11 +106,11 @@ export default function Page() {
 
   const nendo_map = useSelector(selectNendoMap)
   const nendo = Nendo.create(
-    appState.selected_nendo ?? '',
+    app_state.selected_nendo ?? '',
     Array.from(nendo_map.keys()),
   )
 
-  const [_, month] = Month.create(appState.selected_month)
+  const [_, month] = Month.create(app_state.selected_month)
 
   const page_no = PageNo.create(1)
   const page_size = PageSize.create(10)
@@ -112,55 +120,67 @@ export default function Page() {
   }, [dispatch])
 
   useEffect(() => {
-    if (appState.selected_nendo) {
-      dispatch(loadSaimoku(appState.selected_nendo))
+    if (app_state.selected_nendo) {
+      dispatch(loadSaimoku(app_state.selected_nendo))
     }
-  }, [dispatch, appState.selected_nendo])
+  }, [dispatch, app_state.selected_nendo])
 
   return (
     <>
-      <Select
-        value={appState.selected_nendo ?? ''}
-        data={nendo_list}
-        label="Fiscal Year"
-        onChange={(value) => {
-          if (value !== null) {
-            dispatch(appActions.setNendo(value === '' ? undefined : value))
+      <Box pos={'relative'} w={500}>
+        <LoadingOverlay
+          visible={
+            masters_state.nendo_list.loading ||
+            masters_state.saimoku_list.loading
           }
-        }}
-        w={150}
-        withAsterisk
-      />
-      <Select
-        value={appState.selected_ledger_cd ?? ''}
-        data={saimoku_list}
-        label="Account Code"
-        onChange={(saimoku_cd) => {
-          if (saimoku_cd === null) {
-            return
-          }
-          const ledger_cd = saimoku_cd === '' ? undefined : saimoku_cd
-          dispatch(appActions.setLedgerCd(ledger_cd))
-        }}
-        w={300}
-        withAsterisk
-      />
-      <Select
-        value={appState.selected_month ?? ''}
-        data={month_list}
-        label={'Month'}
-        onChange={(month) => {
-          if (month === null) {
-            return
-          }
-          dispatch(appActions.setMonth(month === '' ? undefined : month))
-        }}
-        w={150}
-      />
-      {nendo && appState.selected_ledger_cd ? (
+          zIndex={1000}
+          overlayProps={{ radius: 'sm' }}
+          loaderProps={{ type: 'dots' }}
+        />
+        <Select
+          value={app_state.selected_nendo ?? ''}
+          data={nendo_list}
+          label="Fiscal Year"
+          onChange={(value) => {
+            if (value !== null) {
+              dispatch(appActions.setNendo(value === '' ? undefined : value))
+            }
+          }}
+          w={150}
+          withAsterisk
+        />
+
+        <Select
+          value={app_state.selected_ledger_cd ?? ''}
+          data={saimoku_list_options}
+          label="Account Code"
+          onChange={(saimoku_cd) => {
+            if (saimoku_cd === null) {
+              return
+            }
+            const ledger_cd = saimoku_cd === '' ? undefined : saimoku_cd
+            dispatch(appActions.setLedgerCd(ledger_cd))
+          }}
+          w={300}
+          withAsterisk
+        />
+        <Select
+          value={app_state.selected_month ?? ''}
+          data={month_list}
+          label={'Month'}
+          onChange={(month) => {
+            if (month === null) {
+              return
+            }
+            dispatch(appActions.setMonth(month === '' ? undefined : month))
+          }}
+          w={150}
+        />
+      </Box>
+      {nendo && app_state.selected_ledger_cd ? (
         <LedgerList
           nendo={nendo}
-          ledger_cd={appState.selected_ledger_cd}
+          ledger_cd={app_state.selected_ledger_cd}
           month={month}
           page_no={page_no}
           page_size={page_size}
@@ -177,21 +197,30 @@ const LedgerList: FC<{
   page_no: PageNo
   page_size: PageSize
 }> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const search_params = useSearchParams()
   const dispatch = useDispatch<AppDispatch>()
 
-  const { data: masters_state } = useSelector(
-    (state: RootState) => state.masters,
-  )
-  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
-
-  const appState = useSelector((state: RootState) => state.app)
-
+  const masters_state = useSelector((state: RootState) => state.masters)
+  const ledger_state = useSelector((state: RootState) => state.ledger)
+  const app_state = useSelector((state: RootState) => state.app)
   const saimoku_map = useSelector(selectSaimokuMap)
+
+  const [ledger_error, ledger_list, ledger_count] = useMemo(() => {
+    if (ledger_state.ledger_list.error) {
+      return [true, [], 0]
+    } else {
+      return [
+        false,
+        ledger_state.ledger_list.data.list,
+        ledger_state.ledger_list.data.all_count,
+      ]
+    }
+  }, [ledger_state])
+
   const saimoku_list = useMemo(() => {
-    return masters_state.saimoku_list.filter(
+    if (masters_state.saimoku_list.error) {
+      return []
+    }
+    return masters_state.saimoku_list.data.filter(
       (saimoku) => saimoku.saimoku_cd !== ledger_cd,
     )
   }, [masters_state.saimoku_list, ledger_cd])
@@ -222,8 +251,8 @@ const LedgerList: FC<{
         nendo: toNendoString(nendo),
         ledger_cd,
         month: toMonthString(month),
-        page_no: appState.page_no,
-        page_size: appState.page_size,
+        page_no: app_state.page_no,
+        page_size: app_state.page_size,
       }),
     )
     if (month) {
@@ -234,7 +263,7 @@ const LedgerList: FC<{
     create_form.setFieldValue('nendo', toNendoString(nendo))
   }, [dispatch, ledger_cd, month, nendo, page_no, page_size]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const page_count = getPageCount(ledger_state.all_count, page_size)
+  const page_count = getPageCount(ledger_count, page_size)
 
   const update_form = useForm<LedgerUpdateRequestForm>({
     initialValues: {
@@ -248,7 +277,7 @@ const LedgerList: FC<{
       return
     }
     update_form.setValues({
-      items: ledger_state.ledger_list.map((item) => {
+      items: ledger_list.map((item) => {
         const date = JournalDate.create(item.date)
         const date_full = date === null ? '' : date.format('yyyy/MM/dd')
         const date_yymm = date === null ? '' : date.format('yyyy/MM')
@@ -318,7 +347,7 @@ const LedgerList: FC<{
       )}
       <div>
         <Pagination
-          value={appState.page_no}
+          value={app_state.page_no}
           total={page_count}
           siblings={2}
           onChange={(page_no) => {
@@ -520,10 +549,13 @@ const LedgerListNewRow: FC<{
   const counter_cd_ref = useRef<HTMLInputElement>(null)
   const note_ref = useRef<HTMLInputElement>(null)
 
-  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
+  const ledger_state = useSelector((state: RootState) => state.ledger)
 
   useEffect(() => {
-    if (ledger_state.last_upserted !== null) {
+    if (
+      !ledger_state.last_upserted.error &&
+      ledger_state.last_upserted.data !== null
+    ) {
       dispatch(ledgerActions.clearLastUpserted())
       const current_values = props.form.values
       props.form.reset()
