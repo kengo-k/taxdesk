@@ -1,52 +1,25 @@
 import { NextActions } from '.'
 
 import { journals } from '@prisma/client'
-import {
-  SerializedError,
-  createAsyncThunk,
-  createSlice,
-} from '@reduxjs/toolkit'
+import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { JournalDeleteRequest } from '@/models/journal'
 
+import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
 
 export interface JournalState {
-  data: {
-    journal_list: journals[]
-    all_count: number
-  }
-  loading: boolean
-  error: SerializedError | null
+  last_deleted: ApiResState<journals | null>
+  delete_journal_id: number | null
 }
 
 const initialState: JournalState = {
-  data: {
-    journal_list: [],
-    all_count: 0,
-  },
-  loading: true,
-  error: null,
+  last_deleted: initApiResState(null),
+  delete_journal_id: null,
 }
 
-export const updateJournal = createAsyncThunk<
-  void,
-  {
-    id: number
-    journal: Partial<Omit<journals, 'id'>>
-  }
->('journal/update', async (request, { dispatch, rejectWithValue }) => {
-  return await fetchWithAuth(
-    `/api/v1/journal/${request.id}`,
-    error_handler(dispatch, rejectWithValue),
-    {
-      method: 'PUT',
-    },
-  )
-})
-
 export const deleteJournal = createAsyncThunk<
-  void,
+  ApiResponse<journals | null>,
   {
     request: JournalDeleteRequest
     next: NextActions
@@ -62,7 +35,7 @@ export const deleteJournal = createAsyncThunk<
       },
     )
     for (const action of next) {
-      return dispatch(action)
+      dispatch(action)
     }
     return json
   },
@@ -71,17 +44,20 @@ export const deleteJournal = createAsyncThunk<
 export const journalSlice = createSlice({
   name: 'journal',
   initialState,
-  reducers: {},
+  reducers: {
+    setDeleteJournalId: (state, action: PayloadAction<number | null>) => {
+      state.delete_journal_id = action.payload
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(deleteJournal.fulfilled, (state, action) => {
-      state.loading = false
+      state.last_deleted = {
+        ...action.payload,
+        loading: false,
+      }
     })
     builder.addCase(deleteJournal.pending, (state) => {
-      state.loading = true
-    })
-    builder.addCase(deleteJournal.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.error
+      state.last_deleted.loading = true
     })
   },
 })
