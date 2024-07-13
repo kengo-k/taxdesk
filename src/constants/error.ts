@@ -3,6 +3,7 @@ export type ApplicationErrorCode =
   | 'AUTH_ERROR'
   | 'DUMP_ERROR'
   | 'RESTORE_ERROR'
+  | 'ENVIRONMENT_ERROR'
   | 'UNEXPECTED_ERROR'
 
 export const REQUEST_ERROR = (
@@ -33,6 +34,13 @@ export const RESTORE_ERROR = (
   message: message ?? 'Data restore failed.',
 })
 
+export const ENVIRONMENT_ERROR = (
+  message: string | null = null,
+): ApplicationError => ({
+  code: 'ENVIRONMENT_ERROR',
+  message: message ?? 'Environment variables is undefined.',
+})
+
 export const UNEXPECTED_ERROR = (
   message: string | null = null,
 ): ApplicationError => ({
@@ -50,5 +58,6 @@ export const StatusCodeMapping: { [key in ApplicationErrorCode]: number } = {
   AUTH_ERROR: 401,
   DUMP_ERROR: 500,
   RESTORE_ERROR: 500,
+  ENVIRONMENT_ERROR: 500,
   UNEXPECTED_ERROR: 500,
 }
