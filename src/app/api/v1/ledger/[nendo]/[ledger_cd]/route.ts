@@ -26,7 +26,7 @@ export const GET = execApi(
     if (page_no != null) {
       const page_num = Number(page_no)
       if (isNaN(page_num)) {
-        return ApiResponse.failure(REQUEST_ERROR)
+        return ApiResponse.failure(REQUEST_ERROR())
       }
       search_request.page_no = page_num
     }
@@ -46,7 +46,7 @@ export const POST = execApi(
       const last_upserted = await service.createLedger(is_valid.data)
       return ApiResponse.success(last_upserted)
     } else {
-      return ApiResponse.failure(REQUEST_ERROR, is_valid.error)
+      return ApiResponse.failure(REQUEST_ERROR(), is_valid.error)
     }
   },
 )
@@ -62,7 +62,7 @@ export const PUT = execApi(
       const last_upserted = await service.updateLedger(is_valid.data)
       return ApiResponse.success(last_upserted)
     } else {
-      return ApiResponse.failure(REQUEST_ERROR, is_valid.error)
+      return ApiResponse.failure(REQUEST_ERROR(), is_valid.error)
     }
   },
 )

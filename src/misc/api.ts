@@ -67,7 +67,7 @@ export const execApi = (
         })
       }
     } catch {
-      return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+      return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
         status: 500,
         headers: cache.headers,
       })

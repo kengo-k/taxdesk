@@ -38,14 +38,14 @@ export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
       status: 500,
       headers: cache.headers,
     })
   }
 
   if (backup_list === undefined) {
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
       status: 500,
     })
   }
@@ -70,7 +70,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
       },
     )
   } catch {
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
       status: 500,
     })
   }
@@ -82,7 +82,7 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
   try {
     backups = await dumpDatabase()
   } catch (e: any) {
-    return NextResponse.json(ApiResponse.failure(DUMP_ERROR), {
+    return NextResponse.json(ApiResponse.failure(DUMP_ERROR()), {
       status: 500,
       headers: cache.headers,
     })
@@ -107,7 +107,7 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR()), {
       status: 500,
       headers: cache.headers,
     })

@@ -12,7 +12,7 @@ export const DELETE = execApi(
   async (_: NextRequest, params: { nendo: string; journal_id: number }) => {
     const journal_id = numeral(params.journal_id).value()
     if (journal_id === null) {
-      return ApiResponse.failure(REQUEST_ERROR)
+      return ApiResponse.failure(REQUEST_ERROR())
     }
     const service = Factory.getJournalService()
     const last_deleted = await service.deleteById(journal_id)

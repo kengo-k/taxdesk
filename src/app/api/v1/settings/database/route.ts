@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server'
-
 import AWS from 'aws-sdk'
 import { exec } from 'child_process'
 import fs from 'fs'
@@ -7,19 +5,10 @@ import os from 'os'
 import path from 'path'
 
 import { ConnectionSetting } from '@/connection'
-import { getDefault } from '@/constants/cache'
-import {
-  REQUEST_ERROR,
-  RESTORE_ERROR,
-  UNEXPECTED_ERROR,
-} from '@/constants/error'
-import { ApiResponse } from '@/misc/api'
-import { isAWSError } from '@/misc/aws'
+import { REQUEST_ERROR, RESTORE_ERROR } from '@/constants/error'
+import { ApiResponse, execApi } from '@/misc/api'
 
 export const dynamic = 'force-dynamic'
-
-const cache = getDefault()
-export const revalidate = cache.revalidate
 
 AWS.config.update({
   region: 'ap-northeast-1',
@@ -28,14 +17,11 @@ AWS.config.update({
 const s3 = new AWS.S3()
 const Bucket = process.env.BACKUP_BUCKETS ?? ''
 
-export async function PUT(request: NextRequest) {
+export const PUT = execApi(async (request) => {
   const { searchParams } = new URL(request.url)
   const backup_id = searchParams.get('backup_id')
   if (backup_id === null) {
-    return NextResponse.json(ApiResponse.failure(REQUEST_ERROR), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(REQUEST_ERROR())
   }
   const backup_file = `tax-accounting-backup-${backup_id}.sql`
 
@@ -44,40 +30,30 @@ export async function PUT(request: NextRequest) {
   try {
     query = await getRestoreQuery(Bucket, backup_file)
   } catch (e: any) {
-    let message = 'Read from s3 failed'
-    let code = null
-    if (isAWSError(e)) {
-      message = `${message}: ${e.message}`
-      code = e.code
+    let errorDetail = null
+    if (e instanceof Error) {
+      errorDetail = e
     }
-    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(RESTORE_ERROR(), errorDetail)
   }
 
   if (query === undefined) {
-    return NextResponse.json(ApiResponse.failure(RESTORE_ERROR), {
-      status: 500,
-      headers: cache.headers,
-    })
+    return ApiResponse.failure(RESTORE_ERROR())
   }
 
   // Restore from backup query
   try {
-    await restore(query, backup_file)
+    await execRestoreQuery(query, backup_file)
   } catch (e: any) {
-    return NextResponse.json(ApiResponse.failure(RESTORE_ERROR), {
-      status: 500,
-      headers: cache.headers,
-    })
+    let errorDetail = null
+    if (e instanceof Error) {
+      errorDetail = e
+    }
+    return ApiResponse.failure(RESTORE_ERROR(), errorDetail)
   }
 
-  return NextResponse.json(ApiResponse.success('success'), {
-    status: 200,
-    headers: cache.headers,
-  })
-}
+  return ApiResponse.success('success')
+})
 
 async function getRestoreQuery(
   bucket: string,
@@ -91,7 +67,7 @@ async function getRestoreQuery(
   return data.Body?.toString('utf-8')
 }
 
-function restore(query: string, save_to: string): Promise<void> {
+function execRestoreQuery(query: string, save_to: string): Promise<void> {
   const temp_dir = os.tmpdir()
   const backup_path = path.join(temp_dir, save_to)
   fs.writeFileSync(backup_path, query)
