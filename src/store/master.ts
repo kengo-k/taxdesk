@@ -5,7 +5,7 @@ import { RootState } from '@/store'
 
 import { SaimokuWithSummary } from '@/models/master'
 
-import { ApiResState, initApiResState } from '@/misc/api'
+import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
 
 export interface MasterState {
@@ -20,7 +20,7 @@ const initialState: MasterState = {
   saimoku_list: initApiResState([]),
 }
 
-export const loadNendo = createAsyncThunk(
+export const loadNendo = createAsyncThunk<ApiResponse<nendo_masters[]>, void>(
   'masters/loadNendo',
   async (_, { dispatch, rejectWithValue }) => {
     return await fetchWithAuth(
@@ -30,7 +30,10 @@ export const loadNendo = createAsyncThunk(
   },
 )
 
-export const loadSaimoku = createAsyncThunk(
+export const loadSaimoku = createAsyncThunk<
+  ApiResponse<SaimokuWithSummary[]>,
+  string
+>(
   'masters/loadSaimokku',
   async (nendo: string, { dispatch, rejectWithValue }) => {
     return await fetchWithAuth(
@@ -48,25 +51,19 @@ export const masterSlice = createSlice({
     // loadNendo
     builder.addCase(loadNendo.fulfilled, (state, action) => {
       state.nendo_list = {
-        error: null,
         loading: false,
-        data: action.payload.data,
+        ...action.payload,
       }
     })
     builder.addCase(loadNendo.pending, (state) => {
-      state.nendo_list = {
-        error: null,
-        loading: true,
-        data: [],
-      }
+      state.nendo_list.loading = true
     })
 
     // loadSaimoku
     builder.addCase(loadSaimoku.fulfilled, (state, action) => {
       state.saimoku_list = {
-        error: null,
         loading: false,
-        data: action.payload.data,
+        ...action.payload,
       }
     })
     builder.addCase(loadSaimoku.pending, (state) => {

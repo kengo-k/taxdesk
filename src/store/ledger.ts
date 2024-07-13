@@ -92,11 +92,7 @@ export const ledgerSlice = createSlice({
     })
 
     builder.addCase(loadLedgerList.pending, (state) => {
-      state.ledger_list = {
-        error: null,
-        loading: true,
-        data: { all_count: 0, list: [] },
-      }
+      state.ledger_list.loading = true
     })
 
     builder.addCase(createLedger.fulfilled, (state, action) => {
@@ -107,11 +103,7 @@ export const ledgerSlice = createSlice({
     })
 
     builder.addCase(createLedger.pending, (state) => {
-      state.last_upserted = {
-        error: null,
-        loading: true,
-        data: null,
-      }
+      state.last_upserted.loading = true
     })
   },
 })

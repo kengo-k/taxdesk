@@ -43,7 +43,6 @@ export const POST = execApi(
     const service = Factory.getLedgerService()
     const body = await request.json()
     const create_request = { ...params, ...body }
-    create_request.nendo = 20000
     const is_valid = isValidLedgerCreateRequest(create_request)
     if (is_valid.success) {
       const last_upserted = await service.createLedger(is_valid.data)
