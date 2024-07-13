@@ -48,42 +48,29 @@ export const masterSlice = createSlice({
     // loadNendo
     builder.addCase(loadNendo.fulfilled, (state, action) => {
       state.nendo_list = {
-        error: false,
+        error: null,
         loading: false,
         data: action.payload.data,
       }
     })
     builder.addCase(loadNendo.pending, (state) => {
       state.nendo_list = {
-        error: false,
+        error: null,
         loading: true,
         data: [],
-      }
-    })
-    builder.addCase(loadNendo.rejected, (state, action) => {
-      state.nendo_list = {
-        error: true,
-        loading: false,
-        message: '',
-        errorCode: null,
-        externalErrorCode: null,
-        errorDetail: null,
       }
     })
 
     // loadSaimoku
     builder.addCase(loadSaimoku.fulfilled, (state, action) => {
       state.saimoku_list = {
-        error: false,
+        error: null,
         loading: false,
         data: action.payload.data,
       }
     })
     builder.addCase(loadSaimoku.pending, (state) => {
       state.saimoku_list.loading = true
-    })
-    builder.addCase(loadSaimoku.rejected, (state, action) => {
-      state.saimoku_list.loading = false
     })
   },
 })

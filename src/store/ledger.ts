@@ -85,60 +85,32 @@ export const ledgerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(loadLedgerList.fulfilled, (state, action) => {
-      if (!action.payload.error) {
-        state.ledger_list = {
-          error: false,
-          loading: false,
-          data: action.payload.data,
-        }
+      state.ledger_list = {
+        ...action.payload,
+        loading: false,
       }
     })
 
     builder.addCase(loadLedgerList.pending, (state) => {
       state.ledger_list = {
-        error: false,
+        error: null,
         loading: true,
         data: { all_count: 0, list: [] },
       }
     })
 
-    builder.addCase(loadLedgerList.rejected, (state, action) => {
-      state.ledger_list = {
-        error: true,
-        loading: false,
-        message: '',
-        errorCode: null,
-        externalErrorCode: null,
-        errorDetail: null,
-      }
-    })
-
     builder.addCase(createLedger.fulfilled, (state, action) => {
-      if (!action.payload.error) {
-        state.last_upserted = {
-          error: false,
-          loading: false,
-          data: action.payload.data,
-        }
+      state.last_upserted = {
+        ...action.payload,
+        loading: false,
       }
     })
 
     builder.addCase(createLedger.pending, (state) => {
       state.last_upserted = {
-        error: false,
+        error: null,
         loading: true,
         data: null,
-      }
-    })
-
-    builder.addCase(createLedger.rejected, (state, action) => {
-      state.last_upserted = {
-        error: true,
-        loading: false,
-        message: '',
-        errorCode: null,
-        externalErrorCode: null,
-        errorDetail: null,
       }
     })
   },

@@ -28,7 +28,7 @@ export const GET = execApi(
     if (page_no != null) {
       const page_num = Number(page_no)
       if (isNaN(page_num)) {
-        return ApiResponse.failureWithAppError(REQUEST_ERROR)
+        return ApiResponse.failure(REQUEST_ERROR)
       }
       search_request.page_no = page_num
     }
@@ -43,18 +43,13 @@ export const POST = execApi(
     const service = Factory.getLedgerService()
     const body = await request.json()
     const create_request = { ...params, ...body }
+    create_request.nendo = 20000
     const is_valid = isValidLedgerCreateRequest(create_request)
     if (is_valid.success) {
       const last_upserted = await service.createLedger(is_valid.data)
       return ApiResponse.success(last_upserted)
     } else {
-      const error = is_valid.error
-      return ApiResponse.failure(
-        'Missing require fields',
-        REQUEST_ERROR,
-        null,
-        error,
-      )
+      return ApiResponse.failure(REQUEST_ERROR, is_valid.error)
     }
   },
 )

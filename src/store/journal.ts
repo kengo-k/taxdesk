@@ -79,10 +79,6 @@ export const journalSlice = createSlice({
     builder.addCase(deleteJournal.pending, (state) => {
       state.loading = true
     })
-    builder.addCase(deleteJournal.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.error
-    })
   },
 })
 

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseClient()
   const { code, email, password } = await request.json()
   if (!code || !email || !password) {
-    return NextResponse.json(ApiResponse.failureWithAppError(REQUEST_ERROR), {
+    return NextResponse.json(ApiResponse.failure(REQUEST_ERROR), {
       status: 400,
     })
   }
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     })
 
   if (user_error) {
-    return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+    return NextResponse.json(ApiResponse.failure(AUTH_ERROR), {
       status: 401,
     })
   }
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
   if (level_error) {
-    return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+    return NextResponse.json(ApiResponse.failure(AUTH_ERROR), {
       status: 401,
     })
   }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
   if (level.currentLevel === 'aal1' && level.nextLevel === 'aal2') {
     const factors = user_data.user.factors
     if (!factors) {
-      return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+      return NextResponse.json(ApiResponse.failure(AUTH_ERROR), {
         status: 401,
       })
     }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json(ApiResponse.failureWithAppError(AUTH_ERROR), {
+  return NextResponse.json(ApiResponse.failure(AUTH_ERROR), {
     status: 401,
   })
 }

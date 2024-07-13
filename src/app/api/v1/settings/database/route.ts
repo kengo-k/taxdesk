@@ -8,7 +8,11 @@ import path from 'path'
 
 import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
-import { REQUEST_ERROR, RESTORE_ERROR } from '@/constants/error'
+import {
+  REQUEST_ERROR,
+  RESTORE_ERROR,
+  UNEXPECTED_ERROR,
+} from '@/constants/error'
 import { ApiResponse } from '@/misc/api'
 import { isAWSError } from '@/misc/aws'
 
@@ -28,13 +32,10 @@ export async function PUT(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const backup_id = searchParams.get('backup_id')
   if (backup_id === null) {
-    return NextResponse.json(
-      ApiResponse.failure('backup_id is required', REQUEST_ERROR),
-      {
-        status: 500,
-        headers: cache.headers,
-      },
-    )
+    return NextResponse.json(ApiResponse.failure(REQUEST_ERROR), {
+      status: 500,
+      headers: cache.headers,
+    })
   }
   const backup_file = `tax-accounting-backup-${backup_id}.sql`
 
@@ -49,14 +50,14 @@ export async function PUT(request: NextRequest) {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(message, null, code), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
       status: 500,
       headers: cache.headers,
     })
   }
 
   if (query === undefined) {
-    return NextResponse.json(ApiResponse.failureWithAppError(RESTORE_ERROR), {
+    return NextResponse.json(ApiResponse.failure(RESTORE_ERROR), {
       status: 500,
       headers: cache.headers,
     })
@@ -66,7 +67,7 @@ export async function PUT(request: NextRequest) {
   try {
     await restore(query, backup_file)
   } catch (e: any) {
-    return NextResponse.json(ApiResponse.failureWithAppError(RESTORE_ERROR), {
+    return NextResponse.json(ApiResponse.failure(RESTORE_ERROR), {
       status: 500,
       headers: cache.headers,
     })

@@ -8,7 +8,7 @@ import { BackupItem } from '@/models/backup'
 
 import { ConnectionSetting } from '@/connection'
 import { getDefault } from '@/constants/cache'
-import { DUMP_ERROR } from '@/constants/error'
+import { DUMP_ERROR, UNEXPECTED_ERROR } from '@/constants/error'
 import { ApiResponse } from '@/misc/api'
 import { isAWSError } from '@/misc/aws'
 
@@ -38,19 +38,16 @@ export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(message, null, code), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
       status: 500,
       headers: cache.headers,
     })
   }
 
   if (backup_list === undefined) {
-    return NextResponse.json(
-      ApiResponse.failure('object.Contents is undefined'),
-      {
-        status: 500,
-      },
-    )
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+      status: 500,
+    })
   }
 
   try {
@@ -73,7 +70,7 @@ export async function GET(): Promise<NextResponse<ApiResponse<BackupItem[]>>> {
       },
     )
   } catch {
-    return NextResponse.json(ApiResponse.failure('backup is invalid'), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
       status: 500,
     })
   }
@@ -85,7 +82,7 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
   try {
     backups = await dumpDatabase()
   } catch (e: any) {
-    return NextResponse.json(ApiResponse.failureWithAppError(DUMP_ERROR), {
+    return NextResponse.json(ApiResponse.failure(DUMP_ERROR), {
       status: 500,
       headers: cache.headers,
     })
@@ -110,7 +107,7 @@ export async function POST(): Promise<NextResponse<ApiResponse<null>>> {
       message = `${message}: ${e.message}`
       code = e.code
     }
-    return NextResponse.json(ApiResponse.failure(message, null, code), {
+    return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
       status: 500,
       headers: cache.headers,
     })

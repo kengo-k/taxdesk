@@ -66,11 +66,7 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(loadBackupList.pending, (state) => {
       state.backup_list.loading = true
-      state.backup_list.error = false
-    })
-    builder.addCase(loadBackupList.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.backup_list = { ...payload, loading: false }
+      state.backup_list.error = null
     })
 
     // createBackup
@@ -79,11 +75,7 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(createBackup.pending, (state) => {
       state.create_backup.loading = true
-      state.create_backup.error = false
-    })
-    builder.addCase(createBackup.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.create_backup = { ...payload, loading: false }
+      state.create_backup.error = null
     })
 
     // restoreFromBackup
@@ -92,11 +84,7 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(restoreFromBackup.pending, (state) => {
       state.restore_from_backup.loading = true
-      state.restore_from_backup.error = false
-    })
-    builder.addCase(restoreFromBackup.rejected, (state, action) => {
-      const payload = action.payload as any // TODO FIXME
-      state.restore_from_backup = { ...payload, loading: false }
+      state.restore_from_backup.error = null
     })
   },
 })

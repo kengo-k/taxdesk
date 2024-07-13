@@ -1,43 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { getDefault } from '@/constants/cache'
-import { ApplicationError, UNEXPECTED_ERROR } from '@/constants/error'
+import {
+  ApplicationError,
+  StatusCodeMapping,
+  UNEXPECTED_ERROR,
+} from '@/constants/error'
 
 // Common API response type
 export type ApiResponse<T> =
   | {
-      error: false
+      error: null
       data: T
     }
   | {
-      error: true
-      message: string
-      errorCode: ApplicationError | null // Error code generated inside the application
-      externalErrorCode: string | null // Error codes received from external systems
+      error: ApplicationError // Error generated inside the application
       errorDetail: Error | null
     }
 
 // Constructor for ApiResponse
 export const ApiResponse = {
   success<T>(data: T): ApiResponse<T> {
-    return { error: false, data }
+    return { error: null, data }
   },
   failure(
-    message: string,
-    errorCode: ApplicationError | null = null,
-    externalErrorCode: string | null = null,
+    error: ApplicationError,
     errorDetail: Error | null = null,
   ): ApiResponse<never> {
-    return { error: true, message, errorCode, externalErrorCode, errorDetail }
-  },
-  failureWithAppError(apperror: ApplicationError): ApiResponse<never> {
-    return {
-      error: true,
-      message: apperror.message,
-      errorCode: apperror,
-      externalErrorCode: null,
-      errorDetail: null,
-    }
+    return { error, errorDetail }
   },
 } as const
 
@@ -47,7 +37,7 @@ export type ApiResState<T> = ApiResponse<T> & { loading: boolean }
 export function initApiResState<T>(init: T): ApiResState<T> {
   return {
     data: init,
-    error: false,
+    error: null,
     loading: false,
   }
 }
@@ -68,8 +58,8 @@ export const execApi = (
         return NextResponse.json(response[0], response[1])
       } else {
         let status = 200
-        if (response.error && response.errorCode) {
-          status = response.errorCode.statusCode
+        if (response.error) {
+          status = StatusCodeMapping[response.error.code]
         }
         return NextResponse.json(response, {
           status,
@@ -77,13 +67,10 @@ export const execApi = (
         })
       }
     } catch {
-      return NextResponse.json(
-        ApiResponse.failureWithAppError(UNEXPECTED_ERROR),
-        {
-          status: 500,
-          headers: cache.headers,
-        },
-      )
+      return NextResponse.json(ApiResponse.failure(UNEXPECTED_ERROR), {
+        status: 500,
+        headers: cache.headers,
+      })
     }
   }
 }
