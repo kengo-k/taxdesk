@@ -1,58 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
 import numeral from 'numeral'
 
-import { getDefault } from '@/constants/cache'
+import { REQUEST_ERROR } from '@/constants/error'
 import { Factory } from '@/dicontainer'
+import { ApiResponse, execApi } from '@/misc/api'
 
 export const dynamic = 'force-dynamic'
 
-const cache = getDefault()
-export const revalidate = cache.revalidate
-
-export async function PUT(
-  _: NextRequest,
-  {}: { params: { nendo: string; ledger_cd: string } },
-) {
-  return NextResponse.json(
-    {},
-    {
-      status: 200,
-      headers: cache.headers,
-    },
-  )
-}
-
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: { nendo: string; journal_id: number } },
-) {
-  const journal_id = numeral(params.journal_id).value()
-  if (journal_id === null) {
-    return NextResponse.json(
-      {},
-      {
-        status: 400,
-        headers: cache.headers,
-      },
-    )
-  }
-
-  const service = Factory.getJournalService()
-
-  try {
-    const response = await service.deleteById(journal_id)
-    return NextResponse.json(response, {
-      status: 200,
-      headers: cache.headers,
-    })
-  } catch (error) {
-    return NextResponse.json(
-      {},
-      {
-        status: 404,
-        headers: cache.headers,
-      },
-    )
-  }
-}
+export const DELETE = execApi(
+  async (_: NextRequest, params: { nendo: string; journal_id: number }) => {
+    const journal_id = numeral(params.journal_id).value()
+    if (journal_id === null) {
+      return ApiResponse.failure(REQUEST_ERROR)
+    }
+    const service = Factory.getJournalService()
+    const last_deleted = await service.deleteById(journal_id)
+    return ApiResponse.success(last_deleted)
+  },
+)
