@@ -66,7 +66,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(loadBackupList.pending, (state) => {
       state.backup_list.loading = true
-      state.backup_list.error = null
     })
 
     // createBackup
@@ -75,7 +74,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(createBackup.pending, (state) => {
       state.create_backup.loading = true
-      state.create_backup.error = null
     })
 
     // restoreFromBackup
@@ -84,7 +82,6 @@ export const settingsSlice = createSlice({
     })
     builder.addCase(restoreFromBackup.pending, (state) => {
       state.restore_from_backup.loading = true
-      state.restore_from_backup.error = null
     })
   },
 })
