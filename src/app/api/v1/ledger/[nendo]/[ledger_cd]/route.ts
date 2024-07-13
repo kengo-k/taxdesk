@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server'
-
 import {
   LedgerSearchRequest,
   isValidLedgerCreateRequest,
@@ -53,26 +51,18 @@ export const POST = execApi(
   },
 )
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { nendo: string; ledger_cd: string } },
-) {
-  const service = Factory.getLedgerService()
-  const body = await request.json()
+export const PUT = execApi(
+  async (request, params: { nendo: string; ledger_cd: string }) => {
+    const service = Factory.getLedgerService()
+    const body = await request.json()
 
-  const update_request = { ...params, ...body }
-  const is_valid = isValidLedgerUpdateRequest(update_request)
-  if (is_valid.success) {
-    const response = await service.updateLedger(is_valid.data)
-    return NextResponse.json(response, {
-      status: 200,
-      headers: cache.headers,
-    })
-  } else {
-    const error = is_valid.error
-    return NextResponse.json(
-      { message: 'Missing require fields', error },
-      { status: 400 },
-    )
-  }
-}
+    const update_request = { ...params, ...body }
+    const is_valid = isValidLedgerUpdateRequest(update_request)
+    if (is_valid.success) {
+      const last_upserted = await service.updateLedger(is_valid.data)
+      return ApiResponse.success(last_upserted)
+    } else {
+      return ApiResponse.failure(REQUEST_ERROR, is_valid.error)
+    }
+  },
+)
