@@ -7,41 +7,36 @@ import {
 } from '@/models/ledger'
 
 import { getDefault } from '@/constants/cache'
+import { REQUEST_ERROR } from '@/constants/error'
 import { Factory } from '@/dicontainer'
+import { ApiResponse, execApi } from '@/misc/api'
 
 export const dynamic = 'force-dynamic'
 
 const cache = getDefault()
 export const revalidate = cache.revalidate
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { nendo: string; ledger_cd: string } },
-) {
-  const search_request = { ...params } as LedgerSearchRequest
-  const { searchParams } = new URL(request.url)
-  const month = searchParams.get('month')
-  if (month !== null) {
-    search_request.month = month
-  }
-  const page_no = searchParams.get('page_no')
-  if (page_no != null) {
-    const page_num = Number(page_no)
-    if (isNaN(page_num)) {
-      return NextResponse.json(
-        { message: 'Invalid page no: ' + page_no },
-        { status: 400 },
-      )
+export const GET = execApi(
+  async (request, params: { nendo: string; ledger_cd: string }) => {
+    const search_request = { ...params } as LedgerSearchRequest
+    const { searchParams } = new URL(request.url)
+    const month = searchParams.get('month')
+    if (month !== null) {
+      search_request.month = month
     }
-    search_request.page_no = page_num
-  }
-  const service = Factory.getLedgerService()
-  const response = await service.selectLedgerList(search_request)
-  return NextResponse.json(response, {
-    status: 200,
-    headers: cache.headers,
-  })
-}
+    const page_no = searchParams.get('page_no')
+    if (page_no != null) {
+      const page_num = Number(page_no)
+      if (isNaN(page_num)) {
+        return ApiResponse.failureWithAppError(REQUEST_ERROR)
+      }
+      search_request.page_no = page_num
+    }
+    const service = Factory.getLedgerService()
+    const ledger_list = await service.selectLedgerList(search_request)
+    return ApiResponse.success(ledger_list)
+  },
+)
 
 export async function POST(
   request: NextRequest,

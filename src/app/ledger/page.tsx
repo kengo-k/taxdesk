@@ -200,11 +200,22 @@ const LedgerList: FC<{
   const dispatch = useDispatch<AppDispatch>()
 
   const masters_state = useSelector((state: RootState) => state.masters)
-  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
-
-  const appState = useSelector((state: RootState) => state.app)
-
+  const ledger_state = useSelector((state: RootState) => state.ledger)
+  const app_state = useSelector((state: RootState) => state.app)
   const saimoku_map = useSelector(selectSaimokuMap)
+
+  const [ledger_error, ledger_list, ledger_count] = useMemo(() => {
+    if (ledger_state.ledger_list.error) {
+      return [true, [], 0]
+    } else {
+      return [
+        false,
+        ledger_state.ledger_list.data.list,
+        ledger_state.ledger_list.data.all_count,
+      ]
+    }
+  }, [ledger_state])
+
   const saimoku_list = useMemo(() => {
     if (masters_state.saimoku_list.error) {
       return []
@@ -240,8 +251,8 @@ const LedgerList: FC<{
         nendo: toNendoString(nendo),
         ledger_cd,
         month: toMonthString(month),
-        page_no: appState.page_no,
-        page_size: appState.page_size,
+        page_no: app_state.page_no,
+        page_size: app_state.page_size,
       }),
     )
     if (month) {
@@ -252,7 +263,7 @@ const LedgerList: FC<{
     create_form.setFieldValue('nendo', toNendoString(nendo))
   }, [dispatch, ledger_cd, month, nendo, page_no, page_size]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const page_count = getPageCount(ledger_state.all_count, page_size)
+  const page_count = getPageCount(ledger_count, page_size)
 
   const update_form = useForm<LedgerUpdateRequestForm>({
     initialValues: {
@@ -266,7 +277,7 @@ const LedgerList: FC<{
       return
     }
     update_form.setValues({
-      items: ledger_state.ledger_list.map((item) => {
+      items: ledger_list.map((item) => {
         const date = JournalDate.create(item.date)
         const date_full = date === null ? '' : date.format('yyyy/MM/dd')
         const date_yymm = date === null ? '' : date.format('yyyy/MM')
@@ -336,7 +347,7 @@ const LedgerList: FC<{
       )}
       <div>
         <Pagination
-          value={appState.page_no}
+          value={app_state.page_no}
           total={page_count}
           siblings={2}
           onChange={(page_no) => {
@@ -538,10 +549,13 @@ const LedgerListNewRow: FC<{
   const counter_cd_ref = useRef<HTMLInputElement>(null)
   const note_ref = useRef<HTMLInputElement>(null)
 
-  const { data: ledger_state } = useSelector((state: RootState) => state.ledger)
+  const ledger_state = useSelector((state: RootState) => state.ledger)
 
   useEffect(() => {
-    if (ledger_state.last_upserted !== null) {
+    if (
+      !ledger_state.last_upserted.error &&
+      ledger_state.last_upserted.data !== null
+    ) {
       dispatch(ledgerActions.clearLastUpserted())
       const current_values = props.form.values
       props.form.reset()
