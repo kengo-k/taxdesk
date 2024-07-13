@@ -10,6 +10,7 @@ import {
   Button,
   ComboboxItem,
   LoadingOverlay,
+  Modal,
   Pagination,
   Select,
   Text,
@@ -17,10 +18,11 @@ import {
   Title,
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
+import { useDisclosure } from '@mantine/hooks'
 
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
-import { deleteJournal } from '@/store/journal'
+import { deleteJournal, journalActions } from '@/store/journal'
 import {
   createLedger,
   ledgerActions,
@@ -201,6 +203,7 @@ const LedgerList: FC<{
 
   const masters_state = useSelector((state: RootState) => state.masters)
   const ledger_state = useSelector((state: RootState) => state.ledger)
+  const journal_state = useSelector((state: RootState) => state.journal)
   const app_state = useSelector((state: RootState) => state.app)
   const saimoku_map = useSelector(selectSaimokuMap)
 
@@ -304,8 +307,46 @@ const LedgerList: FC<{
     })
   }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [
+    isDeleteModalOpened,
+    { open: openDeleteModal, close: closeDeleteModal },
+  ] = useDisclosure(false)
+
   return (
     <div>
+      <Modal
+        opened={isDeleteModalOpened}
+        onClose={closeDeleteModal}
+        title="Delete the Ledger"
+      >
+        <Button
+          onClick={() => {
+            if (!journal_state.delete_journal_id) {
+              return
+            }
+            dispatch(
+              deleteJournal({
+                request: {
+                  journal_id: journal_state.delete_journal_id,
+                  nendo: toNendoString(nendo),
+                },
+                next: [
+                  loadLedgerList({
+                    nendo: toNendoString(nendo),
+                    ledger_cd,
+                    month: toMonthString(month),
+                    page_no: toPageNo(page_no),
+                    page_size: toPageSize(page_size),
+                  }),
+                  journalActions.setDeleteJournalId(null),
+                ],
+              }),
+            )
+          }}
+        >
+          Delete
+        </Button>
+      </Modal>
       <Title>
         台帳:
         {saimoku_map.get(ledger_cd)?.saimoku_full_name}
@@ -411,6 +452,7 @@ const LedgerList: FC<{
               saimoku_map={saimoku_map}
               saimoku_list={saimoku_list}
               fixed={fixed}
+              openDeleteModal={openDeleteModal}
             />
           </tbody>
         </table>
@@ -766,6 +808,7 @@ const LedgerListRows: FC<{
   saimoku_map: Map<string, SaimokuWithSummary>
   saimoku_list: SaimokuWithSummary[]
   fixed: boolean
+  openDeleteModal: () => void
 }> = (props) => {
   return props.form.values.items.map((item, index) => {
     return (
@@ -791,6 +834,7 @@ const LedgerListRowItem: FC<{
   fixed: boolean
   pageNo: PageNo
   pageSize: PageSize
+  openDeleteModal: () => void
 }> = ({
   item,
   index,
@@ -803,6 +847,7 @@ const LedgerListRowItem: FC<{
   month,
   pageNo,
   pageSize,
+  openDeleteModal,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
   const date_ref = useRef<HTMLInputElement>(null)
@@ -1118,20 +1163,8 @@ const LedgerListRowItem: FC<{
           color="red"
           disabled={fixed}
           onClick={() => {
-            dispatch(
-              deleteJournal({
-                request: { journal_id: item.journal_id, nendo: item.nendo },
-                next: [
-                  loadLedgerList({
-                    nendo: toNendoString(nendo),
-                    ledger_cd,
-                    month: toMonthString(month),
-                    page_no: toPageNo(pageNo),
-                    page_size: toPageSize(pageSize),
-                  }),
-                ],
-              }),
-            )
+            dispatch(journalActions.setDeleteJournalId(item.journal_id))
+            openDeleteModal()
           }}
         >
           Delete
