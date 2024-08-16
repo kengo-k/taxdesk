@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Setup Instructions
 
-## Getting Started
+Follow these steps to set up the project after cloning the repository from Git.
 
-First, run the development server:
+## Database Initialization
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Set up environment variables:
+   Set the following environment variables in the existing `.env` file:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   - POSTGRES_USER
+   - POSTGRES_PASSWORD
+   - POSTGRES_DB
+   - POSTGRES_HOST
+   - POSTGRES_PORT
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. Run database migrations:
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+   ```
+   npm run migrate:deploy
+   ```
 
-## Learn More
+   This command is executed to update the database schema to its latest state. It applies the migrations defined in Prisma, aligning the database structure with the current requirements of the project.
 
-To learn more about Next.js, take a look at the following resources:
+3. Generate Prisma client:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```
+   npm run migrate:generate
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+   This command generates the Prisma client, which provides a type-safe API for database interactions. It ensures the client reflects the current database structure, enabling efficient and safe database operations in your application.
 
-## Deploy on Vercel
+## How to Apply Changes to the Database
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Modify the schema.prisma file and describe the changes you want to apply.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+2. Generate migration files
+
+   ```
+   npm run migrate:dev --name <your_migration_name>
+   ```
+
+   When you run this command, the following occurs:
+
+   1. Prisma analyzes the schema changes and generates a new migration file in `prisma/migrations`.
+
+   2. The generated migration is automatically applied to the database.
+
+   3. The Prisma client is regenerated to reflect the new schema changes.
+
+   Note: This command should only be used in development environments. For production environments, it is recommended to use `migrate:deploy`.
