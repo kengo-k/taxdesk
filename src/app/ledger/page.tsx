@@ -13,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 import {
   Alert,
@@ -445,40 +454,36 @@ const LedgerList: FC<{
           }}
         />
       </div>
-      <div>
-        <table>
-          <thead>
-            <tr>
-              <th>
-                <Text>Date</Text>
-              </th>
-              <th colSpan={2}>
-                <Text>Counter Code</Text>
-              </th>
-              <th>
-                <Text>
-                  Debit
-                  {target_account.kamoku_bunrui_type === 'L' ? ' [+]' : ' [-]'}
-                </Text>
-              </th>
-              <th>
-                <Text>
-                  Credit
-                  {target_account.kamoku_bunrui_type === 'R' ? ' [+]' : ' [-]'}
-                </Text>
-              </th>
-              <th>
-                <Text>Note</Text>
-              </th>
-              <th>
-                <Text>Acc</Text>
-              </th>
-              <th>
-                <br />
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="font-semibold">
+                Date
+              </TableHead>
+              <TableHead className="font-semibold" colSpan={2}>
+                Counter Code
+              </TableHead>
+              <TableHead className="font-semibold text-right">
+                Debit
+                {target_account.kamoku_bunrui_type === 'L' ? ' [+]' : ' [-]'}
+              </TableHead>
+              <TableHead className="font-semibold text-right">
+                Credit
+                {target_account.kamoku_bunrui_type === 'R' ? ' [+]' : ' [-]'}
+              </TableHead>
+              <TableHead className="font-semibold">
+                Note
+              </TableHead>
+              <TableHead className="font-semibold text-right">
+                Acc
+              </TableHead>
+              <TableHead className="font-semibold">
+                Actions
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {!fixed && (
               <LedgerListNewRow
                 form={create_form}
@@ -503,8 +508,8 @@ const LedgerList: FC<{
               fixed={fixed}
               openDeleteModal={openDeleteModal}
             />
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
@@ -659,8 +664,8 @@ const LedgerListNewRow: FC<{
   }, [dispatch, ledger_state.last_upserted, date_ref]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <tr>
-      <td>
+    <TableRow className="hover:bg-blue-50">
+      <TableCell>
         {props.month !== null ? (
           <>
             <TextInput
@@ -745,8 +750,8 @@ const LedgerListNewRow: FC<{
             })}
           />
         )}
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <div style={{ width: '100%', position: 'relative' }}>
           <Autocomplete
             ref={counter_cd_ref}
@@ -809,8 +814,8 @@ const LedgerListNewRow: FC<{
             comboboxProps={{ width: '180px' }}
           />
         </div>
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <TextInput
           type="text"
           value={other_cd_name}
@@ -818,14 +823,14 @@ const LedgerListNewRow: FC<{
           disabled
           readOnly
         />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell className="text-right">
         <AmountInputForCreate input_key="karikata_value" form={props.form} />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell className="text-right">
         <AmountInputForCreate input_key="kasikata_value" form={props.form} />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <TextInput
           ref={note_ref}
           value={props.form.values.note}
@@ -839,11 +844,14 @@ const LedgerListNewRow: FC<{
           }}
           className="w-96"
         />
-      </td>
-      <td>
-        <br />
-      </td>
-    </tr>
+      </TableCell>
+      <TableCell className="text-right">
+        <span className="text-gray-400">---</span>
+      </TableCell>
+      <TableCell>
+        {/* 新規行なのでアクションはない */}
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -1006,8 +1014,11 @@ const LedgerListRowItem: FC<{
   }, [item.other_cd, saimoku_map])
 
   return (
-    <tr key={item.journal_id}>
-      <td>
+    <TableRow 
+      key={item.journal_id} 
+      className={`hover:bg-blue-50 ${Number(item.acc) < 0 ? 'bg-red-50/30' : ''}`}
+    >
+      <TableCell>
         {month === null ? (
           <TextInput
             ref={date_ref}
@@ -1095,8 +1106,8 @@ const LedgerListRowItem: FC<{
             />
           </>
         )}
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <div>
           <Autocomplete
             ref={counter_cd_ref}
@@ -1159,27 +1170,27 @@ const LedgerListRowItem: FC<{
             comboboxProps={{ width: '180px' }}
           />
         </div>
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <TextInput value={other_cd_name} className="w-16" disabled readOnly />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell className="text-right">
         <AmountInputForUpdate
           input_key="karikata_value"
           form={form}
           index={index}
           disabled={fixed}
         />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell className="text-right">
         <AmountInputForUpdate
           input_key="kasikata_value"
           form={form}
           index={index}
           disabled={fixed}
         />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell>
         <TextInput
           ref={note_ref}
           value={item.note}
@@ -1194,32 +1205,27 @@ const LedgerListRowItem: FC<{
           className={'w-96'}
           disabled={fixed}
         />
-      </td>
-      <td>
-        <TextInput
-          value={Amount.create(item.acc).toFormatedString()}
-          styles={() => ({
-            input: {
-              textAlign: 'right',
-            },
-          })}
-          disabled
-          className="w-28"
-        />
-      </td>
-      <td>
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        <span className={Number(item.acc) < 0 ? 'text-red-500' : 'text-emerald-600'}>
+          {Amount.create(item.acc).toFormatedString()}
+        </span>
+      </TableCell>
+      <TableCell>
         <Button
-          color="red"
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-xs bg-red-50 hover:bg-red-100 hover:text-red-600 border-red-200"
           disabled={fixed}
           onClick={() => {
             dispatch(journalActions.setDeleteJournalId(item.journal_id))
             openDeleteModal()
           }}
         >
-          Delete
+          削除
         </Button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }
 
