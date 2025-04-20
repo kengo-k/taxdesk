@@ -458,28 +458,31 @@ const LedgerList: FC<{
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead className="font-semibold">
-                Date
+              <TableHead className="font-semibold text-center p-2 h-8 w-32">
+                日付
               </TableHead>
-              <TableHead className="font-semibold" colSpan={2}>
-                Counter Code
+              <TableHead className="font-semibold text-center p-2 h-8 w-20">
+                相手科目
               </TableHead>
-              <TableHead className="font-semibold text-right">
-                Debit
+              <TableHead className="font-semibold text-center p-2 h-8 w-20">
+                名称
+              </TableHead>
+              <TableHead className="font-semibold text-center p-2 h-8 w-28">
+                借方
                 {target_account.kamoku_bunrui_type === 'L' ? ' [+]' : ' [-]'}
               </TableHead>
-              <TableHead className="font-semibold text-right">
-                Credit
+              <TableHead className="font-semibold text-center p-2 h-8 w-28">
+                貸方
                 {target_account.kamoku_bunrui_type === 'R' ? ' [+]' : ' [-]'}
               </TableHead>
-              <TableHead className="font-semibold">
-                Note
+              <TableHead className="font-semibold text-center p-2 h-8">
+                摘要
               </TableHead>
-              <TableHead className="font-semibold text-right">
-                Acc
+              <TableHead className="font-semibold text-center p-2 h-8 w-28">
+                残高
               </TableHead>
-              <TableHead className="font-semibold">
-                Actions
+              <TableHead className="font-semibold text-center p-2 h-8 w-20">
+                操作
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -674,6 +677,12 @@ const LedgerListNewRow: FC<{
               disabled
               styles={() => ({
                 root: { width: '80px', display: 'inline-block' },
+                input: {
+                  padding: '0 2px',
+                  height: '28px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #d1d5db',
+                }
               })}
             />
             <TextInput
@@ -699,11 +708,20 @@ const LedgerListNewRow: FC<{
               }}
               error={null}
               styles={() => ({
-                root: { width: '50px', display: 'inline-block' },
+                root: { width: '30px', display: 'inline-block' },
                 input: {
+                  padding: '0 2px',
+                  height: '28px',
+                  textAlign: 'center',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #d1d5db',
                   ...(LedgerCreateRequestForm.hasError('date', props.form)
-                    ? { borderColor: 'red' }
+                    ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
                     : {}),
+                  '&:focus': {
+                    border: '1px solid #d1d5db',
+                    outline: 'none',
+                  },
                 },
               })}
             />
@@ -741,11 +759,19 @@ const LedgerListNewRow: FC<{
             error={null}
             maxLength={10}
             styles={() => ({
-              root: { width: '110px' },
+              root: { width: '90px' },
               input: {
+                padding: '0 2px',
+                height: '28px',
+                backgroundColor: 'transparent',
+                border: '1px solid #d1d5db',
                 ...(LedgerCreateRequestForm.hasError('date', props.form)
-                  ? { borderColor: 'red' }
+                  ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
                   : {}),
+                '&:focus': {
+                  borderColor: '#94a3b8',
+                  outline: 'none',
+                },
               },
             })}
           />
@@ -803,13 +829,25 @@ const LedgerListNewRow: FC<{
             onMouseUp={() => {
               counter_cd_ref.current?.select()
             }}
-            className="w-14"
+            className="w-16"
             styles={() => ({
               input: {
+                padding: '0 2px',
+                height: '28px',
+                backgroundColor: 'transparent',
+                border: '1px solid #d1d5db',
+                fontSize: '0.875rem',
                 ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
-                  ? { borderColor: 'red' }
+                  ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
                   : {}),
+                '&:focus': {
+                  borderColor: '#94a3b8',
+                  outline: 'none',
+                },
               },
+              root: {
+                width: '100%',
+              }
             })}
             comboboxProps={{ width: '180px' }}
           />
@@ -819,9 +857,21 @@ const LedgerListNewRow: FC<{
         <TextInput
           type="text"
           value={other_cd_name}
-          className="w-16"
+          className="w-14"
           disabled
           readOnly
+          styles={() => ({
+            input: {
+              padding: '0 2px',
+              height: '28px',
+              backgroundColor: 'transparent',
+              border: '1px solid #d1d5db',
+              fontSize: '0.875rem',
+            },
+            root: {
+              width: '100%',
+            }
+          })}
         />
       </TableCell>
       <TableCell className="text-right">
@@ -1056,6 +1106,10 @@ const LedgerListRowItem: FC<{
             styles={() => ({
               root: { width: '110px' },
               input: {
+                padding: '0 2px',
+                height: '28px',
+                backgroundColor: 'transparent',
+                border: '1px solid #d1d5db',
                 ...(LedgerUpdateRequestForm.hasError('date', form, index)
                   ? { borderColor: 'red' }
                   : {}),
@@ -1071,6 +1125,12 @@ const LedgerListRowItem: FC<{
               disabled
               styles={() => ({
                 root: { width: '80px', display: 'inline-block' },
+                input: {
+                  padding: '0 2px',
+                  height: '28px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #d1d5db',
+                },
               })}
             />
             <TextInput
@@ -1081,6 +1141,10 @@ const LedgerListRowItem: FC<{
               styles={() => ({
                 root: { width: '50px', display: 'inline-block' },
                 input: {
+                  padding: '0 2px',
+                  height: '28px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #d1d5db',
                   ...(LedgerUpdateRequestForm.hasError('date', form, index)
                     ? { borderColor: 'red' }
                     : {}),
@@ -1238,14 +1302,25 @@ const AmountInputForCreate: FC<{
   return (
     <TextInput
       ref={ref}
-      className={'w-24'}
+      className="w-20"
       styles={() => ({
         input: {
           textAlign: 'right',
+          padding: '0 2px',
+          height: '28px',
+          backgroundColor: 'transparent',
+          border: '1px solid #d1d5db',
           ...(LedgerCreateRequestForm.hasError(input_key, form)
-            ? { borderColor: 'red' }
+            ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
             : {}),
+          '&:focus': {
+            borderColor: '#94a3b8',
+            outline: 'none',
+          },
         },
+        root: {
+          width: '100%',
+        }
       })}
       {...form.getInputProps(input_key)}
       value={form.values[input_key]}
@@ -1296,15 +1371,26 @@ const AmountInputForUpdate: FC<{
   return (
     <TextInput
       ref={ref}
-      className={'w-24'}
+      className="w-20"
       disabled={disabled}
       styles={() => ({
         input: {
           textAlign: 'right',
+          padding: '0 2px',
+          height: '28px',
+          backgroundColor: 'transparent',
+          border: '1px solid #d1d5db',
           ...(LedgerUpdateRequestForm.hasError(input_key, form, index)
-            ? { borderColor: 'red' }
+            ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
             : {}),
+          '&:focus': {
+            borderColor: '#94a3b8',
+            outline: 'none',
+          },
         },
+        root: {
+          width: '100%',
+        }
       })}
       {...form.getInputProps(`items.${index}.${input_key}`)}
       value={form.values.items[index][input_key]}
