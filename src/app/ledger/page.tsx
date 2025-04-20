@@ -3,19 +3,27 @@
 import { FC, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 import {
   Alert,
   Autocomplete,
-  Box,
-  Button,
   ComboboxItem,
   LoadingOverlay,
   Modal,
   Pagination,
-  Select,
   Text,
   TextInput,
-  Title,
+  Title
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
@@ -68,9 +76,8 @@ export default function Page() {
   const masters_state = useSelector((state: RootState) => state.masters)
 
   const nendo_list = useMemo(() => {
-    const init = [{ value: '', label: 'Not selected' }]
     if (masters_state.nendo_list.error) {
-      return init
+      return []
     }
     const nendo_list = masters_state.nendo_list.data.map((n) => {
       return {
@@ -78,13 +85,12 @@ export default function Page() {
         label: n.nendo,
       }
     })
-    return [...init, ...nendo_list]
+    return nendo_list
   }, [masters_state.nendo_list])
 
   const saimoku_list_options = useMemo(() => {
-    const init = [{ value: '', label: 'Not Selected' }]
     if (masters_state.saimoku_list.error) {
-      return init
+      return []
     }
     const saimoku_list = masters_state.saimoku_list.data.map((s) => {
       return {
@@ -92,18 +98,15 @@ export default function Page() {
         label: `${s.saimoku_cd}: ${s.saimoku_full_name} (${s.count})`,
       }
     })
-    return [...init, ...saimoku_list]
+    return saimoku_list
   }, [masters_state.saimoku_list])
 
   const month_list = useMemo(() => {
-    const list = [] as { value: string; label: string }[]
-    list.push(
-      ...[4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3].map((month) => ({
-        value: `${month}`,
-        label: `${month}月`,
-      })),
-    )
-    return [{ value: '', label: 'Not Selected' }, ...list]
+    const list = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3].map((month) => ({
+      value: `${month}`,
+      label: `${month}月`,
+    }))
+    return list
   }, [])
 
   const nendo_map = useSelector(selectNendoMap)
@@ -128,67 +131,113 @@ export default function Page() {
   }, [dispatch, app_state.selected_nendo])
 
   return (
-    <>
-      <Box pos={'relative'} w={500}>
-        <LoadingOverlay
-          visible={
-            masters_state.nendo_list.loading ||
-            masters_state.saimoku_list.loading
-          }
-          zIndex={1000}
-          overlayProps={{ radius: 'sm' }}
-          loaderProps={{ type: 'dots' }}
-        />
-        <Select
-          value={app_state.selected_nendo ?? ''}
-          data={nendo_list}
-          label="Fiscal Year"
-          onChange={(value) => {
-            if (value !== null) {
-              dispatch(appActions.setNendo(value === '' ? undefined : value))
-            }
-          }}
-          w={150}
-          withAsterisk
-        />
+    <div className="container mx-auto py-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>元帳検索</CardTitle>
+          <CardDescription>
+            表示する元帳の条件を指定してください
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="fiscal-year">会計年度</Label>
+              <Select
+                value={app_state.selected_nendo ?? undefined}
+                onValueChange={(value) => {
+                  dispatch(appActions.setNendo(value))
+                }}
+              >
+                <SelectTrigger id="fiscal-year">
+                  <SelectValue placeholder="会計年度を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nendo_list.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <Select
-          value={app_state.selected_ledger_cd ?? ''}
-          data={saimoku_list_options}
-          label="Account Code"
-          onChange={(saimoku_cd) => {
-            if (saimoku_cd === null) {
-              return
-            }
-            const ledger_cd = saimoku_cd === '' ? undefined : saimoku_cd
-            dispatch(appActions.setLedgerCd(ledger_cd))
-          }}
-          w={300}
-          withAsterisk
-        />
-        <Select
-          value={app_state.selected_month ?? ''}
-          data={month_list}
-          label={'Month'}
-          onChange={(month) => {
-            if (month === null) {
-              return
-            }
-            dispatch(appActions.setMonth(month === '' ? undefined : month))
-          }}
-          w={150}
-        />
-      </Box>
+            <div className="space-y-2">
+              <Label htmlFor="account-code">勘定科目</Label>
+              <Select
+                value={app_state.selected_ledger_cd ?? undefined}
+                onValueChange={(saimoku_cd) => {
+                  dispatch(appActions.setLedgerCd(saimoku_cd))
+                }}
+              >
+                <SelectTrigger id="account-code">
+                  <SelectValue placeholder="勘定科目を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {saimoku_list_options.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="month">月</Label>
+              <Select
+                value={app_state.selected_month ?? undefined}
+                onValueChange={(month) => {
+                  dispatch(appActions.setMonth(month))
+                }}
+              >
+                <SelectTrigger id="month">
+                  <SelectValue placeholder="月を選択" />
+                </SelectTrigger>
+                <SelectContent>
+                  {month_list.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <LoadingOverlay
+        visible={
+          masters_state.nendo_list.loading ||
+          masters_state.saimoku_list.loading
+        }
+        zIndex={1000}
+        overlayProps={{ radius: 'sm' }}
+        loaderProps={{ type: 'dots' }}
+      />
+
       {nendo && app_state.selected_ledger_cd ? (
-        <LedgerList
-          nendo={nendo}
-          ledger_cd={app_state.selected_ledger_cd}
-          month={month}
-          page_no={page_no}
-          page_size={page_size}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>元帳一覧</CardTitle>
+            <CardDescription>
+              {nendo.toString()}年度 {app_state.selected_ledger_cd}
+              {month ? `${month}月` : '全期間'}の取引
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LedgerList
+              nendo={nendo}
+              ledger_cd={app_state.selected_ledger_cd}
+              month={month}
+              page_no={page_no}
+              page_size={page_size}
+            />
+          </CardContent>
+        </Card>
       ) : null}
-    </>
+    </div>
   )
 }
 
