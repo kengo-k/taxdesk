@@ -13,15 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 
 import {
   Alert,
@@ -30,9 +21,7 @@ import {
   LoadingOverlay,
   Modal,
   Pagination,
-  Text,
-  TextInput,
-  Title
+  TextInput
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
@@ -371,7 +360,7 @@ const LedgerList: FC<{
   ] = useDisclosure(false)
 
   return (
-    <div>
+    <div className="space-y-4">
       <Modal
         opened={isDeleteModalOpened}
         onClose={closeDeleteModal}
@@ -405,114 +394,121 @@ const LedgerList: FC<{
           Delete
         </Button>
       </Modal>
-      <Title>
-        台帳:
-        {saimoku_map.get(ledger_cd)?.saimoku_full_name}
-        {month !== null ? ` - ${month}月分 ` : ''}
-      </Title>
-      {Object.keys(create_form.errors).length > 0 && (
-        <Alert
-          variant="light"
-          color="red"
-          title="Failed to creating a new ledgger."
-        >
-          <ul>
-            {Object.keys(create_form.errors).map((key) => {
-              return (
-                <li key={key}>
-                  {key}: {create_form.errors[key]}
-                </li>
-              )
-            })}
-          </ul>
-        </Alert>
-      )}
-      {Object.keys(update_form.errors).length > 0 && (
-        <Alert
-          variant="light"
-          color="red"
-          title="Failed to updating a ledgger."
-        >
-          <ul>
-            {Object.keys(update_form.errors).map((key) => {
-              return (
-                <li key={key}>
-                  {key}: {update_form.errors[key]}
-                </li>
-              )
-            })}
-          </ul>
-        </Alert>
-      )}
-      <div>
-        <Pagination
-          value={app_state.page_no}
-          total={page_count}
-          siblings={2}
-          onChange={(page_no) => {
-            dispatch(appActions.setPageNo(page_no))
-          }}
-        />
-      </div>
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50 hover:bg-slate-50">
-              <TableHead className="font-semibold text-center p-2 h-8 w-32">
-                日付
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-20">
-                相手科目
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-20">
-                名称
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-28">
-                借方
-                {target_account.kamoku_bunrui_type === 'L' ? ' [+]' : ' [-]'}
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-28">
-                貸方
-                {target_account.kamoku_bunrui_type === 'R' ? ' [+]' : ' [-]'}
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8">
-                摘要
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-28">
-                残高
-              </TableHead>
-              <TableHead className="font-semibold text-center p-2 h-8 w-20">
-                操作
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!fixed && (
-              <LedgerListNewRow
-                form={create_form}
+
+      <div className="bg-white">
+        <div className="mb-4">
+          <h2 className="text-xl">
+            台帳:{saimoku_map.get(ledger_cd)?.saimoku_full_name}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {toNendoString(nendo)}年度 {month ? `${month}月分` : '全期間'}の取引
+          </p>
+        </div>
+
+        {Object.keys(create_form.errors).length > 0 && (
+          <Alert
+            variant="light"
+            color="red"
+            title="Failed to creating a new ledgger."
+          >
+            <ul>
+              {Object.keys(create_form.errors).map((key) => {
+                return (
+                  <li key={key}>
+                    {key}: {create_form.errors[key]}
+                  </li>
+                )
+              })}
+            </ul>
+          </Alert>
+        )}
+        {Object.keys(update_form.errors).length > 0 && (
+          <Alert
+            variant="light"
+            color="red"
+            title="Failed to updating a ledgger."
+          >
+            <ul>
+              {Object.keys(update_form.errors).map((key) => {
+                return (
+                  <li key={key}>
+                    {key}: {update_form.errors[key]}
+                  </li>
+                )
+              })}
+            </ul>
+          </Alert>
+        )}
+
+        <div className="mb-4">
+          <Pagination
+            value={app_state.page_no}
+            total={page_count}
+            siblings={2}
+            onChange={(page_no) => {
+              dispatch(appActions.setPageNo(page_no))
+            }}
+          />
+        </div>
+
+        <div className="border rounded-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-white">
+                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[130px]">
+                  日付
+                </th>
+                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[100px]">
+                  相手科目
+                </th>
+                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[100px]">
+                  名称
+                </th>
+                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                  借方 {target_account.kamoku_bunrui_type === 'L' ? '[+]' : '[-]'}
+                </th>
+                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                  貸方 {target_account.kamoku_bunrui_type === 'R' ? '[+]' : '[-]'}
+                </th>
+                <th className="px-3 py-2 text-left font-normal text-gray-600">
+                  摘要
+                </th>
+                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                  残高
+                </th>
+                <th className="px-3 py-2 text-center font-normal text-gray-600 w-[80px]">
+                  操作
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {!fixed && (
+                <LedgerListNewRow
+                  form={create_form}
+                  nendo={nendo}
+                  ledger_cd={ledger_cd}
+                  month={month}
+                  pageNo={page_no}
+                  pageSize={page_size}
+                  saimoku_map={saimoku_map}
+                  saimoku_list={saimoku_list}
+                />
+              )}
+              <LedgerListRows
                 nendo={nendo}
                 ledger_cd={ledger_cd}
                 month={month}
                 pageNo={page_no}
                 pageSize={page_size}
+                form={update_form}
                 saimoku_map={saimoku_map}
                 saimoku_list={saimoku_list}
+                fixed={fixed}
+                openDeleteModal={openDeleteModal}
               />
-            )}
-            <LedgerListRows
-              nendo={nendo}
-              ledger_cd={ledger_cd}
-              month={month}
-              pageNo={page_no}
-              pageSize={page_size}
-              form={update_form}
-              saimoku_map={saimoku_map}
-              saimoku_list={saimoku_list}
-              fixed={fixed}
-              openDeleteModal={openDeleteModal}
-            />
-          </TableBody>
-        </Table>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
@@ -667,22 +663,23 @@ const LedgerListNewRow: FC<{
   }, [dispatch, ledger_state.last_upserted, date_ref]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <TableRow className="hover:bg-blue-50">
-      <TableCell>
+    <tr className="hover:bg-gray-50">
+      <td className="px-3 py-2">
         {props.month !== null ? (
-          <>
+          <div className="flex gap-1">
             <TextInput
               {...props.form.getInputProps('date_yymm')}
               readOnly
               disabled
               styles={() => ({
-                root: { width: '80px', display: 'inline-block' },
+                root: { width: '80px' },
                 input: {
-                  padding: '0 2px',
                   height: '28px',
+                  padding: '0 4px',
                   backgroundColor: 'transparent',
-                  border: '1px solid #d1d5db',
-                }
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                },
               })}
             />
             <TextInput
@@ -708,24 +705,21 @@ const LedgerListNewRow: FC<{
               }}
               error={null}
               styles={() => ({
-                root: { width: '30px', display: 'inline-block' },
+                root: { width: '40px' },
                 input: {
-                  padding: '0 2px',
                   height: '28px',
-                  textAlign: 'center',
+                  padding: '0 4px',
                   backgroundColor: 'transparent',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '0.875rem',
+                  textAlign: 'center',
                   ...(LedgerCreateRequestForm.hasError('date', props.form)
-                    ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
+                    ? { borderColor: 'red' }
                     : {}),
-                  '&:focus': {
-                    border: '1px solid #d1d5db',
-                    outline: 'none',
-                  },
                 },
               })}
             />
-          </>
+          </div>
         ) : (
           <TextInput
             ref={date_ref}
@@ -761,126 +755,110 @@ const LedgerListNewRow: FC<{
             styles={() => ({
               root: { width: '90px' },
               input: {
-                padding: '0 2px',
                 height: '28px',
+                padding: '0 4px',
                 backgroundColor: 'transparent',
-                border: '1px solid #d1d5db',
+                border: '1px solid #e5e7eb',
+                fontSize: '0.875rem',
                 ...(LedgerCreateRequestForm.hasError('date', props.form)
-                  ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
+                  ? { borderColor: 'red' }
                   : {}),
-                '&:focus': {
-                  borderColor: '#94a3b8',
-                  outline: 'none',
-                },
               },
             })}
           />
         )}
-      </TableCell>
-      <TableCell>
-        <div style={{ width: '100%', position: 'relative' }}>
-          <Autocomplete
-            ref={counter_cd_ref}
-            value={props.form.values.other_cd}
-            data={props.saimoku_list.map((s) => s.saimoku_cd)}
-            filter={({ options, search }) => {
-              return (options as ComboboxItem[]).filter((option) => {
-                const key = search.trim().toLowerCase()
-                if (key.length === 0) {
-                  return true
-                }
-                const saimoku = props.saimoku_map.get(option.value)!
-                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-                const kana = saimoku.saimoku_kana_name.toLowerCase()
-                return saimoku_cd.includes(key) || kana.includes(key)
-              })
-            }}
-            renderOption={({ option }) => {
+      </td>
+      <td className="px-3 py-2">
+        <Autocomplete
+          ref={counter_cd_ref}
+          value={props.form.values.other_cd}
+          data={props.saimoku_list.map((s) => s.saimoku_cd)}
+          filter={({ options, search }) => {
+            return (options as ComboboxItem[]).filter((option) => {
+              const key = search.trim().toLowerCase()
+              if (key.length === 0) {
+                return true
+              }
               const saimoku = props.saimoku_map.get(option.value)!
-              return (
-                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+              const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+              const kana = saimoku.saimoku_kana_name.toLowerCase()
+              return saimoku_cd.includes(key) || kana.includes(key)
+            })
+          }}
+          renderOption={({ option }) => {
+            const saimoku = props.saimoku_map.get(option.value)!
+            return (
+              <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
+            )
+          }}
+          onChange={(value: string) => {
+            LedgerCreateRequestForm.set('other_cd', props.form, value)
+          }}
+          onBlur={(e) => {
+            const keyword = e.currentTarget.value.toLowerCase()
+            const results = props.saimoku_list.filter((s) => {
+              const code = s.saimoku_cd.toLowerCase()
+              const kana = s.saimoku_kana_name
+              return code.includes(keyword) || kana.includes(keyword)
+            })
+            if (results.length === 1) {
+              LedgerCreateRequestForm.set(
+                'other_cd',
+                props.form,
+                results[0].saimoku_cd,
               )
-            }}
-            onChange={(value: string) => {
-              LedgerCreateRequestForm.set('other_cd', props.form, value)
-            }}
-            onBlur={(e) => {
-              const keyword = e.currentTarget.value.toLowerCase()
-              const results = props.saimoku_list.filter((s) => {
-                const code = s.saimoku_cd.toLowerCase()
-                const kana = s.saimoku_kana_name
-                return code.includes(keyword) || kana.includes(keyword)
-              })
-              if (results.length === 1) {
-                LedgerCreateRequestForm.set(
-                  'other_cd',
-                  props.form,
-                  results[0].saimoku_cd,
-                )
-              }
-              const { hasErrors } = props.form.validate()
-              if (hasErrors) {
-                return
-              }
-            }}
-            onFocus={() => {
-              counter_cd_ref.current?.select()
-            }}
-            onMouseUp={() => {
-              counter_cd_ref.current?.select()
-            }}
-            className="w-16"
-            styles={() => ({
-              input: {
-                padding: '0 2px',
-                height: '28px',
-                backgroundColor: 'transparent',
-                border: '1px solid #d1d5db',
-                fontSize: '0.875rem',
-                ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
-                  ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
-                  : {}),
-                '&:focus': {
-                  borderColor: '#94a3b8',
-                  outline: 'none',
-                },
-              },
-              root: {
-                width: '100%',
-              }
-            })}
-            comboboxProps={{ width: '180px' }}
-          />
-        </div>
-      </TableCell>
-      <TableCell>
+            }
+            const { hasErrors } = props.form.validate()
+            if (hasErrors) {
+              return
+            }
+          }}
+          onFocus={() => {
+            counter_cd_ref.current?.select()
+          }}
+          onMouseUp={() => {
+            counter_cd_ref.current?.select()
+          }}
+          styles={() => ({
+            root: { width: '60px' },
+            input: {
+              height: '28px',
+              padding: '0 4px',
+              backgroundColor: 'transparent',
+              border: '1px solid #e5e7eb',
+              fontSize: '0.875rem',
+              ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
+                ? { borderColor: 'red' }
+                : {}),
+            },
+          })}
+        />
+      </td>
+      <td className="px-3 py-2">
         <TextInput
           type="text"
           value={other_cd_name}
-          className="w-14"
           disabled
           readOnly
           styles={() => ({
+            root: { width: '70px' },
             input: {
-              padding: '0 2px',
               height: '28px',
+              padding: '0 4px',
               backgroundColor: 'transparent',
-              border: '1px solid #d1d5db',
+              border: '1px solid #e5e7eb',
               fontSize: '0.875rem',
             },
-            root: {
-              width: '100%',
-            }
           })}
         />
-      </TableCell>
-      <TableCell className="text-right">
+      </td>
+      <td className="px-3 py-2 text-right">
         <AmountInputForCreate input_key="karikata_value" form={props.form} />
-      </TableCell>
-      <TableCell className="text-right">
+      </td>
+      <td className="px-3 py-2 text-right">
         <AmountInputForCreate input_key="kasikata_value" form={props.form} />
-      </TableCell>
-      <TableCell>
+      </td>
+      <td className="px-3 py-2">
         <TextInput
           ref={note_ref}
           value={props.form.values.note}
@@ -892,16 +870,25 @@ const LedgerListNewRow: FC<{
           onMouseUp={() => {
             note_ref.current?.select()
           }}
-          className="w-96"
+          styles={() => ({
+            root: { width: '100%' },
+            input: {
+              height: '28px',
+              padding: '0 4px',
+              backgroundColor: 'transparent',
+              border: '1px solid #e5e7eb',
+              fontSize: '0.875rem',
+            },
+          })}
         />
-      </TableCell>
-      <TableCell className="text-right">
-        <span className="text-gray-400">---</span>
-      </TableCell>
-      <TableCell>
-        {/* 新規行なのでアクションはない */}
-      </TableCell>
-    </TableRow>
+      </td>
+      <td className="px-3 py-2 text-right text-gray-400">
+        ---
+      </td>
+      <td className="px-3 py-2">
+        <br />
+      </td>
+    </tr>
   )
 }
 
@@ -1064,11 +1051,8 @@ const LedgerListRowItem: FC<{
   }, [item.other_cd, saimoku_map])
 
   return (
-    <TableRow 
-      key={item.journal_id} 
-      className={`hover:bg-blue-50 ${Number(item.acc) < 0 ? 'bg-red-50/30' : ''}`}
-    >
-      <TableCell>
+    <tr key={item.journal_id} className="hover:bg-gray-50">
+      <td className="px-3 py-2">
         {month === null ? (
           <TextInput
             ref={date_ref}
@@ -1104,7 +1088,7 @@ const LedgerListRowItem: FC<{
             }}
             maxLength={10}
             styles={() => ({
-              root: { width: '110px' },
+              root: { width: '90px' },
               input: {
                 padding: '0 2px',
                 height: '28px',
@@ -1170,8 +1154,8 @@ const LedgerListRowItem: FC<{
             />
           </>
         )}
-      </TableCell>
-      <TableCell>
+      </td>
+      <td className="px-3 py-2">
         <div>
           <Autocomplete
             ref={counter_cd_ref}
@@ -1225,7 +1209,9 @@ const LedgerListRowItem: FC<{
             disabled={fixed}
             className="w-14"
             styles={() => ({
+              root: { width: '60px' },
               input: {
+
                 ...(LedgerUpdateRequestForm.hasError('other_cd', form, index)
                   ? { borderColor: 'red' }
                   : {}),
@@ -1234,27 +1220,29 @@ const LedgerListRowItem: FC<{
             comboboxProps={{ width: '180px' }}
           />
         </div>
-      </TableCell>
-      <TableCell>
-        <TextInput value={other_cd_name} className="w-16" disabled readOnly />
-      </TableCell>
-      <TableCell className="text-right">
+      </td>
+      <td className="px-3 py-2">
+        <TextInput value={other_cd_name} className="w-16" disabled readOnly styles={() => ({
+          root: { width: '70px' },
+        })}/>
+      </td>
+      <td className="px-3 py-2 text-right">
         <AmountInputForUpdate
           input_key="karikata_value"
           form={form}
           index={index}
           disabled={fixed}
         />
-      </TableCell>
-      <TableCell className="text-right">
+      </td>
+      <td className="px-3 py-2 text-right">
         <AmountInputForUpdate
           input_key="kasikata_value"
           form={form}
           index={index}
           disabled={fixed}
         />
-      </TableCell>
-      <TableCell>
+      </td>
+      <td className="px-3 py-2">
         <TextInput
           ref={note_ref}
           value={item.note}
@@ -1266,20 +1254,27 @@ const LedgerListRowItem: FC<{
           onMouseUp={() => {
             note_ref.current?.select()
           }}
-          className={'w-96'}
+          styles={() => ({
+            root: { width: '100%' },
+            input: {
+              height: '28px',
+              padding: '0 4px',
+              backgroundColor: 'transparent',
+              border: '1px solid #e5e7eb',
+              fontSize: '0.875rem',
+            },
+          })}
           disabled={fixed}
         />
-      </TableCell>
-      <TableCell className="text-right font-medium">
+      </td>
+      <td className="px-3 py-2 text-right font-medium">
         <span className={Number(item.acc) < 0 ? 'text-red-500' : 'text-emerald-600'}>
           {Amount.create(item.acc).toFormatedString()}
         </span>
-      </TableCell>
-      <TableCell>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-2 text-xs bg-red-50 hover:bg-red-100 hover:text-red-600 border-red-200"
+      </td>
+      <td className="px-3 py-2 text-center">
+        <button
+          className="text-xs text-red-500 hover:text-red-600"
           disabled={fixed}
           onClick={() => {
             dispatch(journalActions.setDeleteJournalId(item.journal_id))
@@ -1287,40 +1282,33 @@ const LedgerListRowItem: FC<{
           }}
         >
           削除
-        </Button>
-      </TableCell>
-    </TableRow>
+        </button>
+      </td>
+    </tr>
   )
 }
 
 const AmountInputForCreate: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerCreateRequestForm>
-  //onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
-}> = ({ input_key, form /*onSave*/ }) => {
+}> = ({ input_key, form }) => {
   const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
       ref={ref}
-      className="w-20"
       styles={() => ({
+        root: { width: '120px' },
         input: {
-          textAlign: 'right',
-          padding: '0 2px',
           height: '28px',
+          padding: '0 4px',
           backgroundColor: 'transparent',
-          border: '1px solid #d1d5db',
+          border: '1px solid #e5e7eb',
+          fontSize: '0.875rem',
+          textAlign: 'right',
           ...(LedgerCreateRequestForm.hasError(input_key, form)
-            ? { borderColor: 'red', borderWidth: '1px', borderStyle: 'solid' }
+            ? { borderColor: 'red' }
             : {}),
-          '&:focus': {
-            borderColor: '#94a3b8',
-            outline: 'none',
-          },
         },
-        root: {
-          width: '100%',
-        }
       })}
       {...form.getInputProps(input_key)}
       value={form.values[input_key]}
@@ -1355,7 +1343,6 @@ const AmountInputForCreate: FC<{
           ref.current?.select()
         })
       }}
-      //onKeyDown={onSave}
     />
   )
 }
@@ -1364,9 +1351,8 @@ const AmountInputForUpdate: FC<{
   input_key: 'karikata_value' | 'kasikata_value'
   form: UseFormReturnType<LedgerUpdateRequestForm>
   index: number
-  //onSave: (e: React.KeyboardEvent<HTMLInputElement>) => void
   disabled: boolean
-}> = ({ input_key, form, index, /*onSave,*/ disabled }) => {
+}> = ({ input_key, form, index, disabled }) => {
   const ref = useRef<HTMLInputElement>(null)
   return (
     <TextInput
@@ -1431,7 +1417,6 @@ const AmountInputForUpdate: FC<{
           ref.current?.select()
         })
       }}
-      //onKeyDown={onSave}
     />
   )
 }
