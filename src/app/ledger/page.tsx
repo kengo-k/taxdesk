@@ -1073,18 +1073,22 @@ const LedgerListRowItem: FC<{
               })
             }}
             onBlur={(e) => {
-              const date = JournalDate.create(e.currentTarget.value)
-              if (date !== null) {
-                LedgerUpdateRequestForm.set(
-                  'date',
-                  form,
-                  index,
-                  date.format('yyyy/MM/dd'),
-                )
+              // 入力値を取得
+              let inputValue = e.currentTarget.value;
+              console.log('onBlur input value:', inputValue);
+
+              // yyyyMMdd形式の場合、yyyy/MM/dd形式に変換
+              if (/^\d{8}$/.test(inputValue)) {
+                inputValue = `${inputValue.substring(0, 4)}/${inputValue.substring(4, 6)}/${inputValue.substring(6, 8)}`;
+                console.log('Converted to yyyy/MM/dd format:', inputValue);
               }
-              setTimeout(() => {
-                form.validate()
-              })
+
+              // 直接フォームの値を設定
+              form.setFieldValue(`items.${index}.date`, inputValue);
+
+              // バリデーションを実行
+              console.log('Running validation');
+              form.validate();
             }}
             maxLength={10}
             styles={() => ({
@@ -1136,14 +1140,29 @@ const LedgerListRowItem: FC<{
               })}
               disabled={fixed}
               onBlur={(e) => {
-                const { hasErrors } = form.validate()
-                if (hasErrors) {
-                  return
-                }
-                const day = e.currentTarget.value
+                // 入力値を取得
+                let day = e.currentTarget.value;
+                console.log('onBlur date_dd value:', day);
+
+                // 1桁の場合、2桁に変換
                 if (day.length === 1) {
-                  form.setFieldValue(`items.${index}.date_dd`, `0${day}`)
+                  day = `0${day}`;
+                  console.log('Converted to 2 digits:', day);
                 }
+
+                // date_yymmとdate_ddを組み合わせて日付を作成
+                const dateYymm = item.date_yymm;
+                const fullDate = `${dateYymm}/${day}`;
+                console.log('Full date:', fullDate);
+
+                // 日付を設定
+                form.setFieldValue(`items.${index}.date_dd`, day);
+                form.setFieldValue(`items.${index}.date`, fullDate);
+
+                setTimeout(() => {
+                  console.log('Running validation');
+                  form.validate();
+                });
               }}
               onFocus={() => {
                 date_ref.current?.select()
