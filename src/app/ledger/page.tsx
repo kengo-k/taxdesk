@@ -109,7 +109,7 @@ export default function Page() {
 
   const nendo_map = useSelector(selectNendoMap)
   const nendo = Nendo.create(
-    app_state.selected_nendo ?? '',
+    app_state.selected_nendo,
     Array.from(nendo_map.keys()),
   )
 
@@ -123,7 +123,7 @@ export default function Page() {
   }, [dispatch])
 
   useEffect(() => {
-    if (app_state.selected_nendo) {
+    if (app_state.selected_nendo !== "") {
       dispatch(loadSaimoku(app_state.selected_nendo))
     }
   }, [dispatch, app_state.selected_nendo])
@@ -142,15 +142,23 @@ export default function Page() {
             <div className="space-y-2">
               <Label htmlFor="fiscal-year">会計年度</Label>
               <Select
-                value={app_state.selected_nendo ?? undefined}
+                value={app_state.selected_nendo || ""}
                 onValueChange={(value) => {
-                  dispatch(appActions.setNendo(value))
+                  if (value === "unset") {
+                    // Reset all conditions
+                    dispatch(appActions.setNendo(""))
+                    dispatch(appActions.setLedgerCd(""))
+                    dispatch(appActions.setMonth(""))
+                  } else {
+                    dispatch(appActions.setNendo(value))
+                  }
                 }}
               >
                 <SelectTrigger id="fiscal-year">
                   <SelectValue placeholder="会計年度を選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="unset">未設定</SelectItem>
                   {nendo_list.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
@@ -163,15 +171,23 @@ export default function Page() {
             <div className="space-y-2">
               <Label htmlFor="account-code">勘定科目</Label>
               <Select
-                value={app_state.selected_ledger_cd ?? undefined}
+                value={app_state.selected_ledger_cd || ""}
                 onValueChange={(saimoku_cd) => {
-                  dispatch(appActions.setLedgerCd(saimoku_cd))
+                  if (saimoku_cd === "unset") {
+                    // Reset this condition and the month
+                    dispatch(appActions.setLedgerCd(""))
+                    dispatch(appActions.setMonth(""))
+                  } else {
+                    dispatch(appActions.setLedgerCd(saimoku_cd))
+                  }
                 }}
+                disabled={app_state.selected_nendo === ""}
               >
                 <SelectTrigger id="account-code">
                   <SelectValue placeholder="勘定科目を選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="unset">未設定</SelectItem>
                   {saimoku_list_options.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
@@ -184,15 +200,22 @@ export default function Page() {
             <div className="space-y-2">
               <Label htmlFor="month">月</Label>
               <Select
-                value={app_state.selected_month ?? undefined}
+                value={app_state.selected_month || ""}
                 onValueChange={(month) => {
-                  dispatch(appActions.setMonth(month))
+                  if (month === "unset") {
+                    // Reset only the month
+                    dispatch(appActions.setMonth(""))
+                  } else {
+                    dispatch(appActions.setMonth(month))
+                  }
                 }}
+                disabled={app_state.selected_ledger_cd === ""}
               >
                 <SelectTrigger id="month">
                   <SelectValue placeholder="月を選択" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="unset">未設定</SelectItem>
                   {month_list.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
                       {item.label}
@@ -215,7 +238,7 @@ export default function Page() {
         loaderProps={{ type: 'dots' }}
       />
 
-      {nendo && app_state.selected_ledger_cd ? (
+      {nendo && app_state.selected_ledger_cd !== "" ? (
         <Card>
           <CardHeader>
             <CardTitle>元帳一覧</CardTitle>
