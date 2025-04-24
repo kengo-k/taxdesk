@@ -140,12 +140,27 @@ export default function Page() {
     }
   }, [dispatch, app_state.selected_nendo])
 
-  const updateUrlParams = (nendo: string) => {
+  useEffect(() => {
+    if (!masters_state.saimoku_list.loading && !masters_state.saimoku_list.error) {
+      const urlCode = searchParams.get('code')
+      if (urlCode && masters_state.saimoku_list.data.some(s => s.saimoku_cd === urlCode)) {
+        dispatch(appActions.setLedgerCd(urlCode))
+      }
+    }
+  }, [dispatch, masters_state.saimoku_list, searchParams])
+
+  const updateUrlParams = (nendo: string, code?: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (nendo === "") {
       params.delete('nendo')
+      params.delete('code')
     } else {
       params.set('nendo', nendo)
+      if (code) {
+        params.set('code', code)
+      } else {
+        params.delete('code')
+      }
     }
     router.push(`?${params.toString()}`)
   }
@@ -201,8 +216,10 @@ export default function Page() {
                     // Reset this condition and the month
                     dispatch(appActions.setLedgerCd(""))
                     dispatch(appActions.setMonth(""))
+                    updateUrlParams(app_state.selected_nendo)
                   } else {
                     dispatch(appActions.setLedgerCd(saimoku_cd))
+                    updateUrlParams(app_state.selected_nendo, saimoku_cd)
                   }
                 }}
                 disabled={app_state.selected_nendo === ""}
