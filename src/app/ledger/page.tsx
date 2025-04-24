@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter, useSearchParams } from 'next/navigation'
 import { FC, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -69,6 +70,8 @@ import {
 
 export default function Page() {
   const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const app_state = useSelector((state: RootState) => state.app)
   const masters_state = useSelector((state: RootState) => state.masters)
@@ -123,10 +126,29 @@ export default function Page() {
   }, [dispatch])
 
   useEffect(() => {
+    if (!masters_state.nendo_list.loading && !masters_state.nendo_list.error) {
+      const urlNendo = searchParams.get('nendo')
+      if (urlNendo && masters_state.nendo_list.data.some(n => n.nendo === urlNendo)) {
+        dispatch(appActions.setNendo(urlNendo))
+      }
+    }
+  }, [dispatch, masters_state.nendo_list, searchParams])
+
+  useEffect(() => {
     if (app_state.selected_nendo !== "") {
       dispatch(loadSaimoku(app_state.selected_nendo))
     }
   }, [dispatch, app_state.selected_nendo])
+
+  const updateUrlParams = (nendo: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (nendo === "") {
+      params.delete('nendo')
+    } else {
+      params.set('nendo', nendo)
+    }
+    router.push(`?${params.toString()}`)
+  }
 
   return (
     <div className="container mx-auto py-6">
@@ -149,8 +171,10 @@ export default function Page() {
                     dispatch(appActions.setNendo(""))
                     dispatch(appActions.setLedgerCd(""))
                     dispatch(appActions.setMonth(""))
+                    updateUrlParams("")
                   } else {
                     dispatch(appActions.setNendo(value))
+                    updateUrlParams(value)
                   }
                 }}
               >
