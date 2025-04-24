@@ -149,17 +149,33 @@ export default function Page() {
     }
   }, [dispatch, masters_state.saimoku_list, searchParams])
 
-  const updateUrlParams = (nendo: string, code?: string) => {
+  useEffect(() => {
+    if (app_state.selected_ledger_cd !== "") {
+      const urlMonth = searchParams.get('month')
+      if (urlMonth && month_list.some(m => m.value === urlMonth)) {
+        dispatch(appActions.setMonth(urlMonth))
+      }
+    }
+  }, [dispatch, app_state.selected_ledger_cd, searchParams])
+
+  const updateUrlParams = (nendo: string, code?: string, month?: string) => {
     const params = new URLSearchParams(searchParams.toString())
     if (nendo === "") {
       params.delete('nendo')
       params.delete('code')
+      params.delete('month')
     } else {
       params.set('nendo', nendo)
       if (code) {
         params.set('code', code)
+        if (month) {
+          params.set('month', month)
+        } else {
+          params.delete('month')
+        }
       } else {
         params.delete('code')
+        params.delete('month')
       }
     }
     router.push(`?${params.toString()}`)
@@ -246,8 +262,10 @@ export default function Page() {
                   if (month === "unset") {
                     // Reset only the month
                     dispatch(appActions.setMonth(""))
+                    updateUrlParams(app_state.selected_nendo, app_state.selected_ledger_cd)
                   } else {
                     dispatch(appActions.setMonth(month))
+                    updateUrlParams(app_state.selected_nendo, app_state.selected_ledger_cd, month)
                   }
                 }}
                 disabled={app_state.selected_ledger_cd === ""}
