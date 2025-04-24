@@ -1129,13 +1129,13 @@ const LedgerListRowItem: FC<{
             disabled={fixed}
           />
         ) : (
-          <>
+          <div className="flex gap-1 w-full">
             <TextInput
               value={item.date_yymm}
               readOnly
               disabled
               styles={() => ({
-                root: { width: '80px', display: 'inline-block' },
+                root: { width: '70px' },
                 input: {
                   padding: '0 2px',
                   height: '28px',
@@ -1150,12 +1150,13 @@ const LedgerListRowItem: FC<{
               {...form.getInputProps(`items.${index}.date_dd`)}
               maxLength={2}
               styles={() => ({
-                root: { width: '50px', display: 'inline-block' },
+                root: { width: '40px' },
                 input: {
                   padding: '0 2px',
                   height: '28px',
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
+                  textAlign: 'center',
                   ...(LedgerUpdateRequestForm.hasError('date', form, index)
                     ? { borderColor: 'red' }
                     : {}),
@@ -1194,7 +1195,7 @@ const LedgerListRowItem: FC<{
                 date_ref.current?.select()
               }}
             />
-          </>
+          </div>
         )}
       </td>
       <td className="px-3 py-2">
