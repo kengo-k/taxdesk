@@ -754,13 +754,12 @@ const LedgerListNewRow: FC<{
               readOnly
               disabled
               styles={() => ({
-                root: { width: '80px' },
+                root: { width: '70px' },
                 input: {
+                  padding: '0 2px',
                   height: '28px',
-                  padding: '0 4px',
                   backgroundColor: 'transparent',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '0.875rem',
+                  border: '1px solid #d1d5db',
                 },
               })}
             />
