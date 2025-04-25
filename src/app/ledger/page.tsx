@@ -851,70 +851,74 @@ const LedgerListNewRow: FC<{
         )}
       </td>
       <td className="px-3 py-2">
-        <Autocomplete
-          ref={counter_cd_ref}
-          value={props.form.values.other_cd}
-          data={props.saimoku_list.map((s) => s.saimoku_cd)}
-          filter={({ options, search }) => {
-            return (options as ComboboxItem[]).filter((option) => {
-              const key = search.trim().toLowerCase()
-              if (key.length === 0) {
-                return true
-              }
+        <div>
+          <Autocomplete
+            ref={counter_cd_ref}
+            value={props.form.values.other_cd}
+            data={props.saimoku_list.map((s) => s.saimoku_cd)}
+            filter={({ options, search }) => {
+              return (options as ComboboxItem[]).filter((option) => {
+                const key = search.trim().toLowerCase()
+                if (key.length === 0) {
+                  return true
+                }
+                const saimoku = props.saimoku_map.get(option.value)!
+                const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
+                const kana = saimoku.saimoku_kana_name.toLowerCase()
+                return saimoku_cd.includes(key) || kana.includes(key)
+              })
+            }}
+            renderOption={({ option }) => {
               const saimoku = props.saimoku_map.get(option.value)!
-              const saimoku_cd = saimoku.saimoku_cd.toLowerCase()
-              const kana = saimoku.saimoku_kana_name.toLowerCase()
-              return saimoku_cd.includes(key) || kana.includes(key)
-            })
-          }}
-          renderOption={({ option }) => {
-            const saimoku = props.saimoku_map.get(option.value)!
-            return (
-              <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
-            )
-          }}
-          onChange={(value: string) => {
-            LedgerCreateRequestForm.set('other_cd', props.form, value)
-          }}
-          onBlur={(e) => {
-            const keyword = e.currentTarget.value.toLowerCase()
-            const results = props.saimoku_list.filter((s) => {
-              const code = s.saimoku_cd.toLowerCase()
-              const kana = s.saimoku_kana_name
-              return code.includes(keyword) || kana.includes(keyword)
-            })
-            if (results.length === 1) {
-              LedgerCreateRequestForm.set(
-                'other_cd',
-                props.form,
-                results[0].saimoku_cd,
+              return (
+                <div>{`${option.value}:${saimoku.saimoku_ryaku_name}`}</div>
               )
-            }
-            const { hasErrors } = props.form.validate()
-            if (hasErrors) {
-              return
-            }
-          }}
-          onFocus={() => {
-            counter_cd_ref.current?.select()
-          }}
-          onMouseUp={() => {
-            counter_cd_ref.current?.select()
-          }}
-          styles={() => ({
-            root: { width: '60px' },
-            input: {
-              height: '28px',
-              padding: '0 4px',
-              backgroundColor: 'transparent',
-              border: '1px solid #e5e7eb',
-              fontSize: '0.875rem',
-              ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
-                ? { borderColor: 'red' }
-                : {}),
-            },
-          })}
-        />
+            }}
+            onChange={(value: string) => {
+              LedgerCreateRequestForm.set('other_cd', props.form, value)
+            }}
+            onBlur={(e) => {
+              const keyword = e.currentTarget.value.toLowerCase()
+              const results = props.saimoku_list.filter((s) => {
+                const code = s.saimoku_cd.toLowerCase()
+                const kana = s.saimoku_kana_name
+                return code.includes(keyword) || kana.includes(keyword)
+              })
+              if (results.length === 1) {
+                LedgerCreateRequestForm.set(
+                  'other_cd',
+                  props.form,
+                  results[0].saimoku_cd,
+                )
+              }
+              const { hasErrors } = props.form.validate()
+              if (hasErrors) {
+                return
+              }
+            }}
+            onFocus={() => {
+              counter_cd_ref.current?.select()
+            }}
+            onMouseUp={() => {
+              counter_cd_ref.current?.select()
+            }}
+            className="w-14"
+            styles={() => ({
+              root: { width: '60px' },
+              input: {
+                height: '28px',
+                padding: '0 4px',
+                backgroundColor: 'transparent',
+                border: '1px solid #e5e7eb',
+                fontSize: '0.875rem',
+                ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
+                  ? { borderColor: 'red' }
+                  : {}),
+              },
+            })}
+            comboboxProps={{ width: '180px' }}
+          />
+        </div>
       </td>
       <td className="px-3 py-2">
         <TextInput
@@ -1313,7 +1317,11 @@ const LedgerListRowItem: FC<{
             styles={() => ({
               root: { width: '60px' },
               input: {
-
+                height: '28px',
+                padding: '0 4px',
+                backgroundColor: 'transparent',
+                border: '1px solid #e5e7eb',
+                fontSize: '0.875rem',
                 ...(LedgerUpdateRequestForm.hasError('other_cd', form, index)
                   ? { borderColor: 'red' }
                   : {}),
