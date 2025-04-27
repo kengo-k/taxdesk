@@ -63,6 +63,7 @@ import {
   toPageNo,
   toPageSize,
 } from '@/models/paging'
+import { Download, Trash2 } from 'lucide-react'
 
 export default function Page() {
   const dispatch = useDispatch<AppDispatch>()
@@ -279,6 +280,22 @@ export default function Page() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              type="button"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              onClick={() => {}}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />削除モード
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              onClick={() => {}}
+            >
+              <Download className="w-4 h-4 mr-2" />CSV形式でダウンロード
+            </button>
           </div>
         </CardContent>
       </Card>
