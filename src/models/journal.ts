@@ -1,4 +1,4 @@
 export interface JournalDeleteRequest {
-  journal_id: number
+  journalIds: number[]
   nendo: string
 }

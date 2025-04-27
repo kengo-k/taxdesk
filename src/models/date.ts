@@ -72,8 +72,8 @@ export class Month {
   public get value() {
     return this._value
   }
-  public static create(month: string | undefined): [boolean, Month | null] {
-    if (month === undefined) {
+  public static create(month: string): [boolean, Month | null] {
+    if (month === "") {
       return [true, null]
     }
     const value = numeral(month).value()

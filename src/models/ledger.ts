@@ -38,6 +38,7 @@ function day() {
 
 function date() {
   return (data: string, ctx: z.RefinementCtx) => {
+    console.log('date', data)
     if (!data) {
       return
     }

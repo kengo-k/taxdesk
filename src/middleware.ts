@@ -14,6 +14,11 @@ export async function middleware(request: NextRequest) {
     }
 
     if (path.startsWith('/api')) {
+      // Skip authentication if SKIP_AUTH_IN_LOCAL is set to 'true'
+      if (process.env.SKIP_AUTH_IN_LOCAL === 'true') {
+        return NextResponse.next()
+      }
+
       // If Authorization header is present, validate it first
       const auth_header = request.headers.get('authorization')
       if (auth_header) {

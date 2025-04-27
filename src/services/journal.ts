@@ -9,6 +9,7 @@ export interface JournalService {
   create(entity: Prisma.journalsCreateInput): Promise<journals>
   updateById(id: number, entity: Prisma.journalsUpdateInput): Promise<journals>
   deleteById(id: number): Promise<journals>
+  deleteManyByIds(nendo: string, ids: number[]): Promise<Prisma.BatchPayload>
   selectCategorySummary(nendo: string, category: string): Promise<any>
 }
 
@@ -36,6 +37,18 @@ export class JournalServiceImpl implements JournalService {
 
   public async deleteById(id: number): Promise<journals> {
     const deleted = await this.prisma.journals.delete({ where: { id } })
+    return deleted
+  }
+
+  public async deleteManyByIds(nendo: string, ids: number[]): Promise<Prisma.BatchPayload> {
+    const deleted = await this.prisma.journals.deleteMany({
+      where: {
+        AND: [
+          { id: { in: ids } },
+          { nendo: nendo }
+        ]
+      }
+    })
     return deleted
   }
 
