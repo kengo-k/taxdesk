@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { FC, useEffect, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import {
@@ -20,16 +19,14 @@ import {
   Autocomplete,
   ComboboxItem,
   LoadingOverlay,
-  Modal,
   Pagination,
   TextInput
 } from '@mantine/core'
 import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
-import { useDisclosure } from '@mantine/hooks'
 
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
-import { deleteJournal, journalActions } from '@/store/journal'
+import { deleteJournal } from '@/store/journal'
 import {
   createLedger,
   ledgerActions,
@@ -329,10 +326,10 @@ const LedgerList: FC<{
   page_size: PageSize
 }> = ({ nendo, ledger_cd, month, page_no, page_size }) => {
   const dispatch = useDispatch<AppDispatch>()
+  const journal_state = useSelector((state: RootState) => state.journal)
 
   const masters_state = useSelector((state: RootState) => state.masters)
   const ledger_state = useSelector((state: RootState) => state.ledger)
-  const journal_state = useSelector((state: RootState) => state.journal)
   const app_state = useSelector((state: RootState) => state.app)
   const saimoku_map = useSelector(selectSaimokuMap)
 
@@ -436,47 +433,8 @@ const LedgerList: FC<{
     })
   }, [ledger_state.ledger_list, saimoku_map]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [
-    isDeleteModalOpened,
-    { open: openDeleteModal, close: closeDeleteModal },
-  ] = useDisclosure(false)
-
   return (
     <div className="space-y-4">
-      <Modal
-        opened={isDeleteModalOpened}
-        onClose={closeDeleteModal}
-        title="Delete the Ledger"
-      >
-        <Button
-          onClick={() => {
-            if (!journal_state.delete_journal_id) {
-              return
-            }
-            dispatch(
-              deleteJournal({
-                request: {
-                  journal_id: journal_state.delete_journal_id,
-                  nendo: toNendoString(nendo),
-                },
-                next: [
-                  loadLedgerList({
-                    nendo: toNendoString(nendo),
-                    ledger_cd,
-                    month: toMonthString(month),
-                    page_no: toPageNo(page_no),
-                    page_size: toPageSize(page_size),
-                  }),
-                  journalActions.setDeleteJournalId(null),
-                ],
-              }),
-            )
-          }}
-        >
-          Delete
-        </Button>
-      </Modal>
-
       <div className="bg-white">
         <div className="mb-4">
           <h2 className="text-xl">
@@ -537,28 +495,28 @@ const LedgerList: FC<{
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-white">
-                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[130px]">
+                <th className="px-2 py-1 text-left font-normal text-gray-600 w-[95px]">
                   日付
                 </th>
-                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[100px]">
+                <th className="px-2 py-1 text-left font-normal text-gray-600 w-[70px]">
                   相手科目
                 </th>
-                <th className="px-3 py-2 text-left font-normal text-gray-600 w-[100px]">
+                <th className="px-2 py-1 text-left font-normal text-gray-600 w-[80px]">
                   名称
                 </th>
-                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                <th className="px-2 py-1 text-right font-normal text-gray-600 w-[130px]">
                   借方 {target_account.kamoku_bunrui_type === 'L' ? '[+]' : '[-]'}
                 </th>
-                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                <th className="px-2 py-1 text-right font-normal text-gray-600 w-[130px]">
                   貸方 {target_account.kamoku_bunrui_type === 'R' ? '[+]' : '[-]'}
                 </th>
-                <th className="px-3 py-2 text-left font-normal text-gray-600">
+                <th className="px-2 py-1 text-left font-normal text-gray-600">
                   摘要
                 </th>
-                <th className="px-3 py-2 text-right font-normal text-gray-600 w-[130px]">
+                <th className="px-2 py-1 text-right font-normal text-gray-600 w-[130px]">
                   残高
                 </th>
-                <th className="px-3 py-2 text-center font-normal text-gray-600 w-[80px]">
+                <th className="px-2 py-1 text-center font-normal text-gray-600 w-[80px]">
                   操作
                 </th>
               </tr>
@@ -586,7 +544,6 @@ const LedgerList: FC<{
                 saimoku_map={saimoku_map}
                 saimoku_list={saimoku_list}
                 fixed={fixed}
-                openDeleteModal={openDeleteModal}
               />
             </tbody>
           </table>
@@ -746,20 +703,21 @@ const LedgerListNewRow: FC<{
 
   return (
     <tr className="hover:bg-gray-50">
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         {props.month !== null ? (
-          <div className="flex gap-1">
+          <div className="flex">
             <TextInput
               {...props.form.getInputProps('date_yymm')}
               readOnly
               disabled
               styles={() => ({
-                root: { width: '70px' },
+                root: { width: '65px' },
                 input: {
                   padding: '0 2px',
                   height: '28px',
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
+                  textAlign: 'center',
                 },
               })}
             />
@@ -786,7 +744,7 @@ const LedgerListNewRow: FC<{
               }}
               error={null}
               styles={() => ({
-                root: { width: '40px' },
+                root: { width: '30px' },
                 input: {
                   height: '28px',
                   padding: '0 4px',
@@ -834,13 +792,14 @@ const LedgerListNewRow: FC<{
             error={null}
             maxLength={10}
             styles={() => ({
-              root: { width: '90px' },
+              root: { width: '95px' },
               input: {
                 height: '28px',
                 padding: '0 4px',
                 backgroundColor: 'transparent',
                 border: '1px solid #e5e7eb',
                 fontSize: '0.875rem',
+                textAlign: 'center',
                 ...(LedgerCreateRequestForm.hasError('date', props.form)
                   ? { borderColor: 'red' }
                   : {}),
@@ -849,7 +808,7 @@ const LedgerListNewRow: FC<{
           />
         )}
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <div>
           <Autocomplete
             ref={counter_cd_ref}
@@ -910,6 +869,7 @@ const LedgerListNewRow: FC<{
                 backgroundColor: 'transparent',
                 border: '1px solid #e5e7eb',
                 fontSize: '0.875rem',
+                textAlign: 'center',
                 ...(LedgerCreateRequestForm.hasError('other_cd', props.form)
                   ? { borderColor: 'red' }
                   : {}),
@@ -919,7 +879,7 @@ const LedgerListNewRow: FC<{
           />
         </div>
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <TextInput
           type="text"
           value={other_cd_name}
@@ -933,17 +893,18 @@ const LedgerListNewRow: FC<{
               backgroundColor: 'transparent',
               border: '1px solid #e5e7eb',
               fontSize: '0.875rem',
+              textAlign: 'center',
             },
           })}
         />
       </td>
-      <td className="px-3 py-2 text-right">
+      <td className="px-2 py-1 text-right">
         <AmountInputForCreate input_key="karikata_value" form={props.form} />
       </td>
-      <td className="px-3 py-2 text-right">
+      <td className="px-2 py-1 text-right">
         <AmountInputForCreate input_key="kasikata_value" form={props.form} />
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <TextInput
           ref={note_ref}
           value={props.form.values.note}
@@ -967,10 +928,10 @@ const LedgerListNewRow: FC<{
           })}
         />
       </td>
-      <td className="px-3 py-2 text-right text-gray-400">
+      <td className="px-2 py-1 text-right text-gray-400">
         ---
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <br />
       </td>
     </tr>
@@ -987,7 +948,6 @@ const LedgerListRows: FC<{
   saimoku_map: Map<string, SaimokuWithSummary>
   saimoku_list: SaimokuWithSummary[]
   fixed: boolean
-  openDeleteModal: () => void
 }> = (props) => {
   return props.form.values.items.map((item, index) => {
     return (
@@ -1013,7 +973,6 @@ const LedgerListRowItem: FC<{
   fixed: boolean
   pageNo: PageNo
   pageSize: PageSize
-  openDeleteModal: () => void
 }> = ({
   item,
   index,
@@ -1026,7 +985,6 @@ const LedgerListRowItem: FC<{
   month,
   pageNo,
   pageSize,
-  openDeleteModal,
 }) => {
   const dispatch = useDispatch<AppDispatch>()
   const date_ref = useRef<HTMLInputElement>(null)
@@ -1137,7 +1095,7 @@ const LedgerListRowItem: FC<{
 
   return (
     <tr key={item.journal_id} className="hover:bg-gray-50">
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         {month === null ? (
           <TextInput
             ref={date_ref}
@@ -1177,12 +1135,13 @@ const LedgerListRowItem: FC<{
             }}
             maxLength={10}
             styles={() => ({
-              root: { width: '90px' },
+              root: { width: '95px' },
               input: {
                 padding: '0 2px',
                 height: '28px',
                 backgroundColor: 'transparent',
                 border: '1px solid #d1d5db',
+                textAlign: 'center',
                 ...(LedgerUpdateRequestForm.hasError('date', form, index)
                   ? { borderColor: 'red' }
                   : {}),
@@ -1191,18 +1150,19 @@ const LedgerListRowItem: FC<{
             disabled={fixed}
           />
         ) : (
-          <div className="flex gap-1 w-full">
+          <div className="flex">
             <TextInput
               value={item.date_yymm}
               readOnly
               disabled
               styles={() => ({
-                root: { width: '70px' },
+                root: { width: '65px' },
                 input: {
                   padding: '0 2px',
                   height: '28px',
                   backgroundColor: 'transparent',
                   border: '1px solid #d1d5db',
+                  textAlign: 'center',
                 },
               })}
             />
@@ -1212,7 +1172,7 @@ const LedgerListRowItem: FC<{
               {...form.getInputProps(`items.${index}.date_dd`)}
               maxLength={2}
               styles={() => ({
-                root: { width: '40px' },
+                root: { width: '30px' },
                 input: {
                   padding: '0 2px',
                   height: '28px',
@@ -1260,7 +1220,7 @@ const LedgerListRowItem: FC<{
           </div>
         )}
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <div>
           <Autocomplete
             ref={counter_cd_ref}
@@ -1321,6 +1281,7 @@ const LedgerListRowItem: FC<{
                 backgroundColor: 'transparent',
                 border: '1px solid #e5e7eb',
                 fontSize: '0.875rem',
+                textAlign: 'center',
                 ...(LedgerUpdateRequestForm.hasError('other_cd', form, index)
                   ? { borderColor: 'red' }
                   : {}),
@@ -1330,12 +1291,12 @@ const LedgerListRowItem: FC<{
           />
         </div>
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <TextInput value={other_cd_name} className="w-16" disabled readOnly styles={() => ({
           root: { width: '70px' },
         })}/>
       </td>
-      <td className="px-3 py-2 text-right">
+      <td className="px-2 py-1 text-right">
         <AmountInputForUpdate
           input_key="karikata_value"
           form={form}
@@ -1343,7 +1304,7 @@ const LedgerListRowItem: FC<{
           disabled={fixed}
         />
       </td>
-      <td className="px-3 py-2 text-right">
+      <td className="px-2 py-1 text-right">
         <AmountInputForUpdate
           input_key="kasikata_value"
           form={form}
@@ -1351,7 +1312,7 @@ const LedgerListRowItem: FC<{
           disabled={fixed}
         />
       </td>
-      <td className="px-3 py-2">
+      <td className="px-2 py-1">
         <TextInput
           ref={note_ref}
           value={item.note}
@@ -1376,18 +1337,33 @@ const LedgerListRowItem: FC<{
           disabled={fixed}
         />
       </td>
-      <td className="px-3 py-2 text-right font-medium">
+      <td className="px-2 py-1 text-right font-medium">
         <span className={Number(item.acc) < 0 ? 'text-red-500' : 'text-emerald-600'}>
           {Amount.create(item.acc).toFormatedString()}
         </span>
       </td>
-      <td className="px-3 py-2 text-center">
+      <td className="px-2 py-1 text-center">
         <button
           className="text-xs text-red-500 hover:text-red-600"
           disabled={fixed}
           onClick={() => {
-            dispatch(journalActions.setDeleteJournalId(item.journal_id))
-            openDeleteModal()
+            dispatch(
+              deleteJournal({
+                request: {
+                  journalIds: [item.journal_id],
+                  nendo: toNendoString(nendo),
+                },
+                next: [
+                  loadLedgerList({
+                    nendo: toNendoString(nendo),
+                    ledger_cd,
+                    month: toMonthString(month),
+                    page_no: toPageNo(pageNo),
+                    page_size: toPageSize(pageSize),
+                  }),
+                ],
+              }),
+            )
           }}
         >
           削除

@@ -1,7 +1,7 @@
 import { NextActions } from '.'
 
-import { journals } from '@prisma/client'
-import { PayloadAction, createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { Prisma } from '@prisma/client'
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { JournalDeleteRequest } from '@/models/journal'
 
@@ -9,17 +9,15 @@ import { ApiResState, ApiResponse, initApiResState } from '@/misc/api'
 import { error_handler, fetchWithAuth } from '@/misc/fetch'
 
 export interface JournalState {
-  last_deleted: ApiResState<journals | null>
-  delete_journal_id: number | null
+  last_deleted: ApiResState<Prisma.BatchPayload | null>
 }
 
 const initialState: JournalState = {
   last_deleted: initApiResState(null),
-  delete_journal_id: null,
 }
 
 export const deleteJournal = createAsyncThunk<
-  ApiResponse<journals | null>,
+  ApiResponse<Prisma.BatchPayload | null>,
   {
     request: JournalDeleteRequest
     next: NextActions
@@ -28,10 +26,11 @@ export const deleteJournal = createAsyncThunk<
   'journal/delete',
   async ({ request, next }, { dispatch, rejectWithValue }) => {
     const json = await fetchWithAuth(
-      `/api/v1/journal/${request.nendo}/${request.journal_id}`,
+      `/api/v1/journal/${request.nendo}/bulk-delete`,
       error_handler(dispatch, rejectWithValue),
       {
-        method: 'DELETE',
+        method: 'POST',
+        body: JSON.stringify({ journalIds: request.journalIds }),
       },
     )
     for (const action of next) {
@@ -44,11 +43,7 @@ export const deleteJournal = createAsyncThunk<
 export const journalSlice = createSlice({
   name: 'journal',
   initialState,
-  reducers: {
-    setDeleteJournalId: (state, action: PayloadAction<number | null>) => {
-      state.delete_journal_id = action.payload
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder.addCase(deleteJournal.fulfilled, (state, action) => {
       state.last_deleted = {
