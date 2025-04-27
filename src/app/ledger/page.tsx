@@ -26,7 +26,6 @@ import { UseFormReturnType, useForm, zodResolver } from '@mantine/form'
 
 import { AppDispatch, RootState } from '@/store'
 import { appActions } from '@/store/app'
-import { deleteJournal } from '@/store/journal'
 import {
   createLedger,
   ledgerActions,
@@ -516,9 +515,6 @@ const LedgerList: FC<{
                 <th className="px-2 py-1 text-right font-normal text-gray-600 w-[130px]">
                   残高
                 </th>
-                <th className="px-2 py-1 text-center font-normal text-gray-600 w-[80px]">
-                  操作
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -931,9 +927,6 @@ const LedgerListNewRow: FC<{
       <td className="px-2 py-1 text-right text-gray-400">
         ---
       </td>
-      <td className="px-2 py-1">
-        <br />
-      </td>
     </tr>
   )
 }
@@ -1341,33 +1334,6 @@ const LedgerListRowItem: FC<{
         <span className={Number(item.acc) < 0 ? 'text-red-500' : 'text-emerald-600'}>
           {Amount.create(item.acc).toFormatedString()}
         </span>
-      </td>
-      <td className="px-2 py-1 text-center">
-        <button
-          className="text-xs text-red-500 hover:text-red-600"
-          disabled={fixed}
-          onClick={() => {
-            dispatch(
-              deleteJournal({
-                request: {
-                  journalIds: [item.journal_id],
-                  nendo: toNendoString(nendo),
-                },
-                next: [
-                  loadLedgerList({
-                    nendo: toNendoString(nendo),
-                    ledger_cd,
-                    month: toMonthString(month),
-                    page_no: toPageNo(pageNo),
-                    page_size: toPageSize(pageSize),
-                  }),
-                ],
-              }),
-            )
-          }}
-        >
-          削除
-        </button>
       </td>
     </tr>
   )
