@@ -1,10 +1,11 @@
+import { getFiscalYears } from "@/lib/services/masters/get-fiscal-years"
 import { NextResponse } from "next/server"
-import { ServiceFactory } from "@/lib/services/service-factory"
+// モック実装を使用する場合は以下のようにインポートを変更する
+// import { getFiscalYearsMock as getFiscalYears } from "@/lib/services/masters/get-fiscal-years"
 
 export async function GET() {
   try {
-    const fiscalYearService = ServiceFactory.getFiscalYearService()
-    const fiscalYears = await fiscalYearService.getFiscalYears()
+    const fiscalYears = await getFiscalYears()
 
     return NextResponse.json({
       success: true,

@@ -1,10 +1,11 @@
+import { prisma } from "../prisma/client"
+import { useMock } from "../settings"
 import type { AccountService } from "./account-service"
+import { ApiAccountService } from "./api/api-account-service"
+import { ApiFiscalYearService } from "./api/api-fiscal-year-service"
 import type { FiscalYearService } from "./fiscal-year-service"
 import { MockAccountService } from "./mock/mock-account-service"
-import { ApiAccountService } from "./api/api-account-service"
 import { MockFiscalYearService } from "./mock/mock-fiscal-year-service"
-import { ApiFiscalYearService } from "./api/api-fiscal-year-service"
-import { useMock } from "../settings"
 
 export class ServiceFactory {
   static getAccountService(): AccountService {
@@ -17,7 +18,7 @@ export class ServiceFactory {
 
   static getFiscalYearService(): FiscalYearService {
     if (!useMock) {
-      return new ApiFiscalYearService()
+      return new ApiFiscalYearService(prisma)
     }
     return new MockFiscalYearService()
   }
