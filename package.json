@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "watch": "npx tsc --watch",
     "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
+    "@prisma/client": "5.12.1",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",
@@ -38,6 +40,7 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "latest",
     "@reduxjs/toolkit": "latest",
+    "@supabase/supabase-js": "2.43.4",
     "autoprefixer": "^10.4.20",
     "chart.js": "latest",
     "class-variance-authority": "^0.7.1",
@@ -49,6 +52,7 @@
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "^0.4.4",
+    "prisma": "5.12.1",
     "react": "^19",
     "react-day-picker": "8.10.1",
     "react-dom": "^19",
