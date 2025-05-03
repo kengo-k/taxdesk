@@ -1,12 +1,11 @@
-/**
- * 共通型定義
- * このファイルには、アプリケーション全体で使用される共通の型定義を記述します。
- */
+import { Prisma, PrismaClient } from '@prisma/client'
 
-// 会計関連の型定義
+export type Connection = PrismaClient | Prisma.TransactionClient
 
-// 取引関連の型定義
-
-// API関連の型定義
-
-// UI関連の型定義
+export interface FiscalYear {
+  id: string
+  label: string
+  startDate: string
+  endDate: string
+  isCurrent: boolean
+}
