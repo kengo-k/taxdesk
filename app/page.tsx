@@ -1,21 +1,38 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { BarChart3, BookOpen, Database, FileSpreadsheet, Scale, Calculator, Calendar } from "lucide-react"
-import Link from "next/link"
-import { DonutChart } from "@/components/donut-chart"
-import { StackedBarChart } from "@/components/stacked-bar-chart"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
+import { useEffect, useState } from 'react'
+
+import Link from 'next/link'
+
+import {
+  BarChart3,
+  BookOpen,
+  Calculator,
+  Calendar,
+  Database,
+  FileSpreadsheet,
+  Scale,
+} from 'lucide-react'
+
+import { DonutChart } from '@/components/donut-chart'
+import { StackedBarChart } from '@/components/stacked-bar-chart'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   fetchFiscalYears,
-  selectFiscalYear,
   selectAllFiscalYears,
-  selectSelectedFiscalYearId,
-  selectFiscalYearLoading,
+  selectFiscalYear,
   selectFiscalYearError,
-} from "@/lib/redux/features/fiscalYearSlice"
+  selectFiscalYearLoading,
+  selectSelectedFiscalYearId,
+} from '@/lib/redux/features/fiscalYearSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 // 税額シミュレーションデータの型定義
 type TaxSimulationData = {
@@ -69,8 +86,8 @@ export default function Home() {
   const loading = useAppSelector(selectFiscalYearLoading)
   const error = useAppSelector(selectFiscalYearError)
 
-  const [yearData, setYearData] = useState(null)
-  const [taxSimulationData, setTaxSimulationData] = useState<TaxSimulationData | null>(null)
+  const [taxSimulationData, setTaxSimulationData] =
+    useState<TaxSimulationData | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
 
@@ -88,24 +105,18 @@ export default function Home() {
       setDataError(null)
 
       try {
-        // 財務サマリーデータの取得
-        const financialResponse = await fetch(`/api/reports/summary?year=${selectedYearId}`)
-        if (!financialResponse.ok) {
-          throw new Error(`財務データの取得に失敗しました: ${financialResponse.status}`)
-        }
-        const financialData = await financialResponse.json()
-        setYearData(financialData)
-
         // 税額シミュレーションデータの取得
         const taxResponse = await fetch(`/api/reports/tax/${selectedYearId}`)
         if (!taxResponse.ok) {
-          throw new Error(`税額データの取得に失敗しました: ${taxResponse.status}`)
+          throw new Error(
+            `税額データの取得に失敗しました: ${taxResponse.status}`,
+          )
         }
         const taxData = await taxResponse.json()
         setTaxSimulationData(taxData)
       } catch (error) {
-        console.error("エラーが発生しました:", error)
-        setDataError("データの取得中にエラーが発生しました")
+        console.error('エラーが発生しました:', error)
+        setDataError('データの取得中にエラーが発生しました')
       } finally {
         setDataLoading(false)
       }
@@ -116,9 +127,9 @@ export default function Home() {
 
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -254,7 +265,10 @@ export default function Home() {
           <h2 className="text-lg font-bold">財務サマリー</h2>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">年度：</span>
-            <Select value={selectedYearId || ""} onValueChange={handleYearChange}>
+            <Select
+              value={selectedYearId || ''}
+              onValueChange={handleYearChange}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="年度を選択" />
               </SelectTrigger>
@@ -274,56 +288,90 @@ export default function Home() {
           <div className="flex flex-col md:flex-row">
             <div className="md:w-1/3 mb-4 md:mb-0">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="font-medium text-lg">{selectedYearId === "2024" ? "税額見込み" : "確定税額"}</h3>
+                <h3 className="font-medium text-lg">
+                  {selectedYearId === '2024' ? '税額見込み' : '確定税額'}
+                </h3>
                 <span className="font-bold text-lg">
-                  {taxSimulationData ? formatCurrency(taxSimulationData.yearData.taxEstimates.total) : "Loading..."}
+                  {taxSimulationData
+                    ? formatCurrency(
+                        taxSimulationData.yearData.taxEstimates.total,
+                      )
+                    : 'Loading...'}
                 </span>
               </div>
               <p className="text-sm text-gray-500 mb-4 md:mb-0">
-                {selectedYearId === "2024" ? "現在の収支に基づく年間税額見込み" : `${selectedYearId}年度の確定税額`}
+                {selectedYearId === '2024'
+                  ? '現在の収支に基づく年間税額見込み'
+                  : `${selectedYearId}年度の確定税額`}
               </p>
             </div>
 
             <div className="md:w-2/3 md:pl-6 md:border-l">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-3 bg-blue-50 rounded-md">
-                  <div className="text-sm text-gray-600">{selectedYearId === "2024" ? "法人税" : "法人税（確定）"}</div>
+                  <div className="text-sm text-gray-600">
+                    {selectedYearId === '2024' ? '法人税' : '法人税（確定）'}
+                  </div>
                   <div className="font-medium">
                     {taxSimulationData
-                      ? formatCurrency(taxSimulationData.yearData.taxEstimates.totalCorporateTax)
-                      : "Loading..."}
+                      ? formatCurrency(
+                          taxSimulationData.yearData.taxEstimates
+                            .totalCorporateTax,
+                        )
+                      : 'Loading...'}
                   </div>
                 </div>
                 <div className="p-3 bg-green-50 rounded-md">
-                  <div className="text-sm text-gray-600">{selectedYearId === "2024" ? "住民税" : "住民税（確定）"}</div>
+                  <div className="text-sm text-gray-600">
+                    {selectedYearId === '2024' ? '住民税' : '住民税（確定）'}
+                  </div>
                   <div className="font-medium">
                     {taxSimulationData
-                      ? formatCurrency(taxSimulationData.yearData.taxEstimates.totalInhabitantTax)
-                      : "Loading..."}
+                      ? formatCurrency(
+                          taxSimulationData.yearData.taxEstimates
+                            .totalInhabitantTax,
+                        )
+                      : 'Loading...'}
                   </div>
                 </div>
                 <div className="p-3 bg-amber-50 rounded-md">
-                  <div className="text-sm text-gray-600">{selectedYearId === "2024" ? "事業税" : "事業税（確定）"}</div>
+                  <div className="text-sm text-gray-600">
+                    {selectedYearId === '2024' ? '事業税' : '事業税（確定）'}
+                  </div>
                   <div className="font-medium">
                     {taxSimulationData
-                      ? formatCurrency(taxSimulationData.yearData.taxEstimates.totalBusinessTax)
-                      : "Loading..."}
+                      ? formatCurrency(
+                          taxSimulationData.yearData.taxEstimates
+                            .totalBusinessTax,
+                        )
+                      : 'Loading...'}
                   </div>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-md">
-                  <div className="text-sm text-gray-600">{selectedYearId === "2024" ? "消費税" : "消費税（確定）"}</div>
+                  <div className="text-sm text-gray-600">
+                    {selectedYearId === '2024' ? '消費税' : '消費税（確定）'}
+                  </div>
                   <div className="font-medium">
                     {taxSimulationData
-                      ? formatCurrency(taxSimulationData.yearData.taxEstimates.totalConsumptionTax)
-                      : "Loading..."}
+                      ? formatCurrency(
+                          taxSimulationData.yearData.taxEstimates
+                            .totalConsumptionTax,
+                        )
+                      : 'Loading...'}
                   </div>
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
                 <Link href={`/tax-simulation?year=${selectedYearId}`}>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
                     <Calculator className="h-4 w-4" />
-                    {selectedYearId === "2024" ? "詳細シミュレーション" : "詳細表示"}
+                    {selectedYearId === '2024'
+                      ? '詳細シミュレーション'
+                      : '詳細表示'}
                   </Button>
                 </Link>
               </div>
@@ -335,33 +383,33 @@ export default function Home() {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title="現金残高"
-              value={yearData ? formatCurrency(yearData.cashBalanceTotal) : "Loading..."}
-              data={yearData ? yearData.cashBalanceData : []}
-              labels={yearData ? yearData.cashBalanceLabels : []}
-              colors={yearData ? yearData.cashBalanceColors : []}
-              amounts={yearData ? yearData.cashBalanceAmounts : []}
+              value={'Loading...'}
+              data={[]}
+              labels={[]}
+              colors={[]}
+              amounts={[]}
             />
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title="本年度の収入"
-              value={yearData ? formatCurrency(yearData.incomeTotal) : "Loading..."}
-              data={yearData ? yearData.incomeData : []}
-              labels={yearData ? yearData.incomeLabels : []}
-              colors={yearData ? yearData.incomeColors : []}
-              amounts={yearData ? yearData.incomeAmounts : []}
+              value={'Loading...'}
+              data={[]}
+              labels={[]}
+              colors={[]}
+              amounts={[]}
             />
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title="本年度の支出"
-              value={yearData ? formatCurrency(yearData.expenseTotal) : "Loading..."}
-              data={yearData ? yearData.expenseData : []}
-              labels={yearData ? yearData.expenseLabels : []}
-              colors={yearData ? yearData.expenseColors : []}
-              amounts={yearData ? yearData.expenseAmounts : []}
+              value={'Loading...'}
+              data={[]}
+              labels={[]}
+              colors={[]}
+              amounts={[]}
             />
           </div>
         </div>
@@ -370,7 +418,7 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <StackedBarChart
             title={`月別収入（${selectedYearId}年度）`}
-            data={yearData ? yearData.monthlyIncomeData : []}
+            data={{ labels: [], datasets: [] }}
           />
         </div>
 
@@ -378,7 +426,7 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <StackedBarChart
             title={`月別支出（${selectedYearId}年度）`}
-            data={yearData ? yearData.monthlyExpenseData : []}
+            data={{ labels: [], datasets: [] }}
           />
         </div>
       </section>

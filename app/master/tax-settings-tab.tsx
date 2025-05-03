@@ -1,25 +1,37 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
+import { useEffect, useState } from 'react'
 
-import { useState, useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { InfoIcon, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, InfoIcon } from 'lucide-react'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 // 年度のモックデータ
 const FISCAL_YEARS = [
-  { id: "2024", name: "2024年度（現在）" },
-  { id: "2023", name: "2023年度" },
-  { id: "2022", name: "2022年度" },
-  { id: "2021", name: "2021年度" },
-  { id: "2020", name: "2020年度" },
+  { id: '2024', name: '2024年度（現在）' },
+  { id: '2023', name: '2023年度' },
+  { id: '2022', name: '2022年度' },
+  { id: '2021', name: '2021年度' },
+  { id: '2020', name: '2020年度' },
 ]
 
 interface TaxSettingsTabProps {
@@ -28,17 +40,17 @@ interface TaxSettingsTabProps {
 
 export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
   // 状態管理
-  const [selectedYear, setSelectedYear] = useState("2024")
+  const [selectedYear, setSelectedYear] = useState('2024')
   const [isReadOnly, setIsReadOnly] = useState(false)
   const [isTaxableEntity, setIsTaxableEntity] = useState(true)
   const [isSimplifiedTaxation, setIsSimplifiedTaxation] = useState(false)
-  const [deemedPurchaseRate, setDeemedPurchaseRate] = useState("50")
-  const [accountingMethod, setAccountingMethod] = useState("taxExcluded") // デフォルトは税抜経理
+  const [deemedPurchaseRate, setDeemedPurchaseRate] = useState('50')
+  const [accountingMethod, setAccountingMethod] = useState('taxExcluded') // デフォルトは税抜経理
 
   // 年度変更時の処理
   useEffect(() => {
     // 現在年度以外は読み取り専用
-    const isCurrentYear = selectedYear === "2024"
+    const isCurrentYear = selectedYear === '2024'
     setIsReadOnly(!isCurrentYear)
 
     // 親コンポーネントに年度変更を通知
@@ -50,34 +62,35 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
     if (!isCurrentYear) {
       // モック：過去年度のデータ（実際はAPIから取得）
       const mockHistoricalData = {
-        "2023": {
+        '2023': {
           isTaxable: true,
           isSimplified: true,
-          deemedRate: "50",
-          accountingMethod: "taxExcluded",
+          deemedRate: '50',
+          accountingMethod: 'taxExcluded',
         },
-        "2022": {
+        '2022': {
           isTaxable: true,
           isSimplified: false,
-          deemedRate: "40",
-          accountingMethod: "taxIncluded",
+          deemedRate: '40',
+          accountingMethod: 'taxIncluded',
         },
-        "2021": {
+        '2021': {
           isTaxable: false,
           isSimplified: false,
-          deemedRate: "50",
-          accountingMethod: "taxExcluded",
+          deemedRate: '50',
+          accountingMethod: 'taxExcluded',
         },
-        "2020": {
+        '2020': {
           isTaxable: false,
           isSimplified: false,
-          deemedRate: "50",
-          accountingMethod: "taxExcluded",
+          deemedRate: '50',
+          accountingMethod: 'taxExcluded',
         },
       }
 
       // 選択した年度のデータを設定
-      const yearData = mockHistoricalData[selectedYear as keyof typeof mockHistoricalData]
+      const yearData =
+        mockHistoricalData[selectedYear as keyof typeof mockHistoricalData]
       if (yearData) {
         setIsTaxableEntity(yearData.isTaxable)
         setIsSimplifiedTaxation(yearData.isSimplified)
@@ -88,8 +101,8 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
       // 現在年度の場合は最新の設定を表示（実際はAPIから取得）
       setIsTaxableEntity(true)
       setIsSimplifiedTaxation(false)
-      setDeemedPurchaseRate("50")
-      setAccountingMethod("taxExcluded")
+      setDeemedPurchaseRate('50')
+      setAccountingMethod('taxExcluded')
     }
   }, [selectedYear, onYearChange])
 
@@ -105,10 +118,12 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
   }
 
   // みなし仕入れ率の変更ハンドラ
-  const handleDeemedPurchaseRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeemedPurchaseRateChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const value = e.target.value
     // 数値と小数点のみ許可
-    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setDeemedPurchaseRate(value)
     }
   }
@@ -116,17 +131,25 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
   return (
     <div className="space-y-6">
       {isReadOnly && (
-        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert
+          variant="default"
+          className="bg-amber-50 text-amber-800 border-amber-200"
+        >
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {selectedYear}年度の設定を表示しています。過去年度の設定は変更できません。
+            {selectedYear}
+            年度の設定を表示しています。過去年度の設定は変更できません。
           </AlertDescription>
         </Alert>
       )}
 
       <div className="flex justify-between items-center">
         <div className="w-64">
-          <Select value={selectedYear} onValueChange={handleYearChange} disabled={false}>
+          <Select
+            value={selectedYear}
+            onValueChange={handleYearChange}
+            disabled={false}
+          >
             <SelectTrigger>
               <SelectValue placeholder="年度を選択" />
             </SelectTrigger>
@@ -147,7 +170,10 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
             {/* 課税事業者かどうか */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="taxable-entity" className="text-base font-medium">
+                <Label
+                  htmlFor="taxable-entity"
+                  className="text-base font-medium"
+                >
                   課税事業者ですか？
                 </Label>
                 <Switch
@@ -176,7 +202,10 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                 {/* 簡易課税かどうか */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="simplified-taxation" className="text-base font-medium">
+                    <Label
+                      htmlFor="simplified-taxation"
+                      className="text-base font-medium"
+                    >
                       簡易課税制度を適用しますか？
                     </Label>
                     <Switch
@@ -198,7 +227,10 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                 {/* 簡易課税の場合のみ表示 */}
                 {isSimplifiedTaxation && (
                   <div className="space-y-2">
-                    <Label htmlFor="deemed-purchase-rate" className="text-base font-medium">
+                    <Label
+                      htmlFor="deemed-purchase-rate"
+                      className="text-base font-medium"
+                    >
                       みなし仕入れ率（%）
                     </Label>
                     <div className="flex items-center space-x-2">
@@ -236,9 +268,12 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                         </Tooltip>
                       </TooltipProvider>
                     </div>
-                    {deemedPurchaseRate && !validateDeemedPurchaseRate(deemedPurchaseRate) && (
-                      <p className="text-sm text-red-500">0〜100の間の数値を入力してください</p>
-                    )}
+                    {deemedPurchaseRate &&
+                      !validateDeemedPurchaseRate(deemedPurchaseRate) && (
+                        <p className="text-sm text-red-500">
+                          0〜100の間の数値を入力してください
+                        </p>
+                      )}
                   </div>
                 )}
 
@@ -252,8 +287,15 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                     disabled={isReadOnly}
                   >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="taxExcluded" id="tax-excluded" disabled={isReadOnly} />
-                      <Label htmlFor="tax-excluded" className={`cursor-pointer ${isReadOnly ? "text-gray-500" : ""}`}>
+                      <RadioGroupItem
+                        value="taxExcluded"
+                        id="tax-excluded"
+                        disabled={isReadOnly}
+                      />
+                      <Label
+                        htmlFor="tax-excluded"
+                        className={`cursor-pointer ${isReadOnly ? 'text-gray-500' : ''}`}
+                      >
                         税抜経理方式
                       </Label>
                       <TooltipProvider>
@@ -262,14 +304,23 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                             <InfoIcon className="h-4 w-4 text-gray-400 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="w-80">取引金額を「本体価格」と「消費税」に区分して記帳する方式です。</p>
+                            <p className="w-80">
+                              取引金額を「本体価格」と「消費税」に区分して記帳する方式です。
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="taxIncluded" id="tax-included" disabled={isReadOnly} />
-                      <Label htmlFor="tax-included" className={`cursor-pointer ${isReadOnly ? "text-gray-500" : ""}`}>
+                      <RadioGroupItem
+                        value="taxIncluded"
+                        id="tax-included"
+                        disabled={isReadOnly}
+                      />
+                      <Label
+                        htmlFor="tax-included"
+                        className={`cursor-pointer ${isReadOnly ? 'text-gray-500' : ''}`}
+                      >
                         税込経理方式
                       </Label>
                       <TooltipProvider>
@@ -278,7 +329,9 @@ export function TaxSettingsTab({ onYearChange }: TaxSettingsTabProps) {
                             <InfoIcon className="h-4 w-4 text-gray-400 cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="w-80">取引金額を税込金額のまま記帳し、決算時に消費税額を計算する方式です。</p>
+                            <p className="w-80">
+                              取引金額を税込金額のまま記帳し、決算時に消費税額を計算する方式です。
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

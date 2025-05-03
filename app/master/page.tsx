@@ -1,41 +1,61 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, Plus } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/components/ui/use-toast"
+import { useEffect, useState } from 'react'
 
-import { KamokuTab } from "./kamoku-tab"
-import { SaimokuTab } from "./saimoku-tab"
-import { TaxCategoryTab } from "./tax-category-tab"
-import { TaxMappingTab } from "./tax-mapping-tab"
-import { TaxSettingsTab } from "./tax-settings-tab"
-import { KamokuDialog } from "./kamoku-dialog"
-import { SaimokuDialog } from "./saimoku-dialog"
-import { TaxCategoryDialog } from "./tax-category-dialog"
-import { TaxMappingDialog } from "./tax-mapping-dialog"
-import { DeleteDialog } from "./delete-dialog"
-import { getMockData } from "./mock-data"
-import type { Kamoku, Saimoku, TaxCategory, KamokuTaxMapping, DeleteType } from "./types"
+import Link from 'next/link'
+
+import { DeleteDialog } from './delete-dialog'
+import { KamokuDialog } from './kamoku-dialog'
+import { KamokuTab } from './kamoku-tab'
+import { getMockData } from './mock-data'
+import { SaimokuDialog } from './saimoku-dialog'
+import { SaimokuTab } from './saimoku-tab'
+import { TaxCategoryDialog } from './tax-category-dialog'
+import { TaxCategoryTab } from './tax-category-tab'
+import { TaxMappingDialog } from './tax-mapping-dialog'
+import { TaxMappingTab } from './tax-mapping-tab'
+import { TaxSettingsTab } from './tax-settings-tab'
+import type {
+  DeleteType,
+  Kamoku,
+  KamokuTaxMapping,
+  Saimoku,
+  TaxCategory,
+} from './types'
+import { ArrowLeft, Plus } from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toast } from '@/components/ui/use-toast'
 
 export default function MasterManagementPage() {
   // 状態管理
-  const [activeTab, setActiveTab] = useState("kamoku")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterBunrui, setFilterBunrui] = useState("all")
+  const [activeTab, setActiveTab] = useState('kamoku')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterBunrui, setFilterBunrui] = useState('all')
   const [kamokuList, setKamokuList] = useState<Kamoku[]>([])
   const [bunruiList, setBunruiList] = useState<any[]>([])
   const [saimokuList, setSaimokuList] = useState<Saimoku[]>([])
   const [taxCategories, setTaxCategories] = useState<TaxCategory[]>([])
-  const [kamokuTaxMappings, setKamokuTaxMappings] = useState<KamokuTaxMapping[]>([])
+  const [kamokuTaxMappings, setKamokuTaxMappings] = useState<
+    KamokuTaxMapping[]
+  >([])
   const [filteredKamokuList, setFilteredKamokuList] = useState<Kamoku[]>([])
   const [filteredSaimokuList, setFilteredSaimokuList] = useState<Saimoku[]>([])
-  const [filteredTaxCategories, setFilteredTaxCategories] = useState<TaxCategory[]>([])
-  const [filteredKamokuTaxMappings, setFilteredKamokuTaxMappings] = useState<KamokuTaxMapping[]>([])
-  const [selectedTaxYear, setSelectedTaxYear] = useState("2024")
+  const [filteredTaxCategories, setFilteredTaxCategories] = useState<
+    TaxCategory[]
+  >([])
+  const [filteredKamokuTaxMappings, setFilteredKamokuTaxMappings] = useState<
+    KamokuTaxMapping[]
+  >([])
+  const [selectedTaxYear, setSelectedTaxYear] = useState('2024')
   const [isTaxSettingsReadOnly, setIsTaxSettingsReadOnly] = useState(false)
 
   // ダイアログの状態
@@ -46,21 +66,31 @@ export default function MasterManagementPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [currentKamoku, setCurrentKamoku] = useState<Kamoku | null>(null)
   const [currentSaimoku, setCurrentSaimoku] = useState<Saimoku | null>(null)
-  const [currentTaxCategory, setCurrentTaxCategory] = useState<TaxCategory | null>(null)
-  const [currentMapping, setCurrentMapping] = useState<KamokuTaxMapping | null>(null)
+  const [currentTaxCategory, setCurrentTaxCategory] =
+    useState<TaxCategory | null>(null)
+  const [currentMapping, setCurrentMapping] = useState<KamokuTaxMapping | null>(
+    null,
+  )
   const [isEditing, setIsEditing] = useState(false)
-  const [parentKamokuForSaimoku, setParentKamokuForSaimoku] = useState<Kamoku | null>(null)
-  const [deleteType, setDeleteType] = useState<DeleteType>("kamoku")
+  const [parentKamokuForSaimoku, setParentKamokuForSaimoku] =
+    useState<Kamoku | null>(null)
+  const [deleteType, setDeleteType] = useState<DeleteType>('kamoku')
 
   // 消費税設定の年度変更ハンドラ
   const handleTaxSettingsYearChange = (year: string) => {
     setSelectedTaxYear(year)
-    setIsTaxSettingsReadOnly(year !== "2024")
+    setIsTaxSettingsReadOnly(year !== '2024')
   }
 
   // モックデータの読み込み
   useEffect(() => {
-    const { bunruiList, kamokuList, saimokuList, taxCategories, kamokuTaxMappings } = getMockData()
+    const {
+      bunruiList,
+      kamokuList,
+      saimokuList,
+      taxCategories,
+      kamokuTaxMappings,
+    } = getMockData()
 
     setBunruiList(bunruiList)
     setKamokuList(kamokuList)
@@ -78,8 +108,10 @@ export default function MasterManagementPage() {
     let filtered = kamokuList
 
     // 分類でフィルタリング
-    if (filterBunrui && filterBunrui !== "all") {
-      filtered = filtered.filter((kamoku) => kamoku.kamoku_bunrui_cd === filterBunrui)
+    if (filterBunrui && filterBunrui !== 'all') {
+      filtered = filtered.filter(
+        (kamoku) => kamoku.kamoku_bunrui_cd === filterBunrui,
+      )
     }
 
     // 検索語でフィルタリング
@@ -135,7 +167,14 @@ export default function MasterManagementPage() {
       )
     }
     setFilteredKamokuTaxMappings(filteredMapping)
-  }, [searchTerm, filterBunrui, kamokuList, saimokuList, taxCategories, kamokuTaxMappings])
+  }, [
+    searchTerm,
+    filterBunrui,
+    kamokuList,
+    saimokuList,
+    taxCategories,
+    kamokuTaxMappings,
+  ])
 
   // 勘定科目の追加/編集ダイアログを開く
   const openKamokuDialog = (kamoku?: Kamoku) => {
@@ -144,13 +183,13 @@ export default function MasterManagementPage() {
       setIsEditing(true)
     } else {
       setCurrentKamoku({
-        id: "",
-        kamoku_cd: "",
-        kamoku_full_name: "",
-        kamoku_ryaku_name: "",
-        kamoku_kana_name: "",
-        kamoku_bunrui_cd: "",
-        description: "",
+        id: '',
+        kamoku_cd: '',
+        kamoku_full_name: '',
+        kamoku_ryaku_name: '',
+        kamoku_kana_name: '',
+        kamoku_bunrui_cd: '',
+        description: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -167,18 +206,18 @@ export default function MasterManagementPage() {
       setIsEditing(true)
     } else {
       setCurrentSaimoku({
-        id: "",
+        id: '',
         kamoku_cd: parentKamoku.kamoku_cd,
-        saimoku_cd: "",
-        saimoku_full_name: "",
-        saimoku_ryaku_name: "",
-        saimoku_kana_name: "",
-        description: "",
+        saimoku_cd: '',
+        saimoku_full_name: '',
+        saimoku_ryaku_name: '',
+        saimoku_kana_name: '',
+        description: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         transaction: '["2000-01-01 00:00:00+00",)',
-        valid_from: new Date().toISOString().split("T")[0], // 今日の日付を初期値に
-        valid_to: "", // 終了日は空欄
+        valid_from: new Date().toISOString().split('T')[0], // 今日の日付を初期値に
+        valid_to: '', // 終了日は空欄
       })
       setIsEditing(false)
     }
@@ -192,18 +231,18 @@ export default function MasterManagementPage() {
       setIsEditing(true)
     } else {
       setCurrentTaxCategory({
-        id: "",
+        id: '',
         code: `TAX_${Date.now().toString().substring(8)}`,
-        name: "",
-        description: "",
+        name: '',
+        description: '',
         tax_rate: 0,
         is_reduced_tax: false,
         is_taxable: true,
         is_deductible: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        valid_from: new Date().toISOString().split("T")[0], // 今日の日付を初期値に
-        valid_to: "", // 終了日は空欄
+        valid_from: new Date().toISOString().split('T')[0], // 今日の日付を初期値に
+        valid_to: '', // 終了日は空欄
       })
       setIsEditing(false)
     }
@@ -217,14 +256,14 @@ export default function MasterManagementPage() {
       setIsEditing(true)
     } else {
       setCurrentMapping({
-        id: "",
-        kamoku_cd: "",
-        tax_category_id: "",
+        id: '',
+        kamoku_cd: '',
+        tax_category_id: '',
         is_default: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        valid_from: new Date().toISOString().split("T")[0], // 今日の日付を初期値に
-        valid_to: "", // 終了日は空欄
+        valid_from: new Date().toISOString().split('T')[0], // 今日の日付を初期値に
+        valid_to: '', // 終了日は空欄
       })
       setIsEditing(false)
     }
@@ -238,9 +277,9 @@ export default function MasterManagementPage() {
     // バリデーション
     if (!currentKamoku.kamoku_full_name) {
       toast({
-        title: "入力エラー",
-        description: "科目名は必須項目です",
-        variant: "destructive",
+        title: '入力エラー',
+        description: '科目名は必須項目です',
+        variant: 'destructive',
       })
       return
     }
@@ -254,17 +293,23 @@ export default function MasterManagementPage() {
     currentKamoku.updated_at = new Date().toISOString()
 
     // 分類情報を取得
-    const bunrui = bunruiList.find((b) => b.kamoku_bunrui_cd === currentKamoku.kamoku_bunrui_cd)
+    const bunrui = bunruiList.find(
+      (b) => b.kamoku_bunrui_cd === currentKamoku.kamoku_bunrui_cd,
+    )
 
     // 勘定科目リストを更新
     if (isEditing) {
-      setKamokuList((prev) => prev.map((k) => (k.id === currentKamoku?.id ? { ...currentKamoku, bunrui } : k)))
+      setKamokuList((prev) =>
+        prev.map((k) =>
+          k.id === currentKamoku?.id ? { ...currentKamoku, bunrui } : k,
+        ),
+      )
     } else {
       setKamokuList((prev) => [...prev, { ...currentKamoku, bunrui }])
     }
 
     toast({
-      title: isEditing ? "勘定科目を更新しました" : "勘定科目を追加しました",
+      title: isEditing ? '勘定科目を更新しました' : '勘定科目を追加しました',
       description: `${currentKamoku.kamoku_full_name}（${currentKamoku.kamoku_cd}）`,
     })
 
@@ -276,11 +321,15 @@ export default function MasterManagementPage() {
     if (!currentSaimoku || !parentKamokuForSaimoku) return
 
     // バリデーション
-    if (!currentSaimoku.saimoku_cd || !currentSaimoku.saimoku_full_name || !currentSaimoku.valid_from) {
+    if (
+      !currentSaimoku.saimoku_cd ||
+      !currentSaimoku.saimoku_full_name ||
+      !currentSaimoku.valid_from
+    ) {
       toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください",
-        variant: "destructive",
+        title: '入力エラー',
+        description: '必須項目を入力してください',
+        variant: 'destructive',
       })
       return
     }
@@ -295,7 +344,9 @@ export default function MasterManagementPage() {
 
     // 細目リストを更新
     if (isEditing) {
-      setSaimokuList((prev) => prev.map((s) => (s.id === currentSaimoku?.id ? currentSaimoku : s)))
+      setSaimokuList((prev) =>
+        prev.map((s) => (s.id === currentSaimoku?.id ? currentSaimoku : s)),
+      )
     } else {
       setSaimokuList((prev) => [...prev, currentSaimoku])
     }
@@ -305,7 +356,9 @@ export default function MasterManagementPage() {
       prev.map((k) => {
         if (k.id === parentKamokuForSaimoku.id) {
           const updatedSaimokuList = isEditing
-            ? (k.saimokuList || []).map((s) => (s.id === currentSaimoku.id ? currentSaimoku : s))
+            ? (k.saimokuList || []).map((s) =>
+                s.id === currentSaimoku.id ? currentSaimoku : s,
+              )
             : [...(k.saimokuList || []), currentSaimoku]
           return { ...k, saimokuList: updatedSaimokuList }
         }
@@ -314,7 +367,7 @@ export default function MasterManagementPage() {
     )
 
     toast({
-      title: isEditing ? "細目を更新しました" : "細目を追加しました",
+      title: isEditing ? '細目を更新しました' : '細目を追加しました',
       description: `${currentSaimoku.saimoku_full_name}（${currentSaimoku.saimoku_cd}）`,
     })
 
@@ -328,9 +381,9 @@ export default function MasterManagementPage() {
     // バリデーション
     if (!currentTaxCategory.name || !currentTaxCategory.valid_from) {
       toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください",
-        variant: "destructive",
+        title: '入力エラー',
+        description: '必須項目を入力してください',
+        variant: 'destructive',
       })
       return
     }
@@ -350,7 +403,11 @@ export default function MasterManagementPage() {
 
     // 消費税区分リストを更新
     if (isEditing) {
-      setTaxCategories((prev) => prev.map((c) => (c.id === currentTaxCategory?.id ? currentTaxCategory : c)))
+      setTaxCategories((prev) =>
+        prev.map((c) =>
+          c.id === currentTaxCategory?.id ? currentTaxCategory : c,
+        ),
+      )
     } else {
       setTaxCategories((prev) => [...prev, currentTaxCategory])
     }
@@ -368,7 +425,9 @@ export default function MasterManagementPage() {
     }
 
     toast({
-      title: isEditing ? "消費税区分を更新しました" : "消費税区分を追加しました",
+      title: isEditing
+        ? '消費税区分を更新しました'
+        : '消費税区分を追加しました',
       description: `${currentTaxCategory.name}（${currentTaxCategory.code}）`,
     })
 
@@ -380,11 +439,15 @@ export default function MasterManagementPage() {
     if (!currentMapping) return
 
     // バリデーション
-    if (!currentMapping.kamoku_cd || !currentMapping.tax_category_id || !currentMapping.valid_from) {
+    if (
+      !currentMapping.kamoku_cd ||
+      !currentMapping.tax_category_id ||
+      !currentMapping.valid_from
+    ) {
       toast({
-        title: "入力エラー",
-        description: "必須項目を入力してください",
-        variant: "destructive",
+        title: '入力エラー',
+        description: '必須項目を入力してください',
+        variant: 'destructive',
       })
       return
     }
@@ -398,8 +461,12 @@ export default function MasterManagementPage() {
     currentMapping.updated_at = new Date().toISOString()
 
     // 関連情報を取得
-    const kamoku = kamokuList.find((k) => k.kamoku_cd === currentMapping.kamoku_cd)
-    const taxCategory = taxCategories.find((t) => t.id === currentMapping.tax_category_id)
+    const kamoku = kamokuList.find(
+      (k) => k.kamoku_cd === currentMapping.kamoku_cd,
+    )
+    const taxCategory = taxCategories.find(
+      (t) => t.id === currentMapping.tax_category_id,
+    )
 
     // 関連付けリストを更新
     const updatedMapping = {
@@ -409,13 +476,15 @@ export default function MasterManagementPage() {
     }
 
     if (isEditing) {
-      setKamokuTaxMappings((prev) => prev.map((m) => (m.id === currentMapping.id ? updatedMapping : m)))
+      setKamokuTaxMappings((prev) =>
+        prev.map((m) => (m.id === currentMapping.id ? updatedMapping : m)),
+      )
     } else {
       setKamokuTaxMappings((prev) => [...prev, updatedMapping])
     }
 
     toast({
-      title: isEditing ? "関連付けを更新しました" : "関連付けを追加しました",
+      title: isEditing ? '関連付けを更新しました' : '関連付けを追加しました',
       description: `${kamoku?.kamoku_full_name} - ${taxCategory?.name}`,
     })
 
@@ -425,14 +494,16 @@ export default function MasterManagementPage() {
   // 削除確認ダイアログを開く
   const confirmDelete = (item: any, type: DeleteType) => {
     setDeleteType(type)
-    if (type === "kamoku") {
+    if (type === 'kamoku') {
       setCurrentKamoku(item)
-    } else if (type === "saimoku") {
+    } else if (type === 'saimoku') {
       setCurrentSaimoku(item)
-      setParentKamokuForSaimoku(kamokuList.find((k) => k.kamoku_cd === item.kamoku_cd) || null)
-    } else if (type === "tax-category") {
+      setParentKamokuForSaimoku(
+        kamokuList.find((k) => k.kamoku_cd === item.kamoku_cd) || null,
+      )
+    } else if (type === 'tax-category') {
       setCurrentTaxCategory(item)
-    } else if (type === "mapping") {
+    } else if (type === 'mapping') {
       setCurrentMapping(item)
     }
     setShowDeleteDialog(true)
@@ -440,19 +511,23 @@ export default function MasterManagementPage() {
 
   // 削除処理
   const handleDelete = () => {
-    if (deleteType === "kamoku" && currentKamoku) {
+    if (deleteType === 'kamoku' && currentKamoku) {
       // 勘定科目の削除
       setKamokuList((prev) => prev.filter((k) => k.id !== currentKamoku.id))
       // 関連する細目も削除
-      setSaimokuList((prev) => prev.filter((s) => s.kamoku_cd !== currentKamoku.kamoku_cd))
+      setSaimokuList((prev) =>
+        prev.filter((s) => s.kamoku_cd !== currentKamoku.kamoku_cd),
+      )
       // 関連する消費税関連付けも削除
-      setKamokuTaxMappings((prev) => prev.filter((m) => m.kamoku_cd !== currentKamoku.kamoku_cd))
+      setKamokuTaxMappings((prev) =>
+        prev.filter((m) => m.kamoku_cd !== currentKamoku.kamoku_cd),
+      )
 
       toast({
-        title: "勘定科目を削除しました",
+        title: '勘定科目を削除しました',
         description: `${currentKamoku.kamoku_full_name}（${currentKamoku.kamoku_cd}）`,
       })
-    } else if (deleteType === "saimoku" && currentSaimoku) {
+    } else if (deleteType === 'saimoku' && currentSaimoku) {
       // 細目の削除
       setSaimokuList((prev) => prev.filter((s) => s.id !== currentSaimoku.id))
 
@@ -460,32 +535,43 @@ export default function MasterManagementPage() {
       setKamokuList((prev) =>
         prev.map((k) => {
           if (k.kamoku_cd === currentSaimoku.kamoku_cd) {
-            return { ...k, saimokuList: (k.saimokuList || []).filter((s) => s.id !== currentSaimoku?.id) }
+            return {
+              ...k,
+              saimokuList: (k.saimokuList || []).filter(
+                (s) => s.id !== currentSaimoku?.id,
+              ),
+            }
           }
           return k
         }),
       )
 
       toast({
-        title: "細目を削除しました",
+        title: '細目を削除しました',
         description: `${currentSaimoku.saimoku_full_name}（${currentSaimoku.saimoku_cd}）`,
       })
-    } else if (deleteType === "tax-category" && currentTaxCategory) {
+    } else if (deleteType === 'tax-category' && currentTaxCategory) {
       // 消費税区分の削除
-      setTaxCategories((prev) => prev.filter((c) => c.id !== currentTaxCategory.id))
+      setTaxCategories((prev) =>
+        prev.filter((c) => c.id !== currentTaxCategory.id),
+      )
       // 関連する関連付けも削除
-      setKamokuTaxMappings((prev) => prev.filter((m) => m.tax_category_id !== currentTaxCategory.id))
+      setKamokuTaxMappings((prev) =>
+        prev.filter((m) => m.tax_category_id !== currentTaxCategory.id),
+      )
 
       toast({
-        title: "消費税区分を削除しました",
+        title: '消費税区分を削除しました',
         description: `${currentTaxCategory.name}（${currentTaxCategory.code}）`,
       })
-    } else if (deleteType === "mapping" && currentMapping) {
+    } else if (deleteType === 'mapping' && currentMapping) {
       // 関連付けの削除
-      setKamokuTaxMappings((prev) => prev.filter((m) => m.id !== currentMapping.id))
+      setKamokuTaxMappings((prev) =>
+        prev.filter((m) => m.id !== currentMapping.id),
+      )
 
       toast({
-        title: "関連付けを削除しました",
+        title: '関連付けを削除しました',
         description: `${currentMapping.kamoku_name} - ${currentMapping.tax_category?.name}`,
       })
     }
@@ -505,7 +591,9 @@ export default function MasterManagementPage() {
 
   // 細目の勘定科目変更ハンドラ
   const handleSaimokuKamokuChange = (kamokuCd: string) => {
-    setCurrentSaimoku((prev) => (prev ? { ...prev, kamoku_cd: kamokuCd } : null))
+    setCurrentSaimoku((prev) =>
+      prev ? { ...prev, kamoku_cd: kamokuCd } : null,
+    )
     const selectedKamoku = kamokuList.find((k) => k.kamoku_cd === kamokuCd)
     if (selectedKamoku) {
       setParentKamokuForSaimoku(selectedKamoku)
@@ -513,20 +601,26 @@ export default function MasterManagementPage() {
   }
 
   // 消費税区分フィールド変更ハンドラ
-  const handleTaxCategoryChange = (field: keyof TaxCategory, value: string | number | boolean) => {
+  const handleTaxCategoryChange = (
+    field: keyof TaxCategory,
+    value: string | number | boolean,
+  ) => {
     setCurrentTaxCategory((prev) => (prev ? { ...prev, [field]: value } : null))
   }
 
   // 関連付けフィールド変更ハンドラ
-  const handleMappingChange = (field: keyof KamokuTaxMapping, value: string | boolean) => {
+  const handleMappingChange = (
+    field: keyof KamokuTaxMapping,
+    value: string | boolean,
+  ) => {
     setCurrentMapping((prev) => (prev ? { ...prev, [field]: value } : null))
   }
 
   // 消費税設定の保存処理
   const saveTaxSettings = () => {
     toast({
-      title: "消費税設定を保存しました",
-      description: "設定が正常に保存されました",
+      title: '消費税設定を保存しました',
+      description: '設定が正常に保存されました',
     })
   }
 
@@ -534,7 +628,10 @@ export default function MasterManagementPage() {
     <div className="container mx-auto px-4 py-6">
       <main className="flex-1">
         <div className="mb-6 flex items-center">
-          <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 mr-4">
+          <Link
+            href="/"
+            className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-1" />
             戻る
           </Link>
@@ -544,10 +641,16 @@ export default function MasterManagementPage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>マスタデータ管理</CardTitle>
-            <CardDescription>勘定科目・細目・消費税区分の追加・編集・削除を行います</CardDescription>
+            <CardDescription>
+              勘定科目・細目・消費税区分の追加・編集・削除を行います
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <div className="flex justify-between items-center mb-4">
                 <TabsList>
                   <TabsTrigger value="kamoku">勘定科目</TabsTrigger>
@@ -557,39 +660,43 @@ export default function MasterManagementPage() {
                   <TabsTrigger value="tax-settings">消費税設定</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
-                  {activeTab !== "tax-settings" && (
+                  {activeTab !== 'tax-settings' && (
                     <Button
                       onClick={() => {
-                        if (activeTab === "kamoku") {
+                        if (activeTab === 'kamoku') {
                           openKamokuDialog()
-                        } else if (activeTab === "saimoku") {
+                        } else if (activeTab === 'saimoku') {
                           if (kamokuList.length > 0) {
                             openSaimokuDialog(kamokuList[0])
                           } else {
                             toast({
-                              title: "操作ガイド",
-                              description: "細目を追加するには、まず勘定科目を登録してください",
+                              title: '操作ガイド',
+                              description:
+                                '細目を追加するには、まず勘定科目を登録してください',
                             })
                           }
-                        } else if (activeTab === "tax-categories") {
+                        } else if (activeTab === 'tax-categories') {
                           openTaxCategoryDialog()
-                        } else if (activeTab === "mappings") {
+                        } else if (activeTab === 'mappings') {
                           openMappingDialog()
                         }
                       }}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      {activeTab === "kamoku"
-                        ? "勘定科目を追加"
-                        : activeTab === "saimoku"
-                          ? "細目を追加"
-                          : activeTab === "tax-categories"
-                            ? "消費税区分を追加"
-                            : "消費税関連付けを追加"}
+                      {activeTab === 'kamoku'
+                        ? '勘定科目を追加'
+                        : activeTab === 'saimoku'
+                          ? '細目を追加'
+                          : activeTab === 'tax-categories'
+                            ? '消費税区分を追加'
+                            : '消費税関連付けを追加'}
                     </Button>
                   )}
-                  {activeTab === "tax-settings" && (
-                    <Button onClick={saveTaxSettings} disabled={isTaxSettingsReadOnly}>
+                  {activeTab === 'tax-settings' && (
+                    <Button
+                      onClick={saveTaxSettings}
+                      disabled={isTaxSettingsReadOnly}
+                    >
                       設定を保存
                     </Button>
                   )}
@@ -643,9 +750,8 @@ export default function MasterManagementPage() {
         onOpenChange={setShowKamokuDialog}
         isEditing={isEditing}
         currentKamoku={currentKamoku}
-        bunruiList={bunruiList}
-        handleKamokuChange={handleKamokuChange}
-        saveKamoku={saveKamoku}
+        onSave={saveKamoku}
+        onChange={handleKamokuChange}
       />
 
       {/* 細目追加/編集ダイアログ */}
@@ -656,9 +762,9 @@ export default function MasterManagementPage() {
         currentSaimoku={currentSaimoku}
         kamokuList={kamokuList}
         parentKamokuForSaimoku={parentKamokuForSaimoku}
-        handleSaimokuChange={handleSaimokuChange}
-        handleSaimokuKamokuChange={handleSaimokuKamokuChange}
-        saveSaimoku={saveSaimoku}
+        onSave={saveSaimoku}
+        onChange={handleSaimokuChange}
+        onKamokuChange={handleSaimokuKamokuChange}
       />
 
       {/* 消費税区分追加/編集ダイアログ */}
@@ -667,8 +773,8 @@ export default function MasterManagementPage() {
         onOpenChange={setShowTaxCategoryDialog}
         isEditing={isEditing}
         currentTaxCategory={currentTaxCategory}
-        handleTaxCategoryChange={handleTaxCategoryChange}
-        saveTaxCategory={saveTaxCategory}
+        onSave={saveTaxCategory}
+        onChange={handleTaxCategoryChange}
       />
 
       {/* 関連付け追加/編集ダイアログ */}
@@ -679,8 +785,8 @@ export default function MasterManagementPage() {
         currentMapping={currentMapping}
         kamokuList={kamokuList}
         taxCategories={taxCategories}
-        handleMappingChange={handleMappingChange}
-        saveMapping={saveMapping}
+        onSave={saveMapping}
+        onChange={handleMappingChange}
       />
 
       {/* 削除確認ダイアログ */}
@@ -688,11 +794,7 @@ export default function MasterManagementPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         deleteType={deleteType}
-        currentKamoku={currentKamoku}
-        currentSaimoku={currentSaimoku}
-        currentTaxCategory={currentTaxCategory}
-        currentMapping={currentMapping}
-        handleDelete={handleDelete}
+        onDelete={handleDelete}
       />
     </div>
   )

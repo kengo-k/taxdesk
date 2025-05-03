@@ -1,3 +1,5 @@
+import { Connection } from '@/lib/types'
+
 // 現金残高データの型定義
 export type CashBalanceData = {
   cashBalanceTotal: number
@@ -38,25 +40,21 @@ const mockData: { [key: string]: CashBalanceData } = {
  * @returns 現金残高データ
  */
 export async function getCashBalance(
+  conn: Connection,
   fiscalYear: string,
 ): Promise<CashBalanceData> {
-  // 実際の実装では、DBからデータを取得する処理を記述
-  // 現時点では空実装とし、モックデータを返す
-
-  // 指定された年度のデータを取得（存在しない場合は2024年度のデータを返す）
-  const data = mockData[fiscalYear] || mockData['2024']
-
-  // 実際のAPIでは処理に時間がかかることを模擬するために遅延を追加
-  await new Promise((resolve) => setTimeout(resolve, 300))
-
-  return data
-}
-
-/**
- * モック実装
- */
-export async function getCashBalanceMock(
-  fiscalYear: string,
-): Promise<CashBalanceData> {
-  return getCashBalance(fiscalYear)
+  const rows = await conn.$queryRaw<any[]>`
+select
+  km.kamoku_cd,
+  sum(j.karikata_value) as sum
+from
+  journals j
+    inner join saimoku_masters sm on sm.saimoku_cd = j.karikata_cd
+    inner join kamoku_masters km on km.kamoku_cd = sm.kamoku_cd
+where
+  nendo = ${fiscalYear}
+  and km.kamoku_bunrui_cd = ${'1'}
+group by
+  km.kamoku_cd`
+  return rows as any
 }

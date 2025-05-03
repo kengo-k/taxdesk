@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
-import { useEffect, useRef } from "react"
-import { Chart, type ChartConfiguration, registerables } from "chart.js"
+import { useEffect, useRef } from 'react'
+
+import { Chart, Color, registerables } from 'chart.js'
 
 Chart.register(...registerables)
 
@@ -14,15 +15,22 @@ interface DonutChartProps {
   amounts: number[] // 実際の金額データ
 }
 
-export function DonutChart({ data, labels, colors, title, value, amounts }: DonutChartProps) {
+export function DonutChart({
+  data,
+  labels,
+  colors,
+  title,
+  value,
+  amounts,
+}: DonutChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null)
   const chartInstance = useRef<Chart | null>(null)
 
   // 金額をフォーマットする関数
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -34,10 +42,11 @@ export function DonutChart({ data, labels, colors, title, value, amounts }: Donu
         chartInstance.current.destroy()
       }
 
-      const ctx = chartRef.current.getContext("2d")
+      const ctx = chartRef.current.getContext('2d')
       if (ctx) {
-        const config: ChartConfiguration = {
-          type: "doughnut",
+        // 型アサーションを適用して、TypeScriptエラーを回避
+        const config = {
+          type: 'doughnut',
           data: {
             labels,
             datasets: [
@@ -52,21 +61,21 @@ export function DonutChart({ data, labels, colors, title, value, amounts }: Donu
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: "70%",
+            cutout: '70%', // Chart.js v3では、doughnutチャートのcutoutプロパティは正しい
             plugins: {
               legend: {
                 display: true,
-                position: "bottom",
+                position: 'bottom',
                 labels: {
                   boxWidth: 10,
                   padding: 10,
                   font: {
                     size: 11,
                   },
-                  generateLabels: (chart) => {
+                  generateLabels: (chart: any) => {
                     const datasets = chart.data.datasets
                     return (
-                      chart.data.labels?.map((label, i) => {
+                      chart.data.labels?.map((label: string, i: number) => {
                         const dataset = datasets[0]
                         const value = dataset.data[i]
                         const backgroundColor =
@@ -76,8 +85,8 @@ export function DonutChart({ data, labels, colors, title, value, amounts }: Donu
 
                         return {
                           text: `${label}: ${value}%`,
-                          fillStyle: backgroundColor,
-                          strokeStyle: backgroundColor,
+                          fillStyle: backgroundColor as Color,
+                          strokeStyle: backgroundColor as Color,
                           lineWidth: 0,
                           hidden: false,
                           index: i,
@@ -90,8 +99,8 @@ export function DonutChart({ data, labels, colors, title, value, amounts }: Donu
               tooltip: {
                 enabled: true,
                 callbacks: {
-                  label: (context) => {
-                    const label = context.label || ""
+                  label: (context: any) => {
+                    const label = context.label || ''
                     const index = context.dataIndex
                     // 実際の金額を表示
                     return `${label}: ${formatCurrency(amounts[index])}`
@@ -102,7 +111,8 @@ export function DonutChart({ data, labels, colors, title, value, amounts }: Donu
           },
         }
 
-        chartInstance.current = new Chart(ctx, config)
+        // Chart.jsのコンストラクタに渡す際に型アサーションを適用
+        chartInstance.current = new Chart(ctx, config as any)
       }
     }
 

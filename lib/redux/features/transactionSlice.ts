@@ -1,5 +1,10 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import type { RootState } from "../store"
+import type { RootState } from '../store'
+
+import {
+  type PayloadAction,
+  createAsyncThunk,
+  createSlice,
+} from '@reduxjs/toolkit'
 
 // 取引データの型定義
 export interface Transaction {
@@ -85,7 +90,7 @@ const initialState: TransactionState = {
   loading: false,
   error: null,
   searchParams: {
-    nendo: "unset",
+    nendo: 'unset',
     page: 1,
     pageSize: 10,
   },
@@ -96,11 +101,11 @@ const initialState: TransactionState = {
 
 // 非同期アクション - 取引データの取得
 export const fetchTransactions = createAsyncThunk(
-  "transaction/fetchTransactions",
+  'transaction/fetchTransactions',
   async (params: TransactionSearchParams, { rejectWithValue }) => {
     try {
       // nendoが未設定の場合は早期リターン
-      if (params.nendo === "unset") {
+      if (params.nendo === 'unset') {
         return {
           transactions: [],
           pagination: {
@@ -114,10 +119,11 @@ export const fetchTransactions = createAsyncThunk(
 
       // URLパラメータを構築
       const urlParams = new URLSearchParams()
-      if (params.code) urlParams.set("code", params.code)
-      if (params.month && params.month !== "unset") urlParams.set("month", params.month)
-      urlParams.set("page", params.page.toString())
-      urlParams.set("pageSize", params.pageSize.toString())
+      if (params.code) urlParams.set('code', params.code)
+      if (params.month && params.month !== 'unset')
+        urlParams.set('month', params.month)
+      urlParams.set('page', params.page.toString())
+      urlParams.set('pageSize', params.pageSize.toString())
 
       // APIリクエスト
       const url = `/api/ledger/${params.nendo}?${urlParams.toString()}`
@@ -131,33 +137,38 @@ export const fetchTransactions = createAsyncThunk(
       console.log(`response of ${url}: `, data)
 
       // 取引データを変換
-      const transactionsWithErrors: TransactionWithErrors[] = data.transactions.map((transaction) => ({
-        ...transaction,
-        errors: {},
-        showTooltips: {
-          date: false,
-          debit: false,
-          credit: false,
-        },
-      }))
+      const transactionsWithErrors: TransactionWithErrors[] =
+        data.transactions.map((transaction) => ({
+          ...transaction,
+          errors: {},
+          showTooltips: {
+            date: false,
+            debit: false,
+            credit: false,
+          },
+        }))
 
       return {
         transactions: transactionsWithErrors,
         pagination: data.pagination,
       }
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "取引データの取得中にエラーが発生しました")
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '取引データの取得中にエラーが発生しました',
+      )
     }
   },
 )
 
 // 非同期アクション - 勘定科目別レコード件数の取得
 export const fetchAccountCounts = createAsyncThunk(
-  "transaction/fetchAccountCounts",
+  'transaction/fetchAccountCounts',
   async (nendo: string, { rejectWithValue }) => {
     try {
       // nendoが未設定の場合は早期リターン
-      if (nendo === "unset") {
+      if (nendo === 'unset') {
         return {
           accountCounts: [],
         }
@@ -179,7 +190,9 @@ export const fetchAccountCounts = createAsyncThunk(
       }
     } catch (error) {
       return rejectWithValue(
-        error instanceof Error ? error.message : "勘定科目別レコード件数の取得中にエラーが発生しました",
+        error instanceof Error
+          ? error.message
+          : '勘定科目別レコード件数の取得中にエラーが発生しました',
       )
     }
   },
@@ -187,61 +200,45 @@ export const fetchAccountCounts = createAsyncThunk(
 
 // スライスの作成
 export const transactionSlice = createSlice({
-  name: "transaction",
+  name: 'transaction',
   initialState,
   reducers: {
     // 検索条件の更新
-    updateSearchParams: (state, action: PayloadAction<Partial<TransactionSearchParams>>) => {
+    updateSearchParams: (
+      state,
+      action: PayloadAction<Partial<TransactionSearchParams>>,
+    ) => {
       state.searchParams = { ...state.searchParams, ...action.payload }
     },
     // 取引データの更新
     updateTransaction: (
       state,
-      action: PayloadAction<{ id: string; field: keyof Transaction; value: string | number }>,
+      action: PayloadAction<{
+        id: string
+        field: keyof Transaction
+        value: string | number
+      }>,
     ) => {
       const { id, field, value } = action.payload
-      const index = state.transactions.findIndex((transaction) => transaction.id === id)
-
+      const index = state.transactions.findIndex(
+        (transaction) => transaction.id === id,
+      )
       if (index !== -1) {
         const transaction = { ...state.transactions[index] }
         const errors = { ...transaction.errors }
         const showTooltips = { ...transaction.showTooltips }
-
-        // フィールドに応じたバリデーションと値の更新
-        if (field === "date") {
-          transaction.date = value as string
-          errors.date = validateDate(value as string)
-          showTooltips.date = false
-        } else if (field === "debit") {
-          const strValue = value as string
-          errors.debit = validateAmount(strValue)
-          if (!errors.debit) {
-            transaction.debit = strValue === "" ? 0 : Number.parseInt(strValue.replace(/,/g, ""), 10) || 0
-          } else {
-            transaction.debit = strValue === "" ? 0 : transaction.debit
-          }
-          showTooltips.debit = false
-        } else if (field === "credit") {
-          const strValue = value as string
-          errors.credit = validateAmount(strValue)
-          if (!errors.credit) {
-            transaction.credit = strValue === "" ? 0 : Number.parseInt(strValue.replace(/,/g, ""), 10) || 0
-          } else {
-            transaction.credit = strValue === "" ? 0 : transaction.credit
-          }
-          showTooltips.credit = false
-        } else {
-          // その他のフィールド
-          transaction[field] = value
-        }
-
         state.transactions[index] = { ...transaction, errors, showTooltips }
       }
     },
     // フォーカスが外れた時のエラー表示
-    setShowTooltip: (state, action: PayloadAction<{ id: string; field: "date" | "debit" | "credit" }>) => {
+    setShowTooltip: (
+      state,
+      action: PayloadAction<{ id: string; field: 'date' | 'debit' | 'credit' }>,
+    ) => {
       const { id, field } = action.payload
-      const index = state.transactions.findIndex((transaction) => transaction.id === id)
+      const index = state.transactions.findIndex(
+        (transaction) => transaction.id === id,
+      )
 
       if (index !== -1 && state.transactions[index].errors[field]) {
         state.transactions[index].showTooltips[field] = true
@@ -255,11 +252,16 @@ export const transactionSlice = createSlice({
     // 取引の削除
     deleteTransactions: (state, action: PayloadAction<string[]>) => {
       const idsToDelete = action.payload
-      state.transactions = state.transactions.filter((transaction) => !idsToDelete.includes(transaction.id))
+      state.transactions = state.transactions.filter(
+        (transaction) => !idsToDelete.includes(transaction.id),
+      )
       state.pagination = {
         ...state.pagination,
         totalItems: state.pagination.totalItems - idsToDelete.length,
-        totalPages: Math.ceil((state.pagination.totalItems - idsToDelete.length) / state.pagination.pageSize),
+        totalPages: Math.ceil(
+          (state.pagination.totalItems - idsToDelete.length) /
+            state.pagination.pageSize,
+        ),
       }
     },
   },
@@ -299,11 +301,11 @@ const validateDate = (date: string): string | undefined => {
   // 日付形式（YYYY/MM/DD）のチェック
   const datePattern = /^\d{4}\/\d{1,2}\/\d{1,2}$/
   if (!datePattern.test(date)) {
-    return "日付はYYYY/MM/DD形式で入力してください"
+    return '日付はYYYY/MM/DD形式で入力してください'
   }
 
   // 有効な日付かチェック
-  const parts = date.split("/")
+  const parts = date.split('/')
   const year = Number.parseInt(parts[0], 10)
   const month = Number.parseInt(parts[1], 10) - 1 // JavaScriptの月は0始まり
   const day = Number.parseInt(parts[2], 10)
@@ -316,37 +318,50 @@ const validateDate = (date: string): string | undefined => {
     year < 1900 ||
     year > 2100
   ) {
-    return "有効な日付を入力してください"
+    return '有効な日付を入力してください'
   }
 
   return undefined
 }
 
 const validateAmount = (amount: string): string | undefined => {
-  if (amount === "") return undefined // 空の場合はエラーなし
+  if (amount === '') return undefined // 空の場合はエラーなし
 
   // カンマを削除して数値チェック
-  const numericValue = amount.replace(/,/g, "")
+  const numericValue = amount.replace(/,/g, '')
   if (!/^\d+$/.test(numericValue)) {
-    return "数値のみ入力可能です"
+    return '数値のみ入力可能です'
   }
 
   return undefined
 }
 
 // アクションのエクスポート
-export const { updateSearchParams, updateTransaction, setShowTooltip, setSelectedRows, deleteTransactions } =
-  transactionSlice.actions
+export const {
+  updateSearchParams,
+  updateTransaction,
+  setShowTooltip,
+  setSelectedRows,
+  deleteTransactions,
+} = transactionSlice.actions
 
 // セレクターのエクスポート
-export const selectTransactions = (state: RootState) => state.transaction.transactions
-export const selectPagination = (state: RootState) => state.transaction.pagination
-export const selectTransactionLoading = (state: RootState) => state.transaction.loading
-export const selectTransactionError = (state: RootState) => state.transaction.error
-export const selectSearchParams = (state: RootState) => state.transaction.searchParams
-export const selectAccountCounts = (state: RootState) => state.transaction.accountCounts
-export const selectAccountCountsLoading = (state: RootState) => state.transaction.accountCountsLoading
-export const selectAccountCountsError = (state: RootState) => state.transaction.accountCountsError
+export const selectTransactions = (state: RootState) =>
+  state.transaction.transactions
+export const selectPagination = (state: RootState) =>
+  state.transaction.pagination
+export const selectTransactionLoading = (state: RootState) =>
+  state.transaction.loading
+export const selectTransactionError = (state: RootState) =>
+  state.transaction.error
+export const selectSearchParams = (state: RootState) =>
+  state.transaction.searchParams
+export const selectAccountCounts = (state: RootState) =>
+  state.transaction.accountCounts
+export const selectAccountCountsLoading = (state: RootState) =>
+  state.transaction.accountCountsLoading
+export const selectAccountCountsError = (state: RootState) =>
+  state.transaction.accountCountsError
 
 // リデューサーのエクスポート
 export default transactionSlice.reducer

@@ -1,11 +1,12 @@
-"use client"
+'use client'
 
-import { type ReactNode, useRef } from "react"
-import { Provider } from "react-redux"
-import { makeStore, type AppStore } from "./store"
+import { type ReactNode, useRef } from 'react'
+import { Provider } from 'react-redux'
+
+import { type AppStore, makeStore } from './store'
 
 export function ReduxProvider({ children }: { children: ReactNode }) {
-  const storeRef = useRef<AppStore>()
+  const storeRef = useRef<AppStore>(null)
   if (!storeRef.current) {
     storeRef.current = makeStore()
   }
