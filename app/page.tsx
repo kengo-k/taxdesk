@@ -291,13 +291,7 @@ export default function Home() {
                 <h3 className="font-medium text-lg">
                   {selectedYearId === '2024' ? '税額見込み' : '確定税額'}
                 </h3>
-                <span className="font-bold text-lg">
-                  {taxSimulationData
-                    ? formatCurrency(
-                        taxSimulationData.yearData.taxEstimates.total,
-                      )
-                    : 'Loading...'}
-                </span>
+                <span className="font-bold text-lg">{'Loading...'}</span>
               </div>
               <p className="text-sm text-gray-500 mb-4 md:mb-0">
                 {selectedYearId === '2024'
@@ -312,53 +306,25 @@ export default function Home() {
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '法人税' : '法人税（確定）'}
                   </div>
-                  <div className="font-medium">
-                    {taxSimulationData
-                      ? formatCurrency(
-                          taxSimulationData.yearData.taxEstimates
-                            .totalCorporateTax,
-                        )
-                      : 'Loading...'}
-                  </div>
+                  <div className="font-medium">{'Loading...'}</div>
                 </div>
                 <div className="p-3 bg-green-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '住民税' : '住民税（確定）'}
                   </div>
-                  <div className="font-medium">
-                    {taxSimulationData
-                      ? formatCurrency(
-                          taxSimulationData.yearData.taxEstimates
-                            .totalInhabitantTax,
-                        )
-                      : 'Loading...'}
-                  </div>
+                  <div className="font-medium">{'Loading...'}</div>
                 </div>
                 <div className="p-3 bg-amber-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '事業税' : '事業税（確定）'}
                   </div>
-                  <div className="font-medium">
-                    {taxSimulationData
-                      ? formatCurrency(
-                          taxSimulationData.yearData.taxEstimates
-                            .totalBusinessTax,
-                        )
-                      : 'Loading...'}
-                  </div>
+                  <div className="font-medium">{'Loading...'}</div>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '消費税' : '消費税（確定）'}
                   </div>
-                  <div className="font-medium">
-                    {taxSimulationData
-                      ? formatCurrency(
-                          taxSimulationData.yearData.taxEstimates
-                            .totalConsumptionTax,
-                        )
-                      : 'Loading...'}
-                  </div>
+                  <div className="font-medium">{'Loading...'}</div>
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
