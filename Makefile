@@ -1,7 +1,7 @@
 .PHONY: ci
 
 ci:
-	pnpm install --frozen-lockfile
+	npm ci
 
 generate:
 	npx prisma generate
