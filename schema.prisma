@@ -68,7 +68,6 @@ model saimoku_masters {
   saimoku_ryaku_name String
   saimoku_kana_name  String
   description        String?
-  transaction        Unsupported("tstzrange")
   created_at         DateTime                 @db.Timestamp(6)
   updated_at         DateTime                 @db.Timestamp(6)
 }
