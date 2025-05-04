@@ -13,8 +13,8 @@ export interface SaimokuDetailResponse {
 export async function getSaimokuDetail(
   conn: Connection,
   input: SaimokuDetailRequest,
-): Promise<SaimokuDetailResponse[]> {
-  return await conn.$queryRaw<SaimokuDetailResponse[]>`
+): Promise<SaimokuDetailResponse | null> {
+  const result = await conn.$queryRaw<SaimokuDetailResponse[]>`
     select
       k.kamoku_cd,
       s.saimoku_cd,
@@ -27,4 +27,6 @@ export async function getSaimokuDetail(
           b.kamoku_bunrui_cd = k.kamoku_bunrui_cd
     where
       saimoku_cd = ${input.saimoku_cd}`
+
+  return result[0] ?? null
 }
