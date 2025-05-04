@@ -1,12 +1,12 @@
 import { TestEnvironment } from './test-environment'
 
-// Jestのグローバルセットアップ
+// Global setup for Jest
 beforeAll(async () => {
-  // テスト環境を初期化
+  // Initialize test environment
   await TestEnvironment.getInstance().initialize()
-}, 30000) // タイムアウトを30秒に設定
+}, 30000) // Set timeout to 30 seconds
 
-// Jestのグローバルティアダウン
+// Global teardown for Jest
 afterAll(async () => {
   await TestEnvironment.getInstance().cleanup()
 })

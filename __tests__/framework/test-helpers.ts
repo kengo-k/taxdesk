@@ -20,19 +20,11 @@ function getCallerFilePath() {
   return stackLines[3].split('at ')[1]
 }
 
-/**
- * CSVファイルを読み込みJavaScriptオブジェクトの配列に変換
- */
 async function readCsvFile<T = any>(filePath: string): Promise<T[]> {
   const csvData = fs.readFileSync(filePath, 'utf8')
   return parse(csvData, { columns: true, skip_empty_lines: true }) as T[]
 }
 
-/**
- * トランザクション内でテストを実行するラッパー関数
- * @param filenamesOrTestFn テストファイルと同階層にあるCSVファイル名またはディレクトリ名の配列、またはテスト関数
- * @param maybeTestFn テスト関数（第1引数がファイル名配列の場合）
- */
 export function withTransaction(
   filenamesOrTestFn: string[] | ((tx: Connection) => Promise<void>),
   maybeTestFn?: (tx: Connection) => Promise<void>,
