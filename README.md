@@ -29,6 +29,44 @@ Follow these steps to set up the project after cloning the repository from Git.
 
    This command generates the Prisma client, which provides a type-safe API for database interactions. It ensures the client reflects the current database structure, enabling efficient and safe database operations in your application.
 
+## Test Environment Setup
+
+1. The `.env` file already contains test database settings:
+
+   ```
+   # テスト用データベース設定
+   POSTGRES_DB_TEST=account_test
+
+   # Database URL for test connection
+   DATABASE_URL_FOR_TEST=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB_TEST}
+   ```
+
+2. Create a test database:
+
+   ```bash
+   npm run test:db:create
+   ```
+
+   または直接SQLを実行:
+
+   ```sql
+   CREATE DATABASE account_test;
+   ```
+
+3. Run migrations on the test database:
+
+   ```bash
+   npm run test:db:migrate
+   ```
+
+4. Run tests:
+
+   ```bash
+   npm test
+   ```
+
+   The test framework will automatically use the test database specified by `DATABASE_URL_FOR_TEST` environment variable.
+
 ## How to Apply Changes to the Database
 
 1. Modify the schema.prisma file and describe the changes you want to apply.
