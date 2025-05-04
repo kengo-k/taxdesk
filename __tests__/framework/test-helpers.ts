@@ -7,37 +7,107 @@ import { PrismaClient } from '@prisma/client'
 import type { Connection } from '@/lib/types'
 
 /**
- * トランザクション内でテストを実行するラッパー関数
+ * 呼び出し元のファイルパスを取得する関数
  */
-export function withTransaction(testFn: (tx: Connection) => Promise<void>) {
-  return async () => {
-    const prisma = new PrismaClient()
+function getCallerFilePath() {
+  const oldLimit = Error.stackTraceLimit
+  Error.stackTraceLimit = 3
+  const stack = new Error().stack || ''
+  Error.stackTraceLimit = oldLimit
+  const stackLines = stack.split('\n')
 
-    try {
-      await prisma.$transaction(async (tx) => {
-        await testFn(tx)
-      })
-    } finally {
-      await prisma.$disconnect()
-    }
-  }
+  return stackLines[3].split('at ')[1]
 }
 
 /**
- * CSVファイル名からテーブル名を推測するヘルパー関数
+ * CSVファイル名からテーブル名を取得するヘルパー関数
  */
 function getTableNameFromCsv(csvPath: string): string {
-  const filename = csvPath.split('/').pop()?.replace('.csv', '') || ''
-  return filename.includes('_') ? filename : `${filename}_masters`
+  // ファイル名のみを取得（拡張子なし）
+  return path.basename(csvPath, '.csv')
 }
 
 /**
  * CSVファイルを読み込みJavaScriptオブジェクトの配列に変換
  */
 async function readCsvFile<T = any>(filePath: string): Promise<T[]> {
-  const csvPath = path.join(process.cwd(), filePath)
-  const csvData = fs.readFileSync(csvPath, 'utf8')
+  const csvData = fs.readFileSync(filePath, 'utf8')
   return parse(csvData, { columns: true, skip_empty_lines: true }) as T[]
+}
+
+/**
+ * トランザクション内でテストを実行するラッパー関数
+ * @param filenamesOrTestFn テストファイルと同階層にあるCSVファイル名またはディレクトリ名の配列、またはテスト関数
+ * @param maybeTestFn テスト関数（第1引数がファイル名配列の場合）
+ */
+export function withTransaction(
+  filenamesOrTestFn: string[] | ((tx: Connection) => Promise<void>),
+  maybeTestFn?: (tx: Connection) => Promise<void>,
+) {
+  const callerFilePath = getCallerFilePath()
+  const testDir = path.dirname(callerFilePath)
+  // 引数の解析
+  const filenames = Array.isArray(filenamesOrTestFn) ? filenamesOrTestFn : []
+  const testFn =
+    typeof filenamesOrTestFn === 'function' ? filenamesOrTestFn : maybeTestFn
+
+  if (!testFn) {
+    throw new Error('テスト関数が指定されていません')
+  }
+
+  return async () => {
+    const prisma = new PrismaClient()
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        // 指定されたファイル/ディレクトリを処理
+        const csvFilesToLoad: string[] = []
+
+        for (const name of filenames) {
+          const fullPath = path.join(testDir, name)
+
+          try {
+            // ディレクトリかファイルかをチェック
+            const stats = fs.statSync(fullPath)
+
+            if (stats.isDirectory()) {
+              // ディレクトリの場合、その中のCSVファイルをすべて取得
+              const files = fs
+                .readdirSync(fullPath)
+                .filter((file) => file.endsWith('.csv'))
+                .map((file) => path.join(name, file)) // 相対パスを保持
+
+              csvFilesToLoad.push(...files)
+            } else if (stats.isFile() && name.endsWith('.csv')) {
+              // 単一のCSVファイル
+              csvFilesToLoad.push(name)
+            }
+          } catch (error) {
+            console.error(
+              `ファイルまたはディレクトリの読み込みエラー: ${fullPath}`,
+              error,
+            )
+          }
+        }
+
+        // 収集したCSVファイルを読み込み
+        for (const csvFile of csvFilesToLoad) {
+          const fullPath = path.join(testDir, csvFile)
+
+          // ファイル名からテーブル名を決定
+          const tableName = getTableNameFromCsv(csvFile)
+
+          // CSVデータをロード
+          await importCsvToPrisma(tx, tableName, fullPath)
+        }
+
+        // テスト関数を実行
+        await testFn(tx)
+      })
+    } finally {
+      await prisma.$disconnect()
+    }
+  }
 }
 
 /**
@@ -132,7 +202,6 @@ async function importCsvToPrisma<T>(
   // @ts-ignore - 動的プロパティアクセス
   const result = await prisma[tableName].createMany({
     data,
-    skipDuplicates: true,
   })
 
   console.log(
