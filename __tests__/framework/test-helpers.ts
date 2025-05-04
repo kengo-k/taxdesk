@@ -12,19 +12,12 @@ import type { Connection } from '@/lib/types'
 function getCallerFilePath() {
   const oldLimit = Error.stackTraceLimit
   Error.stackTraceLimit = 3
+
   const stack = new Error().stack || ''
   Error.stackTraceLimit = oldLimit
+
   const stackLines = stack.split('\n')
-
   return stackLines[3].split('at ')[1]
-}
-
-/**
- * CSVファイル名からテーブル名を取得するヘルパー関数
- */
-function getTableNameFromCsv(csvPath: string): string {
-  // ファイル名のみを取得（拡張子なし）
-  return path.basename(csvPath, '.csv')
 }
 
 /**
@@ -94,11 +87,8 @@ export function withTransaction(
         for (const csvFile of csvFilesToLoad) {
           const fullPath = path.join(testDir, csvFile)
 
-          // ファイル名からテーブル名を決定
-          const tableName = getTableNameFromCsv(csvFile)
-
           // CSVデータをロード
-          await importCsvToPrisma(tx, tableName, fullPath)
+          await importCsvToPrisma(tx, fullPath)
         }
 
         // テスト関数を実行
@@ -156,21 +146,18 @@ function getTypeMapFromPrisma(tableName: string): {
 /**
  * CSVファイルからデータを読み込み指定されたテーブルに挿入
  */
-async function importCsvToPrisma<T>(
+export async function importCsvToPrisma(
   prisma: any,
-  tableName: string,
   csvPath: string,
-  transformFn?: (record: any) => any,
-  typeMap?: { [key: string]: 'string' | 'number' | 'boolean' | 'date' },
-): Promise<T[]> {
-  // CSVファイルを読み込む
+): Promise<void> {
+  const tableName = path.basename(csvPath, '.csv')
   const records = await readCsvFile(csvPath)
 
   // 型変換を適用
   let convertedRecords = records
 
   // 指定されたtypeMapがある場合はそれを使用、なければPrismaから自動取得
-  const fieldTypeMap = typeMap || getTypeMapFromPrisma(tableName)
+  const fieldTypeMap = getTypeMapFromPrisma(tableName)
 
   convertedRecords = records.map((record: any) => {
     const newRecord = { ...record }
@@ -193,73 +180,9 @@ async function importCsvToPrisma<T>(
     return newRecord
   })
 
-  // データを変換（オプション）
-  const data = transformFn
-    ? convertedRecords.map(transformFn)
-    : convertedRecords
-
   // Prismaの動的テーブルアクセス
   // @ts-ignore - 動的プロパティアクセス
-  const result = await prisma[tableName].createMany({
-    data,
+  await prisma[tableName].createMany({
+    data: convertedRecords,
   })
-
-  console.log(
-    `${result.count} records imported to ${tableName} from ${csvPath}`,
-  )
-  return data as T[]
-}
-
-/**
- * CSVデータをロードしてテストを実行するラッパー関数
- */
-export function withCsvData(
-  csvFiles:
-    | string[]
-    | {
-        path: string
-        table?: string
-        transform?: (record: any) => any
-        typeMap?: { [key: string]: 'string' | 'number' | 'boolean' | 'date' }
-      }[],
-  testFn: (tx: Connection) => Promise<void>,
-) {
-  return async () => {
-    const prisma = new PrismaClient()
-
-    try {
-      await prisma.$transaction(async (tx) => {
-        // CSVファイルのロード
-        for (const file of csvFiles) {
-          if (typeof file === 'string') {
-            await importCsvToPrisma(tx, getTableNameFromCsv(file), file)
-          } else {
-            const { path: filePath, table, transform, typeMap } = file
-            await importCsvToPrisma(
-              tx,
-              table || getTableNameFromCsv(filePath),
-              filePath,
-              transform,
-              typeMap,
-            )
-          }
-        }
-
-        // テスト関数を実行
-        await testFn(tx)
-      })
-    } finally {
-      await prisma.$disconnect()
-    }
-  }
-}
-
-/**
- * 便利なアサーション関数
- */
-export const expectExt = {
-  toHaveLength: (actual: any[], expected: number) => {
-    expect(actual).toHaveLength(expected)
-  },
-  // 他にも必要なカスタムアサーション
 }

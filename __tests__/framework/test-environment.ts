@@ -1,4 +1,4 @@
-import { CsvHelpers } from './csv-helpers'
+import { importCsvToPrisma } from './test-helpers'
 
 import { PrismaClient } from '@prisma/client'
 
@@ -57,16 +57,7 @@ export class TestEnvironment {
 
       // CSVからデータをロード - 失敗したら例外をスロー
       console.log('CSVからマスタデータをロードしています...')
-      await CsvHelpers.importCsvToTable(
-        this.prisma,
-        'nendo_masters',
-        'seed/nendo_masters.csv',
-        (record) => ({
-          ...record,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }),
-      )
+      await importCsvToPrisma(this.prisma, 'seed/nendo_masters.csv')
       console.log('マスタデータのロードが完了しました')
 
       // 他の必要なマスタデータもここでセットアップ
