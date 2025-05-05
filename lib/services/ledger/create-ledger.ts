@@ -8,13 +8,63 @@ import { Connection } from '@/lib/types'
 const createLedgerRequestSchema = z
   .object({
     nendo: z.string().length(4),
-    date: z.string().length(8),
+    date: z.string(),
     ledger_cd: z.string().length(3),
     karikata_value: z.number().optional(),
     counter_cd: z.string().length(3),
     kasikata_value: z.number().optional(),
     note: z.string().nullable(),
     checked: z.string(),
+  })
+  .superRefine((data, ctx) => {
+    // 日付形式のチェック
+    const dateRegex = /^\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/
+    if (!dateRegex.test(data.date)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '日付は有効なYYYYMMDD形式である必要があります',
+        path: ['date'],
+        params: { code: 'INVALID_DATE_FORMAT' },
+      })
+      return
+    }
+
+    const year = parseInt(data.date.substring(0, 4))
+    const month = parseInt(data.date.substring(4, 6)) - 1
+    const day = parseInt(data.date.substring(6, 8))
+
+    const dateObj = new Date(year, month, day)
+    if (
+      dateObj.getFullYear() !== year ||
+      dateObj.getMonth() !== month ||
+      dateObj.getDate() !== day
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '日付は有効なYYYYMMDD形式である必要があります',
+        path: ['date'],
+        params: { code: 'INVALID_DATE_FORMAT' },
+      })
+      return
+    }
+
+    // 年度の範囲チェック
+    const nendoYear = parseInt(data.nendo)
+    const startDate = `${nendoYear}0401`
+    const endDate = `${nendoYear + 1}0331`
+    if (data.date < startDate || data.date > endDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '日付は年度の範囲内（4/1から翌年3/31）である必要があります',
+        path: ['date'],
+        params: { code: 'OUT_OF_FISCAL_YEAR' },
+      })
+    }
+  })
+  .refine((data) => data.ledger_cd !== data.counter_cd, {
+    message: '借方科目と貸方科目は異なる必要があります',
+    path: ['counter_cd'],
+    params: { code: 'SAME_ACCOUNT_CODES' },
   })
   .refine(
     (data) => {
@@ -23,51 +73,21 @@ const createLedgerRequestSchema = z
       const hasKasikata = data.kasikata_value !== undefined
       return (hasKarikata && !hasKasikata) || (!hasKarikata && hasKasikata)
     },
-    {
-      message: '借方または貸方のどちらか一方のみを入力してください',
-      path: ['karikata_value'],
-    },
-  )
-  .refine(
     (data) => {
-      // YYYYMMDD形式のチェックと有効な日付のチェック
-      const dateRegex = /^\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/
-      if (!dateRegex.test(data.date)) {
-        return false
+      const hasKarikata = data.karikata_value !== undefined
+      const hasKasikata = data.kasikata_value !== undefined
+      if (!hasKarikata && !hasKasikata) {
+        return {
+          message: '借方または貸方のどちらか一方を入力してください',
+          path: ['karikata_value'],
+          params: { code: 'MISSING_AMOUNT' },
+        }
       }
-
-      const year = parseInt(data.date.substring(0, 4))
-      const month = parseInt(data.date.substring(4, 6)) - 1
-      const day = parseInt(data.date.substring(6, 8))
-
-      const date = new Date(year, month, day)
-      return (
-        date.getFullYear() === year &&
-        date.getMonth() === month &&
-        date.getDate() === day
-      )
-    },
-    {
-      message: '日付は有効なYYYYMMDD形式である必要があります',
-      path: ['date'],
-    },
-  )
-  .refine((data) => data.ledger_cd !== data.counter_cd, {
-    message: '借方科目と貸方科目は異なる必要があります',
-    path: ['counter_cd'],
-    params: { code: 'SAME_ACCOUNT_CODES' },
-  })
-  .refine(
-    async (data) => {
-      // 年度の範囲チェック
-      const year = parseInt(data.nendo)
-      const startDate = `${year}0401`
-      const endDate = `${year + 1}0331`
-      return data.date >= startDate && data.date <= endDate
-    },
-    {
-      message: '日付は年度の範囲内（4/1から翌年3/31）である必要があります',
-      path: ['date'],
+      return {
+        message: '借方または貸方のどちらか一方のみを入力してください',
+        path: ['karikata_value'],
+        params: { code: 'DUPLICATE_AMOUNT' },
+      }
     },
   )
 
