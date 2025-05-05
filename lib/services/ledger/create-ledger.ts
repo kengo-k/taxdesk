@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { ApiError, ApiErrorType } from '@/lib/api-error'
+import { ApiError, ApiErrorType, toDetails } from '@/lib/api-error'
 import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
 import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 import { Connection } from '@/lib/types'
@@ -81,9 +81,9 @@ export async function createLedger(
   const validationResult = await createLedgerRequestSchema.safeParseAsync(input)
   if (!validationResult.success) {
     throw new ApiError(
-      validationResult.error.message,
+      'バリデーションエラーが発生しました',
       ApiErrorType.VALIDATION,
-      { errors: validationResult.error.errors },
+      toDetails(validationResult.error.errors),
     )
   }
 
@@ -97,7 +97,13 @@ export async function createLedger(
     throw new ApiError(
       `借方科目コード ${input.ledger_cd} は存在しません`,
       ApiErrorType.VALIDATION,
-      { saimoku_cd: input.ledger_cd },
+      [
+        {
+          code: 'INVALID_ACCOUNT_CODE',
+          message: `借方科目コード ${input.ledger_cd} は存在しません`,
+          path: ['ledger_cd'],
+        },
+      ],
     )
   }
 
@@ -105,7 +111,13 @@ export async function createLedger(
     throw new ApiError(
       `貸方科目コード ${input.counter_cd} は存在しません`,
       ApiErrorType.VALIDATION,
-      { saimoku_cd: input.counter_cd },
+      [
+        {
+          code: 'INVALID_ACCOUNT_CODE',
+          message: `貸方科目コード ${input.counter_cd} は存在しません`,
+          path: ['counter_cd'],
+        },
+      ],
     )
   }
 

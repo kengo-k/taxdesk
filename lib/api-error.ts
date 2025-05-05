@@ -1,48 +1,93 @@
 import { NextResponse } from 'next/server'
 
+import { ZodCustomIssue, ZodIssue } from 'zod'
+
 /**
- * Types of API errors
+ * APIエラーの種類
  */
 export enum ApiErrorType {
-  /** Authentication error (401) */
+  /** Unauthorized (401) */
   UNAUTHORIZED = 'UNAUTHORIZED',
-  /** Permission error (403) */
+  /** Forbidden (403) */
   FORBIDDEN = 'FORBIDDEN',
-  /** Resource not found (404) */
+  /** Not found (404) */
   NOT_FOUND = 'NOT_FOUND',
   /** Validation error (400) */
   VALIDATION = 'VALIDATION',
-  /** Server error (500) */
-  SERVER_ERROR = 'SERVER_ERROR',
-  /** Other errors (500) */
-  OTHER = 'OTHER',
+  /** Internal server error (500) */
+  INTERNAL = 'INTERNAL',
 }
 
 /**
- * API Error class
- * Error thrown from service layer
+ * エラー詳細情報の型
+ */
+export interface ErrorDetail {
+  code: string
+  message: string
+  path?: string[]
+}
+
+/**
+ * ZodIssue[]をErrorDetail[]に変換する
+ */
+export function toDetails(issues: ZodIssue[]): ErrorDetail[] {
+  return issues.map((issue) => {
+    const customIssue = issue as ZodCustomIssue
+    return {
+      code: customIssue.params?.code || issue.code,
+      message: issue.message,
+      path: issue.path.map(String),
+    }
+  })
+}
+
+/**
+ * APIエラーレスポンスの型
+ */
+export interface ApiErrorResponse {
+  message: string
+  code?: string
+  details: ErrorDetail[]
+  error?: unknown
+}
+
+/**
+ * APIエラー
  */
 export class ApiError extends Error {
-  /** Error type */
-  type: ApiErrorType
-  /** Additional error information */
-  details?: Record<string, any>
+  private readonly _type: ApiErrorType
+  private readonly _details: ErrorDetail[]
+  private readonly _error?: unknown
 
   constructor(
     message: string,
-    type: ApiErrorType = ApiErrorType.SERVER_ERROR,
-    details?: Record<string, any>,
+    type: ApiErrorType,
+    details: ErrorDetail[] = [],
+    error?: unknown,
   ) {
     super(message)
     this.name = 'ApiError'
-    this.type = type
-    this.details = details
+    this._type = type
+    this._details = details
+    this._error = error
+  }
+
+  get type(): ApiErrorType {
+    return this._type
+  }
+
+  get details(): ErrorDetail[] {
+    return this._details
+  }
+
+  get error(): unknown {
+    return this._error
   }
 
   /**
    * Get HTTP status code based on error type
    */
-  getStatusCode(): number {
+  get statusCode(): number {
     switch (this.type) {
       case ApiErrorType.UNAUTHORIZED:
         return 401
@@ -52,8 +97,8 @@ export class ApiError extends Error {
         return 404
       case ApiErrorType.VALIDATION:
         return 400
-      case ApiErrorType.SERVER_ERROR:
-      case ApiErrorType.OTHER:
+      case ApiErrorType.INTERNAL:
+        return 500
       default:
         return 500
     }
@@ -62,15 +107,12 @@ export class ApiError extends Error {
   /**
    * Generate error response
    */
-  toResponse(): {
-    success: false
-    error: string
-    details?: Record<string, any>
-  } {
+  toResponse(): ApiErrorResponse {
     return {
-      success: false,
-      error: this.message,
-      ...(this.details && { details: this.details }),
+      message: this.message,
+      code: this.type,
+      details: this.details,
+      ...(this._error ? { error: this._error } : {}),
     }
   }
 }
@@ -79,26 +121,20 @@ export class ApiError extends Error {
  * Convert error to API response
  */
 export function toApiResponse(error: unknown): NextResponse {
-  // Use error information if it's an ApiError
   if (error instanceof ApiError) {
-    console.error(`API Error (${error.type}): ${error.message}`, error)
     return NextResponse.json(error.toResponse(), {
-      status: error.getStatusCode(),
+      status: error.statusCode,
     })
   }
 
-  // Treat non-ApiError as server error (500)
-  const defaultErrorMessage = 'An unexpected error occurred'
-  console.error(`Unhandled Error: ${defaultErrorMessage}`, error)
-
-  // Convert unhandled error to ApiError
   const apiError = new ApiError(
-    defaultErrorMessage,
-    ApiErrorType.SERVER_ERROR,
-    { originalError: error instanceof Error ? error.message : String(error) },
+    'An unexpected error occurred',
+    ApiErrorType.INTERNAL,
+    [],
+    error,
   )
 
   return NextResponse.json(apiError.toResponse(), {
-    status: apiError.getStatusCode(),
+    status: apiError.statusCode,
   })
 }
