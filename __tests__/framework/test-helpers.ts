@@ -32,48 +32,51 @@ export function withTransaction(
   const testDir = path.dirname(callerFilePath)
 
   return async () => {
-    await prisma.$transaction(async (tx) => {
-      // 指定されたファイル/ディレクトリを処理
-      const csvFilesToLoad: string[] = []
+    try {
+      await prisma.$transaction(async (tx) => {
+        // 指定されたファイル/ディレクトリを処理
+        const csvFilesToLoad: string[] = []
 
-      for (const name of filenames) {
-        const fullPath = path.join(testDir, name)
+        for (const name of filenames) {
+          const fullPath = path.join(testDir, name)
 
-        try {
-          // ディレクトリかファイルかをチェック
-          const stats = fs.statSync(fullPath)
+          try {
+            // ディレクトリかファイルかをチェック
+            const stats = fs.statSync(fullPath)
 
-          if (stats.isDirectory()) {
-            // ディレクトリの場合、その中のCSVファイルをすべて取得
-            const files = fs
-              .readdirSync(fullPath)
-              .filter((file) => file.endsWith('.csv'))
-              .map((file) => path.join(name, file)) // 相対パスを保持
+            if (stats.isDirectory()) {
+              // ディレクトリの場合、その中のCSVファイルをすべて取得
+              const files = fs
+                .readdirSync(fullPath)
+                .filter((file) => file.endsWith('.csv'))
+                .map((file) => path.join(name, file)) // 相対パスを保持
 
-            csvFilesToLoad.push(...files)
-          } else if (stats.isFile() && name.endsWith('.csv')) {
-            // 単一のCSVファイル
-            csvFilesToLoad.push(name)
+              csvFilesToLoad.push(...files)
+            } else if (stats.isFile() && name.endsWith('.csv')) {
+              // 単一のCSVファイル
+              csvFilesToLoad.push(name)
+            }
+          } catch (error) {
+            console.error(
+              `ファイルまたはディレクトリの読み込みエラー: ${fullPath}`,
+              error,
+            )
           }
-        } catch (error) {
-          console.error(
-            `ファイルまたはディレクトリの読み込みエラー: ${fullPath}`,
-            error,
-          )
         }
-      }
 
-      // 収集したCSVファイルを読み込み
-      for (const csvFile of csvFilesToLoad) {
-        const fullPath = path.join(testDir, csvFile)
+        // 収集したCSVファイルを読み込み
+        for (const csvFile of csvFilesToLoad) {
+          const fullPath = path.join(testDir, csvFile)
 
-        // CSVデータをロード
-        await importCsvToPrisma(tx, fullPath)
-      }
+          // CSVデータをロード
+          await importCsvToPrisma(tx, fullPath)
+        }
 
-      // テスト関数を実行
-      await testFn(tx)
-    })
+        // テスト関数を実行
+        await testFn(tx)
+        throw new Error('Test transaction rolled back')
+      })
+    } catch (error) {}
   }
 }
 
