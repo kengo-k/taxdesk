@@ -156,8 +156,24 @@ export async function createLedger(
     ledgerDetail.kamoku_bunrui_type === KAMOKU_BUNRUI_TYPE.LEFT
   const hasKarikataValue = input.karikata_value !== undefined
 
-  const karikata_cd = isLedgerDebit ? input.ledger_cd : input.counter_cd
-  const kasikata_cd = isLedgerDebit ? input.counter_cd : input.ledger_cd
+  const checkCode = () => {
+    if (isLedgerDebit) {
+      if (hasKarikataValue) {
+        return [input.ledger_cd, input.counter_cd]
+      } else {
+        return [input.counter_cd, input.ledger_cd]
+      }
+    } else {
+      if (hasKarikataValue) {
+        return [input.ledger_cd, input.counter_cd]
+      } else {
+        return [input.counter_cd, input.ledger_cd]
+      }
+    }
+  }
+
+  const [karikata_cd, kasikata_cd] = checkCode()
+
   const karikata_value = hasKarikataValue
     ? input.karikata_value!
     : input.kasikata_value!

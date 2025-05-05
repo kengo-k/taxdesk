@@ -1,0 +1,131 @@
+/**
+ * ページネーションリクエストパラメータ
+ */
+export interface PaginationRequest {
+  /** 現在のページ番号（1から始まる） */
+  page: number
+  /** 1ページあたりの表示件数 */
+  perPage: number
+}
+
+/**
+ * デフォルトのページネーションリクエストパラメータ
+ */
+export const DEFAULT_PAGINATION_REQUEST: Required<PaginationRequest> = {
+  page: 1,
+  perPage: 10,
+}
+
+/**
+ * ページネーション情報
+ */
+export interface PaginationInfo {
+  /** 現在のページ番号（1から始まる） */
+  currentPage: number
+  /** 1ページあたりの表示件数 */
+  perPage: number
+  /** 総件数 */
+  totalCount: number
+  /** 総ページ数 */
+  totalPages: number
+  /** 前のページが存在するか */
+  hasPreviousPage: boolean
+  /** 次のページが存在するか */
+  hasNextPage: boolean
+  /** 現在のページの最初のアイテムの番号（1から始まる） */
+  startItem: number
+  /** 現在のページの最後のアイテムの番号（1から始まる） */
+  endItem: number
+}
+
+/**
+ * ページネーションされたレスポンス
+ */
+export interface PaginationResponse<T> {
+  /** ページング情報 */
+  pagination: PaginationInfo
+  /** データの配列 */
+  data: T[]
+}
+
+/**
+ * ページネーションリクエストパラメータを正規化する
+ * @param request ページネーションリクエストパラメータ
+ * @returns 正規化されたページネーションリクエストパラメータ
+ */
+export function normalizePaginationRequest(
+  request?: PaginationRequest,
+): Required<PaginationRequest> {
+  return {
+    page: request?.page ?? DEFAULT_PAGINATION_REQUEST.page,
+    perPage: request?.perPage ?? DEFAULT_PAGINATION_REQUEST.perPage,
+  }
+}
+
+/**
+ * ページング情報を計算する
+ * @param currentPage 現在のページ番号（1から始まる）
+ * @param perPage 1ページあたりの表示件数
+ * @param totalCount 総件数
+ * @returns ページング情報
+ */
+export function calculatePagination(
+  currentPage: number,
+  perPage: number,
+  totalCount: number,
+): PaginationInfo {
+  // 総ページ数を計算
+  const totalPages = Math.ceil(totalCount / perPage)
+
+  // 現在のページ番号を有効な範囲に制限
+  const validCurrentPage = Math.max(1, Math.min(currentPage, totalPages))
+
+  // 現在のページの最初と最後のアイテムの番号を計算（1から始まる）
+  const startItem = (validCurrentPage - 1) * perPage + 1
+  const endItem = Math.min(startItem + perPage - 1, totalCount)
+
+  return {
+    currentPage: validCurrentPage,
+    perPage,
+    totalCount,
+    totalPages,
+    hasPreviousPage: validCurrentPage > 1,
+    hasNextPage: validCurrentPage < totalPages,
+    startItem,
+    endItem,
+  }
+}
+
+/**
+ * 配列をページネーションする
+ * @param data ページネーションするデータの配列
+ * @param request ページネーションリクエストパラメータ
+ * @returns ページネーションされたレスポンス
+ */
+export function paginateArray<T>(
+  data: T[],
+  request?: PaginationRequest,
+): PaginationResponse<T> {
+  const { page, perPage } = normalizePaginationRequest(request)
+  const pagination = calculatePagination(page, perPage, data.length)
+
+  // 配列のインデックスは0から始まるため、startItemから1を引く
+  const startIndex = pagination.startItem - 1
+  const endIndex = pagination.endItem - 1
+
+  const paginatedData = data.slice(startIndex, endIndex + 1)
+
+  return {
+    pagination,
+    data: paginatedData,
+  }
+}
+
+/**
+ * ページネーションリクエストからSQLのoffset値を計算する
+ * @param request ページネーションリクエストパラメータ
+ * @returns SQLのoffset値（0から始まる）
+ */
+export function calculateOffset(request: PaginationRequest): number {
+  return (request.page - 1) * request.perPage
+}
