@@ -74,9 +74,13 @@ export function withTransaction(
 
         // テスト関数を実行
         await testFn(tx)
-        throw new Error('Test transaction rolled back')
+        throw 'rollback'
       })
-    } catch (error) {}
+    } catch (error) {
+      if (error !== 'rollback') {
+        throw error
+      }
+    }
   }
 }
 
