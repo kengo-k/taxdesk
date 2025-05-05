@@ -1,6 +1,7 @@
 import { withTransaction } from '../../framework/test-helpers'
 
 import { ApiError } from '@/lib/api-error'
+import { countLedgers } from '@/lib/services/ledger/count-ledgers'
 import { createLedger } from '@/lib/services/ledger/create-ledger'
 
 describe('createLedger', () => {
@@ -255,6 +256,40 @@ describe('createLedger', () => {
         expect(missingAmountError).toBeDefined()
         expect(missingAmountError?.path).toEqual(['karikata_value'])
       }
+    }),
+  )
+
+  it(
+    'should create a ledger entry and return the correct count',
+    withTransaction([], async (tx) => {
+      const input = {
+        nendo: '2021',
+        date: '20210401',
+        ledger_cd: 'A11',
+        karikata_value: 1000,
+        counter_cd: 'E61',
+        note: 'test',
+        checked: '0',
+      }
+
+      // 登録前の件数を確認
+      const initialCount = await countLedgers(tx, {
+        nendo: '2021',
+        ledger_cd: 'A11',
+        month: 'all',
+      })
+      expect(initialCount).toBe(0)
+
+      // 登録を実行
+      await createLedger(tx, input)
+
+      // 登録後の件数を確認
+      const finalCount = await countLedgers(tx, {
+        nendo: '2021',
+        ledger_cd: 'A11',
+        month: 'all',
+      })
+      expect(finalCount).toBe(1)
     }),
   )
 })
