@@ -7,6 +7,7 @@ export async function countLedgers(
   conn: Connection,
   input: LedgerListRequest,
 ): Promise<number> {
+  const month = input.month ?? 'all'
   const saimoku_detail = await getSaimokuDetail(conn, {
     saimoku_cd: input.ledger_cd,
   })
@@ -24,7 +25,7 @@ export async function countLedgers(
         karikata_cd = ${input.ledger_cd}
         or kasikata_cd = ${input.ledger_cd}
       )
-      and (case when ${input.month} = 'all' then 'all' else ${input.month} end)
-        = (case when ${input.month} = 'all' then 'all' else substring(j.date, 5, 2) end)`
+      and (case when ${month} = 'all' then 'all' else ${month} end)
+        = (case when ${month} = 'all' then 'all' else substring(j.date, 5, 2) end)`
   return Number(rows[0].count)
 }
