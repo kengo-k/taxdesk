@@ -7,7 +7,7 @@ import { Connection } from '@/lib/types'
 
 const createLedgerRequestSchema = z
   .object({
-    nendo: z.string().length(4),
+    nendo: z.string(),
     date: z.string(),
     ledger_cd: z.string().length(3),
     karikata_value: z.number().optional(),
@@ -17,6 +17,17 @@ const createLedgerRequestSchema = z
     checked: z.string(),
   })
   .superRefine((data, ctx) => {
+    // nendoの形式チェック
+    if (!/^\d{4}$/.test(data.nendo)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '年度は4桁の数字である必要があります',
+        path: ['nendo'],
+        params: { code: 'INVALID_NENDO_FORMAT' },
+      })
+      return
+    }
+
     // 日付形式のチェック
     const dateRegex = /^\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/
     if (!dateRegex.test(data.date)) {

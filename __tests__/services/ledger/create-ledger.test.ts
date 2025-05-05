@@ -5,7 +5,7 @@ import { createLedger } from '@/lib/services/ledger/create-ledger'
 
 describe('createLedger', () => {
   it(
-    '同じ科目コードが指定された場合、ApiErrorが発生する',
+    'should throw ApiError when the same account code is specified',
     withTransaction([], async (tx) => {
       // 同じ科目コードを指定
       const input = {
@@ -30,7 +30,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '存在しない科目コードが指定された場合、ApiErrorが発生する',
+    'should throw ApiError when a non-existent account code is specified',
     withTransaction([], async (tx) => {
       // 存在しない科目コードを指定
       const input = {
@@ -55,7 +55,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '存在しない借方科目コードが指定された場合、ApiErrorが発生する',
+    'should throw ApiError when a non-existent debit account code is specified',
     withTransaction([], async (tx) => {
       // 存在しない借方科目コードを指定
       const input = {
@@ -80,7 +80,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '借方科目コードがA11、貸方科目コードがE61で、借方金額と貸方金額の両方が未設定の場合、ApiErrorが発生する',
+    'should throw ApiError when both debit and credit amounts are unset for A11 and E61 account codes',
     withTransaction([], async (tx) => {
       const input = {
         nendo: '2021',
@@ -103,7 +103,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '借方科目コードがA11、貸方科目コードがE61で、借方金額と貸方金額の両方が設定されている場合、ApiErrorが発生する',
+    'should throw ApiError when both debit and credit amounts are set for A11 and E61 account codes',
     withTransaction([], async (tx) => {
       const input = {
         nendo: '2021',
@@ -128,7 +128,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '英字など明らかに日付ではないdateが設定された場合、ApiErrorが発生する',
+    'should throw ApiError when an invalid date format is specified',
     withTransaction([], async (tx) => {
       const input = {
         nendo: '2021',
@@ -141,7 +141,6 @@ describe('createLedger', () => {
       }
 
       const error = await createLedger(tx, input).catch((e) => e)
-      console.log(error)
       expect(error).toBeInstanceOf(ApiError)
       if (error instanceof ApiError) {
         expect(error.details).toBeInstanceOf(Array)
@@ -153,7 +152,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '2/30など存在しない日付の場合、ApiErrorが発生する',
+    'should throw ApiError when a non-existent date is specified',
     withTransaction([], async (tx) => {
       const input = {
         nendo: '2020',
@@ -177,7 +176,7 @@ describe('createLedger', () => {
   )
 
   it(
-    '日付として正しいが年度の範囲外である場合、ApiErrorが発生する',
+    'should throw ApiError when a date outside the fiscal year range is specified',
     withTransaction([], async (tx) => {
       const input = {
         nendo: '2021',
@@ -196,6 +195,65 @@ describe('createLedger', () => {
         expect(error.details.length).toBe(1)
         expect(error.details[0].code).toBe('OUT_OF_FISCAL_YEAR')
         expect(error.details[0].path).toEqual(['date'])
+      }
+    }),
+  )
+
+  it(
+    'should throw ApiError when nendo is not a 4-digit number',
+    withTransaction([], async (tx) => {
+      const input = {
+        nendo: 'invalid',
+        date: '20210401',
+        ledger_cd: 'A11',
+        karikata_value: 1000,
+        counter_cd: 'E61',
+        note: 'test',
+        checked: '0',
+      }
+
+      const error = await createLedger(tx, input).catch((e) => e)
+      expect(error).toBeInstanceOf(ApiError)
+      if (error instanceof ApiError) {
+        expect(error.details).toBeInstanceOf(Array)
+        expect(error.details.length).toBe(1)
+        expect(error.details[0].code).toBe('INVALID_NENDO_FORMAT')
+        expect(error.details[0].path).toEqual(['nendo'])
+      }
+    }),
+  )
+
+  it(
+    'should return multiple errors when multiple validation errors occur',
+    withTransaction([], async (tx) => {
+      const input = {
+        nendo: '2021',
+        date: '20210331', // 2020年度の最終日
+        ledger_cd: 'A11',
+        counter_cd: 'E61',
+        note: 'test',
+        checked: '0',
+      }
+
+      const error = await createLedger(tx, input).catch((e) => e)
+      expect(error).toBeInstanceOf(ApiError)
+      if (error instanceof ApiError) {
+        expect(error.details).toBeInstanceOf(Array)
+        expect(error.details.length).toBe(2)
+
+        // 年度範囲外のエラー
+        const outOfFiscalYearError = error.details.find(
+          (detail) => detail.code === 'OUT_OF_FISCAL_YEAR',
+        )
+        expect(outOfFiscalYearError).toBeDefined()
+        expect(outOfFiscalYearError?.path).toEqual(['date'])
+
+        // 金額未設定のエラー
+        const missingAmountError = error.details.find(
+          (detail) => detail.code === 'MISSING_AMOUNT',
+        )
+        expect(missingAmountError).toBeDefined()
+        expect(missingAmountError?.path).toEqual(['karikata_value'])
       }
     }),
   )
