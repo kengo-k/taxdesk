@@ -24,7 +24,7 @@ async function readCsvFile<T = any>(filePath: string): Promise<T[]> {
   return parse(csvData, { columns: true, skip_empty_lines: true }) as T[]
 }
 
-export function withTransaction(
+export function withTransactionForTest(
   filenames: string[],
   testFn: (tx: Connection) => Promise<void>,
 ) {

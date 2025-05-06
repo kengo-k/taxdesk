@@ -1,4 +1,4 @@
-import { withTransaction } from '../../framework/test-helpers'
+import { withTransactionForTest } from '../../framework/test-helpers'
 
 import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
 import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
@@ -6,7 +6,7 @@ import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 describe('getSaimokuDetail', () => {
   it(
     'should return one record for saimoku code(A11)',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const result = await getSaimokuDetail(tx, {
         saimoku_cd: 'A11', // 現金
       })
@@ -19,7 +19,7 @@ describe('getSaimokuDetail', () => {
 
   it(
     'should return null for non-existent saimoku code',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const result = await getSaimokuDetail(tx, {
         saimoku_cd: 'XXX', // 存在しない細目コード
       })

@@ -1,4 +1,4 @@
-import { withTransaction } from '../../framework/test-helpers'
+import { withTransactionForTest } from '../../framework/test-helpers'
 
 import { countLedgers } from '@/lib/services/ledger/count-ledgers'
 import { createLedger } from '@/lib/services/ledger/create-ledger'
@@ -7,7 +7,7 @@ import { listLedgers } from '@/lib/services/ledger/list-ledgers'
 describe('listLedgers', () => {
   it(
     'should handle ledger entries with specific conditions',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // Create 5 sales transactions using accounts receivable
       for (let i = 0; i < 5; i++) {
         await createLedger(tx, {
@@ -49,7 +49,7 @@ describe('listLedgers', () => {
 
   it(
     'should correctly handle ledger entries, balances, and pagination',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // Create sales and accounts receivable entries on the 25th of each month in 2021
       // prettier-ignore
       const months = ['04', '05', '06', '07', '08', '09', '10', '11', '12', '01', '02', '03']

@@ -1,4 +1,4 @@
-import { withTransaction } from '../../framework/test-helpers'
+import { withTransactionForTest } from '../../framework/test-helpers'
 
 import { getFiscalYears } from '@/lib/services/masters/get-fiscal-years'
 
@@ -9,7 +9,7 @@ describe('getFiscalYears', () => {
    */
   it(
     'CSVからデータをロードして使用するテスト',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // テスト実行
       const result = await getFiscalYears(tx)
 

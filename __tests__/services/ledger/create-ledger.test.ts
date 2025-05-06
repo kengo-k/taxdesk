@@ -1,4 +1,4 @@
-import { withTransaction } from '../../framework/test-helpers'
+import { withTransactionForTest } from '../../framework/test-helpers'
 
 import { ApiError } from '@/lib/api-error'
 import { countLedgers } from '@/lib/services/ledger/count-ledgers'
@@ -7,7 +7,7 @@ import { createLedger } from '@/lib/services/ledger/create-ledger'
 describe('createLedger', () => {
   it(
     'should throw ApiError when the same account code is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // 同じ科目コードを指定
       const input = {
         nendo: '2021',
@@ -32,7 +32,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when a non-existent account code is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // 存在しない科目コードを指定
       const input = {
         nendo: '2021',
@@ -57,7 +57,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when a non-existent debit account code is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       // 存在しない借方科目コードを指定
       const input = {
         nendo: '2021',
@@ -82,7 +82,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when both debit and credit amounts are unset for A11 and E61 account codes',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210401',
@@ -105,7 +105,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when both debit and credit amounts are set for A11 and E61 account codes',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210401',
@@ -130,7 +130,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when an invalid date format is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: 'invalid',
@@ -154,7 +154,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when a non-existent date is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2020',
         date: '20210230',
@@ -178,7 +178,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when a date outside the fiscal year range is specified',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210331', // 2020年度の最終日
@@ -202,7 +202,7 @@ describe('createLedger', () => {
 
   it(
     'should throw ApiError when nendo is not a 4-digit number',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: 'invalid',
         date: '20210401',
@@ -226,7 +226,7 @@ describe('createLedger', () => {
 
   it(
     'should return multiple errors when multiple validation errors occur',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210331', // 2020年度の最終日
@@ -261,7 +261,7 @@ describe('createLedger', () => {
 
   it(
     'should create a ledger entry and return the correct count',
-    withTransaction([], async (tx) => {
+    withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210401',

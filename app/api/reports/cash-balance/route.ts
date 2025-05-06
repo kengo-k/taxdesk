@@ -1,10 +1,8 @@
-import { withTransaction } from '@/lib/api-transaction'
-import { getCashBalance } from '@/lib/services/reports/get-cash-balance'
+import { createApiRoute, withTransaction } from '@/lib/api-transaction'
+import { getFiscalYears } from '@/lib/services/masters/get-fiscal-years'
 
-export async function GET() {
-  return withTransaction(async (tx) => {
-    const cashBalance = await getCashBalance(tx, '2024')
-
-    return cashBalance
+export const GET = createApiRoute(async (db) => {
+  return withTransaction(db, async (tx) => {
+    return await getFiscalYears(tx)
   })
-}
+})
