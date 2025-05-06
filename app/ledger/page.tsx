@@ -5,10 +5,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import { DeleteConfirmDialog } from './components/delete-confirm-dialog'
-import { LedgerSearchForm } from './components/ledger-search-form'
-import { Pagination } from './components/pagination'
-import { TransactionTable } from './components/transaction-table'
 // コンポーネントのインポート
 import { AlertCircle, ArrowLeft } from 'lucide-react'
 
@@ -45,6 +41,11 @@ import {
   updateSearchParams,
 } from '@/lib/redux/features/transactionSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+
+import { DeleteConfirmDialog } from './components/delete-confirm-dialog'
+import { LedgerSearchForm } from './components/ledger-search-form'
+import { Pagination } from './components/pagination'
+import { TransactionTable } from './components/transaction-table'
 
 export default function LedgerPage() {
   const router = useRouter()
@@ -88,7 +89,6 @@ export default function LedgerPage() {
 
   // 勘定科目一覧と勘定科目別レコード件数をマージ
   const mergedAccounts = useMemo(() => {
-    // 勘定科目一覧がない場合は空の配列を返す
     if (!Array.isArray(accountList) || accountList.length === 0) {
       return []
     }
@@ -106,7 +106,6 @@ export default function LedgerPage() {
       })
       return merged
     }
-
     // 科目コードごとに件数を集計
     const countMap = new Map<string, number>()
     accountCounts.forEach((item) => {
@@ -115,7 +114,6 @@ export default function LedgerPage() {
       // 件数を加算して更新
       countMap.set(item.accountCode, currentCount + item.count)
     })
-
     // 勘定科目一覧と勘定科目別レコード件数をマージ
     const merged = accountList.map((account) => {
       const count = countMap.get(account.code) || 0
@@ -127,7 +125,6 @@ export default function LedgerPage() {
         label: `${account.code}: ${account.name} (${count})`,
       }
     })
-
     return merged
   }, [accountList, accountCounts])
 
@@ -183,14 +180,7 @@ export default function LedgerPage() {
       dispatch(fetchAccountCounts(fiscalYear))
 
       // 勘定科目一覧を取得
-      dispatch(
-        fetchAccountList({
-          nendo: fiscalYear,
-          active: true,
-          category: undefined,
-          search: undefined,
-        }),
-      )
+      dispatch(fetchAccountList(fiscalYear))
     }
   }, [dispatch, fiscalYear])
 

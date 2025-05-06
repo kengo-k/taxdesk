@@ -4,11 +4,17 @@ export interface ListAccountsRequest {
   fiscalYear: string // TODO Get accounts available within the specified fiscal year (currently unused)
 }
 
+export interface ListAccountItem {
+  id: string
+  code: string
+  name: string
+}
+
 export async function listAccounts(
   conn: Connection,
   input: ListAccountsRequest,
-): Promise<any> {
-  return await conn.$queryRaw<any[]>`
+): Promise<ListAccountItem[]> {
+  return await conn.$queryRaw<ListAccountItem[]>`
     select
       id,
       saimoku_cd as code,

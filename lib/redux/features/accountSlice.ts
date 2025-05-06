@@ -1,20 +1,15 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import type { RootState } from "../store"
+import {
+  type PayloadAction,
+  createAsyncThunk,
+  createSlice,
+} from '@reduxjs/toolkit'
 
-// 勘定科目の型定義
-interface AccountItem {
-  id: string
-  code: string
-  name: string
-  category: string
-  categoryName: string
-  isActive: boolean
-  description: string
-}
+import type { RootState } from '@/lib/redux/store'
+import { ListAccountItem } from '@/lib/services/masters/list-accounts'
 
 // 状態の型定義
 interface AccountState {
-  accountList: AccountItem[]
+  accountList: ListAccountItem[]
   selectedAccountId: string | null
   loadingList: boolean
   errorList: string | null
@@ -29,38 +24,32 @@ const initialState: AccountState = {
 }
 
 // 非同期アクション - 勘定科目一覧の取得
-export const fetchAccountList = createAsyncThunk(
-  "account/fetchAccountList",
-  async (
-    { nendo, category, active, search }: { nendo: string; category?: string; active?: boolean; search?: string },
-    { rejectWithValue },
-  ) => {
+export const fetchAccountList = createAsyncThunk<
+  { data: ListAccountItem[] },
+  string
+>(
+  'account/fetchAccountList',
+  async (fiscalYear: string, { rejectWithValue }) => {
     try {
-      let url = `/api/account-list/${nendo}?`
-
-      // クエリパラメータを追加
-      const params = new URLSearchParams()
-      if (category) params.append("category", category)
-      if (active !== undefined) params.append("active", active.toString())
-      if (search) params.append("search", search)
-
-      url += params.toString()
+      let url = `/api/fiscal-years/${fiscalYear}/accounts`
 
       const response = await fetch(url)
       if (!response.ok) {
-        throw new Error("サーバーエラーが発生しました")
+        throw new Error('サーバーエラーが発生しました')
       }
       const data = await response.json()
       return data
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "不明なエラーが発生しました")
+      return rejectWithValue(
+        error instanceof Error ? error.message : '不明なエラーが発生しました',
+      )
     }
   },
 )
 
 // スライスの作成
 export const accountSlice = createSlice({
-  name: "account",
+  name: 'account',
   initialState,
   reducers: {
     // 勘定科目の選択
@@ -81,7 +70,7 @@ export const accountSlice = createSlice({
       })
       .addCase(fetchAccountList.fulfilled, (state, action) => {
         state.loadingList = false
-        state.accountList = action.payload
+        state.accountList = action.payload.data
       })
       .addCase(fetchAccountList.rejected, (state, action) => {
         state.loadingList = false
@@ -94,10 +83,14 @@ export const accountSlice = createSlice({
 export const { selectAccount, clearSelectedAccount } = accountSlice.actions
 
 // セレクターのエクスポート
-export const selectAllAccountList = (state: RootState) => state.account.accountList
-export const selectSelectedAccountId = (state: RootState) => state.account.selectedAccountId
-export const selectAccountListLoading = (state: RootState) => state.account.loadingList
-export const selectAccountListError = (state: RootState) => state.account.errorList
+export const selectAllAccountList = (state: RootState) =>
+  state.account.accountList
+export const selectSelectedAccountId = (state: RootState) =>
+  state.account.selectedAccountId
+export const selectAccountListLoading = (state: RootState) =>
+  state.account.loadingList
+export const selectAccountListError = (state: RootState) =>
+  state.account.errorList
 
 // リデューサーのエクスポート
 export default accountSlice.reducer
