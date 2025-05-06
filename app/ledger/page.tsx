@@ -110,9 +110,9 @@ export default function LedgerPage() {
     const countMap = new Map<string, number>()
     accountCounts.forEach((item) => {
       // 既存の件数を取得（存在しない場合は0）
-      const currentCount = countMap.get(item.accountCode) || 0
+      const currentCount = countMap.get(item.saimoku_cd) || 0
       // 件数を加算して更新
-      countMap.set(item.accountCode, currentCount + item.count)
+      countMap.set(item.saimoku_cd, currentCount + item.count)
     })
     // 勘定科目一覧と勘定科目別レコード件数をマージ
     const merged = accountList.map((account) => {

@@ -6,6 +6,8 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
+import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
+
 // 取引データの型定義
 export interface Transaction {
   id: string
@@ -73,7 +75,7 @@ interface TransactionState {
   loading: boolean
   error: string | null
   searchParams: TransactionSearchParams
-  accountCounts: AccountCount[]
+  accountCounts: CountByAccountItem[]
   accountCountsLoading: boolean
   accountCountsError: string | null
 }
@@ -163,17 +165,13 @@ export const fetchTransactions = createAsyncThunk(
 )
 
 // 非同期アクション - 勘定科目別レコード件数の取得
-export const fetchAccountCounts = createAsyncThunk(
+export const fetchAccountCounts = createAsyncThunk<
+  { data: CountByAccountItem[] },
+  string
+>(
   'transaction/fetchAccountCounts',
   async (nendo: string, { rejectWithValue }) => {
     try {
-      // nendoが未設定の場合は早期リターン
-      if (nendo === 'unset') {
-        return {
-          accountCounts: [],
-        }
-      }
-
       // APIリクエスト
       const url = `/api/fiscal-years/${nendo}/ledger/counts/by-account`
       const response = await fetch(url)
@@ -182,12 +180,7 @@ export const fetchAccountCounts = createAsyncThunk(
         throw new Error(`APIエラー: ${response.status}`)
       }
 
-      const data = await response.json()
-      console.log(`response of ${url}: `, data)
-
-      return {
-        accountCounts: data.accountCounts,
-      }
+      return await response.json()
     } catch (error) {
       return rejectWithValue(
         error instanceof Error
@@ -287,7 +280,7 @@ export const transactionSlice = createSlice({
       })
       .addCase(fetchAccountCounts.fulfilled, (state, action) => {
         state.accountCountsLoading = false
-        state.accountCounts = action.payload.accountCounts
+        state.accountCounts = action.payload.data
       })
       .addCase(fetchAccountCounts.rejected, (state, action) => {
         state.accountCountsLoading = false

@@ -37,8 +37,7 @@ export const fetchAccountList = createAsyncThunk<
       if (!response.ok) {
         throw new Error('サーバーエラーが発生しました')
       }
-      const data = await response.json()
-      return data
+      return await response.json()
     } catch (error) {
       return rejectWithValue(
         error instanceof Error ? error.message : '不明なエラーが発生しました',
