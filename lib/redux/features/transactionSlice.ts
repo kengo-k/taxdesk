@@ -175,7 +175,7 @@ export const fetchAccountCounts = createAsyncThunk(
       }
 
       // APIリクエスト
-      const url = `/api/ledger/counts/by-account/${nendo}`
+      const url = `/api/fiscal-years/${nendo}/ledger/counts/by-account`
       const response = await fetch(url)
 
       if (!response.ok) {
