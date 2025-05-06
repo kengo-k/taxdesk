@@ -1,5 +1,5 @@
-import { getSaimokuDetail } from '../masters/get-saimoku-detail'
-
+import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
+import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 import { Connection } from '@/lib/types'
 import { PaginationRequest, calculateOffset } from '@/lib/utils/pagination'
 
@@ -38,88 +38,79 @@ export async function listLedgers(
   }
   const rows = await conn.$queryRaw<any[]>`
     select
-      *,
-      cast(count(*) over (partition by 1) as integer) as all_count
+      j.id as journal_id,
+      j.nendo,
+      j.date,
+      j.other_cd,
+      j.karikata_cd,
+      j.karikata_value,
+      j.kasikata_cd,
+      j.kasikata_value,
+      cast(sum(
+        case
+          when
+            j.karikata_cd = ${input.ledger_cd}
+          then
+            j.karikata_value else 0 end
+      ) over (
+        order by
+          j.date desc,
+          j.created_at desc
+        rows
+          between current row and unbounded following
+      ) as integer) karikata_sum,
+      cast(sum(
+        case
+          when
+            j.kasikata_cd = ${input.ledger_cd}
+          then
+            j.kasikata_value else 0 end
+      ) over (
+        order by
+          j.date desc,
+          j.created_at desc
+        rows
+          between current row and unbounded following
+      ) as integer) kasikata_sum,
+      note,
+      j.created_at
     from
       (
         select
-          j.id as journal_id,
-          j.nendo,
-          j.date,
-          j.other_cd,
-          j.karikata_cd,
-          j.karikata_value,
-          j.kasikata_cd,
-          j.kasikata_value,
-          cast(sum(
-            case
-              when
-                j.karikata_cd = ${input.ledger_cd}
-              then
-                j.karikata_value else 0 end
-          ) over (
-            order by
-              j.date desc,
-              j.created_at desc
-            rows
-              between current row and unbounded following
-          ) as integer) karikata_sum,
-          cast(sum(
-            case
-              when
-                j.kasikata_cd = ${input.ledger_cd}
-              then
-                j.kasikata_value else 0 end
-          ) over (
-            order by
-              j.date desc,
-              j.created_at desc
-            rows
-              between current row and unbounded following
-          ) as integer) kasikata_sum,
+          id,
+          nendo,
+          date,
+          karikata_cd,
+          kasikata_cd,
+          karikata_value,
+          kasikata_value,
+          case karikata_cd
+            when ${input.ledger_cd} then kasikata_cd
+            else karikata_cd
+          end as other_cd,
           note,
-          j.created_at
+          created_at
         from
-          (
-            select
-              id,
-              nendo,
-              date,
-              karikata_cd,
-              kasikata_cd,
-              karikata_value,
-              kasikata_value,
-              case karikata_cd
-                when ${input.ledger_cd} then kasikata_cd
-                else karikata_cd
-              end as other_cd,
-              note,
-              created_at
-            from
-              journals j
-            where
-              nendo = ${input.nendo}
-              and (
-                karikata_cd = ${input.ledger_cd}
-                or kasikata_cd = ${input.ledger_cd}
-              )
-          ) j
-      ) j2
+          journals j
+        where
+          nendo = ${input.nendo}
+          and (
+            karikata_cd = ${input.ledger_cd}
+            or kasikata_cd = ${input.ledger_cd}
+          )
+      ) j
     where
       (case when ${month} = 'all' then 'all' else ${month} end)
-      = (case when ${month} = 'all' then 'all' else substring(j2.date, 5, 2) end)
+      = (case when ${month} = 'all' then 'all' else substring(j.date, 5, 2) end)
     order by
-      j2.date desc,
-      j2.created_at desc
+      j.date desc,
+      j.created_at desc
     limit ${pagination.perPage} offset ${calculateOffset(pagination)}`
-  let all_count: number | null = null
+
   return rows.map((res) => {
-    if (all_count === null) {
-      all_count = res.all_count
-    }
     const sumL = res.karikata_sum
     const sumR = res.kasikata_sum
-    if (saimoku_detail.kamoku_bunrui_type === 'L') {
+    if (saimoku_detail.kamoku_bunrui_type === KAMOKU_BUNRUI_TYPE.LEFT) {
       res.acc = sumL - sumR
       if (res.karikata_cd === input.ledger_cd) {
         res.kasikata_value = 0
