@@ -1,9 +1,9 @@
 // 実際のパスに合わせて修正してください
 import { testApiHandler } from 'next-test-api-route-handler'
 
-import * as handler from '@/app/api/fiscal-years/route'
+import * as handler from '@/app/api/master/fiscal-years/route'
 
-describe('GET /api/fiscal-years', () => {
+describe('GET /api/master/fiscal-years', () => {
   it('should return fiscal years', async () => {
     await testApiHandler({
       appHandler: handler,
