@@ -11,7 +11,7 @@ export function countByAccountHandler(
   { ctx }: { ctx: RouteContext },
 ) {
   return withTransaction(conn, async (tx) => {
-    const fiscalYear = ctx.params.year
+    const { year: fiscalYear } = await ctx.params
     return await countByAccount(tx, { fiscalYear })
   })
 }

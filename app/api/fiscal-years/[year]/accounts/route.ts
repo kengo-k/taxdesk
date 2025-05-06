@@ -11,7 +11,7 @@ export function listAccountsHandler(
   { ctx }: { ctx: RouteContext },
 ) {
   return withTransaction(conn, async (tx) => {
-    const fiscalYear = ctx.params.year
+    const { year: fiscalYear } = await ctx.params
     return await listAccounts(tx, { fiscalYear })
   })
 }

@@ -36,7 +36,7 @@ export async function withTransaction<T>(
 }
 
 export type RouteContext = {
-  params: Record<string, string>
+  params: Promise<Record<string, string>>
 }
 
 // Utility function to create API routes
