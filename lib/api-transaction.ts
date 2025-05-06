@@ -7,11 +7,14 @@ import { prisma } from '@/lib/prisma/client'
 
 export type Connection = PrismaClient | Prisma.TransactionClient
 
+// Execute a transaction using the specified connection
+// If a transaction is already started, use that transaction
 export async function withTransaction<T>(
   conn: Connection,
   handler: (tx: Prisma.TransactionClient) => Promise<T>,
 ) {
   try {
+    // Determine if a transaction is started by checking if the $transaction property exists
     if ('$transaction' in conn) {
       const result = await conn.$transaction(async (tx) => {
         return await handler(tx)
@@ -32,6 +35,8 @@ export async function withTransaction<T>(
   }
 }
 
+// Utility function to create API routes
+// Intended to allow passing externally started transactions during testing
 export const createApiRoute =
   <T extends (conn: Connection, req: Request, ctx: any) => Promise<Response>>(
     fn: T,
