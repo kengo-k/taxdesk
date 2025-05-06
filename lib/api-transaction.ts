@@ -35,7 +35,7 @@ export async function withTransaction<T>(
   }
 }
 
-type RouteContext = {
+export type RouteContext = {
   params: Record<string, string>
 }
 
