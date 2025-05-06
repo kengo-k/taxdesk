@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 import { Prisma, PrismaClient } from '@prisma/client'
 
@@ -35,12 +35,21 @@ export async function withTransaction<T>(
   }
 }
 
+type RouteContext = {
+  params: Record<string, string>
+}
+
 // Utility function to create API routes
 // Intended to allow passing externally started transactions during testing
 export const createApiRoute =
-  <T extends (conn: Connection, req: Request, ctx: any) => Promise<Response>>(
+  <
+    T extends (
+      conn: Connection,
+      args: { req: NextRequest; ctx: RouteContext },
+    ) => Promise<Response>,
+  >(
     fn: T,
     conn: Connection = prisma,
   ) =>
-  (req: Request, ctx: any) =>
-    fn(conn, req, ctx)
+  (req: NextRequest, ctx: RouteContext) =>
+    fn(conn, { req, ctx })
