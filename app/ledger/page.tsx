@@ -24,6 +24,7 @@ import {
   selectFiscalYearLoading,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
+  clearTransactions,
   deleteTransactions,
   fetchAccountCounts,
   fetchTransactions,
@@ -112,8 +113,8 @@ export default function LedgerPage() {
       setAccount(null)
       setMonth(null)
       setCurrentPage(1)
+      dispatch(clearTransactions())
       // TODO ストアの勘定科目一覧をクリアする
-      // TODO ストアの台帳一覧をクリアする
       return
     }
     // 年度が変更された時に勘定科目一覧(件数付き)を取得する
@@ -122,7 +123,7 @@ export default function LedgerPage() {
     if (account == null) {
       setMonth(null)
       setCurrentPage(1)
-      // TODO ストアの台帳一覧をクリアする
+      dispatch(clearTransactions())
       return
     }
 
@@ -449,7 +450,7 @@ export default function LedgerPage() {
   }
 
   // 検索条件が有効かどうかを判定
-  const isSearchValid = fiscalYear !== 'unset' && account !== 'unset'
+  const isSearchValid = fiscalYear != null && account != null
 
   // 選択された勘定科目の表示名を取得
   const getSelectedAccountLabel = () => {

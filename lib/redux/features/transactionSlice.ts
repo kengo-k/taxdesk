@@ -178,6 +178,11 @@ export const transactionSlice = createSlice({
     ) => {
       state.searchParams = { ...state.searchParams, ...action.payload }
     },
+    // 取引データのクリア
+    clearTransactions: (state) => {
+      state.transactions = []
+      state.all_count = 0
+    },
     // 取引データの更新
     updateTransaction: (
       state,
@@ -312,6 +317,7 @@ export const {
   setShowTooltip,
   setSelectedRows,
   deleteTransactions,
+  clearTransactions,
 } = transactionSlice.actions
 
 // セレクターのエクスポート
