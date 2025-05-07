@@ -72,6 +72,7 @@ export interface AccountCount {
 // 状態の型定義
 interface TransactionState {
   transactions: LedgerListItem[]
+  all_count: number
   pagination: PaginationInfo
   loading: boolean
   error: string | null
@@ -84,6 +85,7 @@ interface TransactionState {
 // 初期状態
 const initialState: TransactionState = {
   transactions: [],
+  all_count: 0,
   pagination: {
     page: 1,
     pageSize: 10,
@@ -237,6 +239,7 @@ export const transactionSlice = createSlice({
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.loading = false
         state.transactions = action.payload.data.ledgers
+        state.all_count = action.payload.data.all_count
         state.pagination = action.payload.pagination
       })
       .addCase(fetchTransactions.rejected, (state, action) => {
@@ -311,6 +314,7 @@ export const {
 // セレクターのエクスポート
 export const selectTransactions = (state: RootState) =>
   state.transaction.transactions
+export const selectAllCount = (state: RootState) => state.transaction.all_count
 export const selectPagination = (state: RootState) =>
   state.transaction.pagination
 export const selectTransactionLoading = (state: RootState) =>

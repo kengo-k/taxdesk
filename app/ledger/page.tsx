@@ -32,6 +32,7 @@ import {
   selectAccountCounts,
   selectAccountCountsError,
   selectAccountCountsLoading,
+  selectAllCount,
   selectPagination,
   selectSearchParams,
   selectTransactionError,
@@ -64,6 +65,7 @@ export default function LedgerPage() {
 
   // Reduxから取引データを取得
   const transactions = useAppSelector(selectTransactions)
+  const allCount = useAppSelector(selectAllCount)
   const pagination = useAppSelector(selectPagination)
   const transactionLoading = useAppSelector(selectTransactionLoading)
   const transactionError = useAppSelector(selectTransactionError)
@@ -526,7 +528,7 @@ export default function LedgerPage() {
 
                     {/* ページネーション */}
                     <Pagination
-                      totalItems={100}
+                      totalItems={allCount}
                       totalPages={10}
                       currentPage={currentPage}
                       pageSize={pageSize}

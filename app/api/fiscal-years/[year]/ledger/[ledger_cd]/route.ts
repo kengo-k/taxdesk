@@ -46,12 +46,12 @@ export function countByAccountHandler(
         perPage: 10,
       },
     )
-    const count = await countLedgers(tx, {
+    const all_count = await countLedgers(tx, {
       fiscal_year,
       ledger_cd,
       month: null,
     })
-    return { count, ledgers }
+    return { all_count, ledgers }
   })
 }
 
