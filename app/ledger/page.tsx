@@ -541,7 +541,7 @@ export default function LedgerPage() {
                     {/* ページネーション */}
                     <Pagination
                       totalItems={allCount}
-                      totalPages={10}
+                      totalPages={Math.ceil(allCount / pageSize)}
                       currentPage={currentPage}
                       pageSize={pageSize}
                       onPageChange={handlePageChange}
