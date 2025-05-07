@@ -525,20 +525,14 @@ export default function LedgerPage() {
                     />
 
                     {/* ページネーション */}
-                    {
-                      <Pagination
-                        pagination={{
-                          totalItems: 100,
-                          totalPages: 10,
-                          currentPage: 1,
-                          pageSize: 10,
-                        }}
-                        currentPage={currentPage}
-                        pageSize={pageSize}
-                        onPageChange={handlePageChange}
-                        onPageSizeChange={handlePageSizeChange}
-                      />
-                    }
+                    <Pagination
+                      totalItems={100}
+                      totalPages={10}
+                      currentPage={currentPage}
+                      pageSize={pageSize}
+                      onPageChange={handlePageChange}
+                      onPageSizeChange={handlePageSizeChange}
+                    />
                   </>
                 )}
               </CardContent>
@@ -560,7 +554,6 @@ export default function LedgerPage() {
           )}
         </main>
       </div>
-
       {/* 削除確認ダイアログ */}
       <DeleteConfirmDialog
         open={showDeleteDialog}
