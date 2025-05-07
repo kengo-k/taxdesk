@@ -7,6 +7,7 @@ import {
 } from '@reduxjs/toolkit'
 
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
+import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
 
 // 取引データの型定義
 export interface Transaction {
@@ -70,7 +71,7 @@ export interface AccountCount {
 
 // 状態の型定義
 interface TransactionState {
-  transactions: TransactionWithErrors[]
+  transactions: LedgerListItem[]
   pagination: PaginationInfo
   loading: boolean
   error: string | null
@@ -106,19 +107,6 @@ export const fetchTransactions = createAsyncThunk(
   'transaction/fetchTransactions',
   async (params: TransactionSearchParams, { rejectWithValue }) => {
     try {
-      // nendoが未設定の場合は早期リターン
-      if (params.nendo === 'unset') {
-        return {
-          transactions: [],
-          pagination: {
-            page: 1,
-            pageSize: params.pageSize,
-            totalItems: 0,
-            totalPages: 0,
-          },
-        }
-      }
-
       // URLパラメータを構築
       const urlParams = new URLSearchParams()
       if (params.code) urlParams.set('code', params.code)
@@ -128,32 +116,14 @@ export const fetchTransactions = createAsyncThunk(
       urlParams.set('pageSize', params.pageSize.toString())
 
       // APIリクエスト
-      const url = `/api/ledger/${params.nendo}?${urlParams.toString()}`
+      const url = `/api/fiscal-years/${params.nendo}/ledger/${params.code}`
       const response = await fetch(url)
 
       if (!response.ok) {
         throw new Error(`APIエラー: ${response.status}`)
       }
 
-      const data: ApiResponse = await response.json()
-      console.log(`response of ${url}: `, data)
-
-      // 取引データを変換
-      const transactionsWithErrors: TransactionWithErrors[] =
-        data.transactions.map((transaction) => ({
-          ...transaction,
-          errors: {},
-          showTooltips: {
-            date: false,
-            debit: false,
-            credit: false,
-          },
-        }))
-
-      return {
-        transactions: transactionsWithErrors,
-        pagination: data.pagination,
-      }
+      return await response.json()
     } catch (error) {
       return rejectWithValue(
         error instanceof Error
@@ -212,30 +182,30 @@ export const transactionSlice = createSlice({
         value: string | number
       }>,
     ) => {
-      const { id, field, value } = action.payload
-      const index = state.transactions.findIndex(
-        (transaction) => transaction.id === id,
-      )
-      if (index !== -1) {
-        const transaction = { ...state.transactions[index] }
-        const errors = { ...transaction.errors }
-        const showTooltips = { ...transaction.showTooltips }
-        state.transactions[index] = { ...transaction, errors, showTooltips }
-      }
+      // const { id, field, value } = action.payload
+      // const index = state.transactions.findIndex(
+      //   (transaction) => transaction.id === id,
+      // )
+      // if (index !== -1) {
+      //   const transaction = { ...state.transactions[index] }
+      //   const errors = { ...transaction.errors }
+      //   const showTooltips = { ...transaction.showTooltips }
+      //   state.transactions[index] = { ...transaction, errors, showTooltips }
+      // }
     },
     // フォーカスが外れた時のエラー表示
     setShowTooltip: (
       state,
-      action: PayloadAction<{ id: string; field: 'date' | 'debit' | 'credit' }>,
+      action: PayloadAction<{ id: number; field: 'date' | 'debit' | 'credit' }>,
     ) => {
       const { id, field } = action.payload
       const index = state.transactions.findIndex(
-        (transaction) => transaction.id === id,
+        (transaction) => transaction.journal_id === id,
       )
 
-      if (index !== -1 && state.transactions[index].errors[field]) {
-        state.transactions[index].showTooltips[field] = true
-      }
+      // if (index !== -1 && state.transactions[index].errors[field]) {
+      //   state.transactions[index].showTooltips[field] = true
+      // }
     },
     // 選択行の管理
     setSelectedRows: (state, action: PayloadAction<string[]>) => {
@@ -245,9 +215,9 @@ export const transactionSlice = createSlice({
     // 取引の削除
     deleteTransactions: (state, action: PayloadAction<string[]>) => {
       const idsToDelete = action.payload
-      state.transactions = state.transactions.filter(
-        (transaction) => !idsToDelete.includes(transaction.id),
-      )
+      // state.transactions = state.transactions.filter(
+      //   (transaction) => !idsToDelete.includes(transaction.id),
+      // )
       state.pagination = {
         ...state.pagination,
         totalItems: state.pagination.totalItems - idsToDelete.length,
@@ -266,7 +236,7 @@ export const transactionSlice = createSlice({
       })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.loading = false
-        state.transactions = action.payload.transactions
+        state.transactions = action.payload.data.ledgers
         state.pagination = action.payload.pagination
       })
       .addCase(fetchTransactions.rejected, (state, action) => {

@@ -25,7 +25,7 @@ describe('listLedgers', () => {
       const arResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'A31', // Accounts Receivable
           month: null,
         },
@@ -101,7 +101,7 @@ describe('listLedgers', () => {
       const salesResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'D11', // Sales
           month: null,
         },
@@ -117,7 +117,7 @@ describe('listLedgers', () => {
       const salesResultPage2 = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'D11', // Sales
           month: null,
         },
@@ -130,7 +130,7 @@ describe('listLedgers', () => {
 
       // Verify sales count
       const salesCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'D11',
         month: null,
       })
@@ -140,7 +140,7 @@ describe('listLedgers', () => {
       const cashResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'A11', // Cash
           month: null,
         },
@@ -153,7 +153,7 @@ describe('listLedgers', () => {
       expect(cashResult.length).toBe(10) // First page has 10 items
       // Verify cash count
       const cashCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'A11',
         month: null,
       })
@@ -163,7 +163,7 @@ describe('listLedgers', () => {
       const arResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'A31', // Accounts Receivable
           month: null,
         },
@@ -176,7 +176,7 @@ describe('listLedgers', () => {
       expect(arResult.length).toBe(10) // Only March's accounts receivable
       // Verify accounts receivable count
       const arCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'A31',
         month: null,
       })
@@ -186,7 +186,7 @@ describe('listLedgers', () => {
       const suppliesResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'E61', // Supplies Expense
           month: null,
         },
@@ -199,7 +199,7 @@ describe('listLedgers', () => {
       expect(suppliesResult.length).toBe(3) // 3 items of supplies purchased
       // Verify supplies expense count
       const suppliesCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'E61',
         month: null,
       })
@@ -209,7 +209,7 @@ describe('listLedgers', () => {
       const juneCashResult = await listLedgers(
         tx,
         {
-          nendo: '2021',
+          fiscal_year: '2021',
           ledger_cd: 'A11', // Cash
           month: '06', // Search only June
         },
@@ -221,7 +221,7 @@ describe('listLedgers', () => {
       expect(juneCashResult.length).toBe(4) // 4 cash transactions in June (supplies purchases)
       // Verify cash transaction count in June
       const juneCashCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'A11',
         month: '06',
       })

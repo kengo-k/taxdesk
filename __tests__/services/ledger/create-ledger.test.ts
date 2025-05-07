@@ -274,7 +274,7 @@ describe('createLedger', () => {
 
       // 登録前の件数を確認
       const initialCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'A11',
         month: 'all',
       })
@@ -285,7 +285,7 @@ describe('createLedger', () => {
 
       // 登録後の件数を確認
       const finalCount = await countLedgers(tx, {
-        nendo: '2021',
+        fiscal_year: '2021',
         ledger_cd: 'A11',
         month: 'all',
       })

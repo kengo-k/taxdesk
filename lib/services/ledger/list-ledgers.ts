@@ -5,11 +5,11 @@ import { PaginationRequest, calculateOffset } from '@/lib/utils/pagination'
 
 export interface LedgerListRequest {
   ledger_cd: string
-  nendo: string
+  fiscal_year: string
   month: string | null
 }
 
-export interface LedgerListResponse {
+export interface LedgerListItem {
   journal_id: number
   nendo: string
   date: string
@@ -28,7 +28,7 @@ export async function listLedgers(
   conn: Connection,
   input: LedgerListRequest,
   pagination: PaginationRequest,
-): Promise<LedgerListResponse[]> {
+): Promise<LedgerListItem[]> {
   const month = input.month ?? 'all'
   const saimoku_detail = await getSaimokuDetail(conn, {
     saimoku_cd: input.ledger_cd,
@@ -93,7 +93,7 @@ export async function listLedgers(
         from
           journals j
         where
-          nendo = ${input.nendo}
+          nendo = ${input.fiscal_year}
           and (
             karikata_cd = ${input.ledger_cd}
             or kasikata_cd = ${input.ledger_cd}
@@ -125,6 +125,6 @@ export async function listLedgers(
         res.karikata_value = 0
       }
     }
-    return res as LedgerListResponse
+    return res as LedgerListItem
   })
 }

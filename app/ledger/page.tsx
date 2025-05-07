@@ -37,14 +37,12 @@ import {
   selectTransactionError,
   selectTransactionLoading,
   selectTransactions,
-  setShowTooltip,
   updateSearchParams,
 } from '@/lib/redux/features/transactionSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 import { DeleteConfirmDialog } from './components/delete-confirm-dialog'
 import { LedgerSearchForm } from './components/ledger-search-form'
-import { Pagination } from './components/pagination'
 import { TransactionTable } from './components/transaction-table'
 
 export default function LedgerPage() {
@@ -301,7 +299,7 @@ export default function LedgerPage() {
 
   // フォーカスが外れた時のハンドラー
   const handleBlur = (id: string, field: 'date' | 'debit' | 'credit') => {
-    dispatch(setShowTooltip({ id, field }))
+    //dispatch(setShowTooltip({ id, field }))
   }
 
   // CSVダウンロード処理
@@ -322,13 +320,12 @@ export default function LedgerPage() {
     const csvData = transactions.map((transaction) => {
       return [
         transaction.date,
-        transaction.accountCode,
-        transaction.counterpartyAccount,
-        transaction.description,
-        transaction.debit,
-        transaction.credit,
-        transaction.summary,
-        transaction.balance,
+        transaction.other_cd,
+        transaction.karikata_cd,
+        transaction.kasikata_cd,
+        transaction.karikata_value,
+        transaction.kasikata_value,
+        transaction.note,
       ].join(',')
     })
 
@@ -518,7 +515,7 @@ export default function LedgerPage() {
                   <>
                     {/* 取引テーブル */}
                     <TransactionTable
-                      transactions={[]}
+                      transactions={transactions}
                       deleteMode={deleteMode}
                       selectedRows={selectedRows}
                       onToggleRowSelection={toggleRowSelection}
@@ -527,7 +524,7 @@ export default function LedgerPage() {
                     />
 
                     {/* ページネーション */}
-                    {pagination.totalItems > 0 && (
+                    {/* {pagination.totalItems > 0 && (
                       <Pagination
                         pagination={null as any}
                         currentPage={currentPage}
@@ -535,7 +532,7 @@ export default function LedgerPage() {
                         onPageChange={handlePageChange}
                         onPageSizeChange={handlePageSizeChange}
                       />
-                    )}
+                    )} */}
                   </>
                 )}
               </CardContent>
