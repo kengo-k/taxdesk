@@ -90,13 +90,13 @@ export function TransactionTable({
                             <Input
                               type="text"
                               value={transaction.date}
-                              // onChange={(e) =>
-                              //   onUpdateTransaction(
-                              //     transaction.id,
-                              //     'date',
-                              //     e.target.value,
-                              //   )
-                              // }
+                              onChange={(e) =>
+                                onUpdateTransaction(
+                                  transaction.journal_id + '',
+                                  'date',
+                                  e.target.value,
+                                )
+                              }
                               //onBlur={() => onBlur(transaction.id, 'date')}
                               // className={`h-8 text-sm ${transaction.errors.date ? 'border-red-500 pr-8' : ''}`}
                               className={`h-8 text-sm}`}
@@ -121,13 +121,13 @@ export function TransactionTable({
                     <Input
                       type="text"
                       value={transaction.other_cd}
-                      // onChange={(e) =>
-                      //   onUpdateTransaction(
-                      //     transaction.id,
-                      //     'karikata_cd',
-                      //     e.target.value,
-                      //   )
-                      // }
+                      onChange={(e) =>
+                        onUpdateTransaction(
+                          transaction.journal_id + '',
+                          'karikata_cd',
+                          e.target.value,
+                        )
+                      }
                       className="h-8 text-sm"
                     />
                   </td>
@@ -160,13 +160,13 @@ export function TransactionTable({
                                 //   ? formatCurrency(transaction.debit)
                                 //   : ''
                               }
-                              // onChange={(e) =>
-                              //   onUpdateTransaction(
-                              //     transaction.id,
-                              //     'karikata_value',
-                              //     e.target.value,
-                              //   )
-                              // }
+                              onChange={(e) =>
+                                onUpdateTransaction(
+                                  transaction.journal_id + '',
+                                  'karikata_value',
+                                  e.target.value,
+                                )
+                              }
                               // onBlur={() => onBlur(transaction.id, 'debit')}
                               // className={`h-8 text-sm text-right ${transaction.errors.debit ? 'border-red-500 pr-8' : ''}`}
                               className={`h-8 text-sm text-right`}
@@ -208,13 +208,13 @@ export function TransactionTable({
                                 //   ? formatCurrency(transaction.credit)
                                 //   : ''
                               }
-                              // onChange={(e) =>
-                              //   onUpdateTransaction(
-                              //     transaction.id,
-                              //     'kasikata_value',
-                              //     e.target.value,
-                              //   )
-                              // }
+                              onChange={(e) =>
+                                onUpdateTransaction(
+                                  transaction.journal_id + '',
+                                  'kasikata_value',
+                                  e.target.value,
+                                )
+                              }
                               // onBlur={() => onBlur(transaction.id, 'credit')}
                               // className={`h-8 text-sm text-right ${transaction.errors.credit ? 'border-red-500 pr-8' : ''}`}
                               className={`h-8 text-sm text-right`}
@@ -239,13 +239,13 @@ export function TransactionTable({
                     <Input
                       type="text"
                       value={transaction.note ?? ''}
-                      // onChange={(e) =>
-                      //   onUpdateTransaction(
-                      //     transaction.id,
-                      //     'note',
-                      //     e.target.value,
-                      //   )
-                      // }
+                      onChange={(e) =>
+                        onUpdateTransaction(
+                          transaction.journal_id + '',
+                          'note',
+                          e.target.value,
+                        )
+                      }
                       className="h-8 text-sm"
                       placeholder="摘要を入力"
                     />

@@ -187,21 +187,24 @@ export const transactionSlice = createSlice({
     updateTransaction: (
       state,
       action: PayloadAction<{
-        id: string
-        field: keyof Transaction
+        id: number
+        field: keyof LedgerListItem
         value: string | number
       }>,
     ) => {
-      // const { id, field, value } = action.payload
-      // const index = state.transactions.findIndex(
-      //   (transaction) => transaction.id === id,
-      // )
-      // if (index !== -1) {
-      //   const transaction = { ...state.transactions[index] }
-      //   const errors = { ...transaction.errors }
-      //   const showTooltips = { ...transaction.showTooltips }
-      //   state.transactions[index] = { ...transaction, errors, showTooltips }
-      // }
+      console.log('updateTransaction', action.payload)
+      const { id, field, value } = action.payload
+      const index = state.transactions.findIndex(
+        (transaction) => transaction.journal_id === id,
+      )
+      if (index !== -1) {
+        const transaction = { ...state.transactions[index] }
+        console.log('transaction', transaction)
+        // const errors = { ...transaction.errors }
+        // const showTooltips = { ...transaction.shozwTooltips }
+        transaction[field] = value as never
+        state.transactions[index] = { ...transaction }
+      }
     },
     // フォーカスが外れた時のエラー表示
     setShowTooltip: (

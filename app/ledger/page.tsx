@@ -37,6 +37,7 @@ import {
   selectTransactionError,
   selectTransactionLoading,
   selectTransactions,
+  updateTransaction,
 } from '@/lib/redux/features/transactionSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
@@ -327,7 +328,7 @@ export default function LedgerPage() {
     field: keyof (typeof transactions)[0],
     value: string | number,
   ) => {
-    //dispatch(updateTransaction({ id, field, value }))
+    dispatch(updateTransaction({ id: Number(id), field, value }))
   }
 
   // フォーカスが外れた時のハンドラー
@@ -461,12 +462,16 @@ export default function LedgerPage() {
 
   // 選択された勘定科目の表示名を取得
   const getSelectedAccountLabel = () => {
-    if (account === 'unset') return ''
+    if (account == null) {
+      return ''
+    }
 
     // マージされた勘定科目データから検索
     if (mergedAccounts.length > 0) {
-      const selectedAccount = mergedAccounts.find((acc) => acc.id === account)
-      if (selectedAccount) return selectedAccount.label
+      const selectedAccount = mergedAccounts.find((acc) => acc.code === account)
+      if (selectedAccount) {
+        return selectedAccount.name
+      }
     }
 
     return ''
@@ -517,8 +522,7 @@ export default function LedgerPage() {
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-bold">元帳一覧</h3>
                   <p className="text-sm text-gray-500">
-                    {fiscalYear}年度{' '}
-                    {month === 'unset' ? '全期間' : `${month}月`}
+                    {fiscalYear}年度 {month == null ? '全期間' : `${month}月`}
                   </p>
                 </div>
 
