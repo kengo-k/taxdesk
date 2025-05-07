@@ -43,6 +43,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 import { DeleteConfirmDialog } from './components/delete-confirm-dialog'
 import { LedgerSearchForm } from './components/ledger-search-form'
+import { Pagination } from './components/pagination'
 import { TransactionTable } from './components/transaction-table'
 
 export default function LedgerPage() {
@@ -524,15 +525,20 @@ export default function LedgerPage() {
                     />
 
                     {/* ページネーション */}
-                    {/* {pagination.totalItems > 0 && (
+                    {
                       <Pagination
-                        pagination={null as any}
+                        pagination={{
+                          totalItems: 100,
+                          totalPages: 10,
+                          currentPage: 1,
+                          pageSize: 10,
+                        }}
                         currentPage={currentPage}
                         pageSize={pageSize}
                         onPageChange={handlePageChange}
                         onPageSizeChange={handlePageSizeChange}
                       />
-                    )} */}
+                    }
                   </>
                 )}
               </CardContent>
