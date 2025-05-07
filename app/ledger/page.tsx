@@ -275,6 +275,12 @@ export default function LedgerPage() {
     if (month) {
       params.set('month', month)
     }
+    if (currentPage) {
+      params.set('pageno', currentPage.toString())
+    }
+    if (pageSize) {
+      params.set('pagesize', pageSize.toString())
+    }
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
     router.push(newUrl, { scroll: false })
   }
@@ -437,7 +443,8 @@ export default function LedgerPage() {
 
   // ページ変更ハンドラー
   const handlePageChange = (page: number) => {
-    const newPage = Math.max(1, Math.min(page, pagination.totalPages))
+    console.log('handlePageChange', page)
+    const newPage = Math.max(1, Math.min(page, Math.ceil(allCount / pageSize)))
     setCurrentPage(newPage)
     updateUrlParams()
   }
