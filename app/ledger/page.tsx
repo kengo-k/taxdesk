@@ -20,7 +20,6 @@ import {
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
-  selectFiscalYear as selectFiscalYearAction,
   selectFiscalYearError,
   selectFiscalYearLoading,
 } from '@/lib/redux/features/fiscalYearSlice'
@@ -49,8 +48,6 @@ import { TransactionTable } from './components/transaction-table'
 
 export default function LedgerPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-
   const dispatch = useAppDispatch()
 
   // Reduxから年度データを取得
@@ -77,16 +74,46 @@ export default function LedgerPage() {
   const accountCountsError = useAppSelector(selectAccountCountsError)
 
   // URLパラメータから初期値を取得
+  const searchParams = useSearchParams()
   const nendoParam = searchParams.get('nendo')
   const codeParam = searchParams.get('code')
   const monthParam = searchParams.get('month')
-  const pageParam = searchParams.get('page')
+  const pageNoParam = searchParams.get('pageno')
+  const pageSizeParam = searchParams.get('pagesize')
 
   // 検索条件の状態
-  const [fiscalYear, setFiscalYear] = useState<string>(nendoParam || 'unset')
+  const [fiscalYear, setFiscalYear] = useState<string | null>(nendoParam)
+  const [account, setAccount] = useState<string | null>(codeParam)
+  const [month, setMonth] = useState<string | null>(monthParam)
+
+  const [currentPage, setCurrentPage] = useState(
+    pageNoParam ? Number.parseInt(pageNoParam, 10) : 1,
+  )
+  const [pageSize, setPageSize] = useState(
+    pageSizeParam ? Number.parseInt(pageSizeParam, 10) : 10,
+  )
+
+  // 削除モード関連の状態
+  const [deleteMode, setDeleteMode] = useState(false)
+  const [selectedRows, setSelectedRows] = useState<string[]>([])
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // 初期表示用の空の配列
   const [initialLoaded, setInitialLoaded] = useState(false)
+
+  // コンポーネントマウント時に年度一覧と勘定科目データを取得
+  useEffect(() => {
+    // ストアに年度データがない場合のみ取得
+    if (fiscalYears.length === 0 && !fiscalYearsLoading) {
+      dispatch(fetchFiscalYears())
+    }
+
+    // URLパラメータから年度が指定されている場合は、その年度のデータを取得
+    if (nendoParam != null) {
+      dispatch(fetchAccountCounts(nendoParam))
+    }
+    setInitialLoaded(true)
+  }, [dispatch, nendoParam, fiscalYears.length, fiscalYearsLoading])
 
   // 勘定科目一覧と勘定科目別レコード件数をマージ
   const mergedAccounts = useMemo(() => {
@@ -129,54 +156,9 @@ export default function LedgerPage() {
     return merged
   }, [accountList, accountCounts])
 
-  // codeParamからアカウントIDを特定
-  const getAccountIdFromCode = (code: string | null): string => {
-    if (!code) return 'unset'
-
-    // マージされた勘定科目データから検索
-    if (mergedAccounts.length > 0) {
-      const account = mergedAccounts.find((acc) => acc.code === code)
-      if (account) return account.id
-    }
-
-    return 'unset'
-  }
-
-  const [account, setAccount] = useState<string>(
-    getAccountIdFromCode(codeParam),
-  )
-  const [month, setMonth] = useState<string>(monthParam || 'unset')
-  const [currentPage, setCurrentPage] = useState(
-    pageParam ? Number.parseInt(pageParam, 10) : 1,
-  )
-  const [pageSize, setPageSize] = useState(10)
-
-  // 削除モード関連の状態
-  const [deleteMode, setDeleteMode] = useState(false)
-  const [selectedRows, setSelectedRows] = useState<string[]>([])
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
-  // コンポーネントマウント時に年度一覧と勘定科目データを取得
-  useEffect(() => {
-    // ストアに年度データがない場合のみ取得
-    if (fiscalYears.length === 0 && !fiscalYearsLoading) {
-      dispatch(fetchFiscalYears())
-    }
-
-    // URLパラメータから年度が指定されている場合は、その年度のデータを取得
-    if (nendoParam && nendoParam !== 'unset') {
-      dispatch(fetchAccountCounts(nendoParam))
-    } else {
-      // デフォルトの年度データを取得
-      dispatch(fetchAccountCounts('2024'))
-    }
-
-    setInitialLoaded(true)
-  }, [dispatch, nendoParam, fiscalYears.length, fiscalYearsLoading])
-
   // 初期表示時または年度変更時に勘定科目データを取得
   useEffect(() => {
-    if (fiscalYear !== 'unset') {
+    if (fiscalYear != null) {
       // 勘定科目別レコード件数を取得
       dispatch(fetchAccountCounts(fiscalYear))
 
@@ -187,18 +169,31 @@ export default function LedgerPage() {
 
   // 検索条件が変更されたときにReduxの検索パラメータを更新し、取引データを取得
   useEffect(() => {
+    if (fiscalYear == null) {
+      // TODO 全ての検索条件をクリアする
+      // TODO ストアの台帳一覧をクリアする
+      return
+    }
+    if (account == null) {
+      // TODO 勘定科目をクリアする
+      // TODO ストアの台帳一覧をクリアする
+      return
+    }
     const searchParams: TransactionSearchParams = {
       nendo: fiscalYear,
       page: currentPage,
       pageSize: pageSize,
+      code: null,
+      month: null,
     }
 
     // 勘定科目コードを取得
-    const code = getCodeFromAccountId(account)
-    if (code) searchParams.code = code
+    searchParams.code = account
 
     // 月を設定
-    if (month !== 'unset') searchParams.month = month
+    if (month != null) {
+      searchParams.month = month
+    }
 
     // 検索パラメータを更新
     dispatch(updateSearchParams(searchParams))
@@ -221,74 +216,56 @@ export default function LedgerPage() {
   }
 
   // URLパラメータを更新する関数
-  const updateUrlParams = (
-    nendo?: string,
-    code?: string,
-    monthValue?: string,
-    page?: number,
-  ) => {
+  const updateUrlParams = () => {
     const params = new URLSearchParams()
 
-    if (nendo) params.set('nendo', nendo)
-    if (code) params.set('code', code)
-    if (monthValue) params.set('month', monthValue)
-    if (page && page > 1) params.set('page', page.toString())
-
+    if (fiscalYear) {
+      params.set('nendo', fiscalYear)
+    }
+    if (account) {
+      params.set('code', account)
+    }
+    if (month) {
+      params.set('month', month)
+    }
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
     router.push(newUrl, { scroll: false })
   }
 
-  // 検索条件変更ハンドラー
+  // 年度条件を変更した時のハンドラー
   const handleFiscalYearChange = (value: string) => {
-    setFiscalYear(value)
-    // Reduxストアの年度も更新
-    dispatch(selectFiscalYearAction(value))
-
-    // 年度が変更されたら、他の条件をリセット
-    setAccount('unset')
-    setMonth('unset')
+    setAccount(null)
+    setMonth(null)
     setCurrentPage(1)
-
-    if (value !== 'unset') {
-      updateUrlParams(value)
+    if (value === '') {
+      setFiscalYear(null)
     } else {
-      // 未設定の場合はURLパラメータをクリア
-      updateUrlParams()
+      setFiscalYear(value)
     }
+    updateUrlParams()
   }
 
+  // 勘定科目を変更した時のハンドラー
   const handleAccountChange = (value: string) => {
-    setAccount(value)
-    // 勘定科目が変更されたら、月をリセット
-    setMonth('unset')
+    setMonth(null)
     setCurrentPage(1)
-
-    // 勘定科目からコード部分を抽出
-    const code = getCodeFromAccountId(value)
-
-    if (fiscalYear !== 'unset' && value !== 'unset' && code) {
-      updateUrlParams(fiscalYear, code)
-    } else if (fiscalYear !== 'unset') {
-      updateUrlParams(fiscalYear)
+    if (value === '') {
+      setAccount(null)
     } else {
-      updateUrlParams()
+      setAccount(value)
     }
+    updateUrlParams()
   }
 
+  // 月を変更した時のハンドラー
   const handleMonthChange = (value: string) => {
-    setMonth(value)
     setCurrentPage(1)
-
-    // 勘定科目からコード部分を抽出
-    const code = getCodeFromAccountId(account)
-
-    if (fiscalYear !== 'unset' && account !== 'unset' && code) {
-      if (value !== 'unset') {
-        updateUrlParams(fiscalYear, code, value)
-      } else {
-        updateUrlParams(fiscalYear, code)
-      }
+    if (value === '') {
+      setMonth(null)
+    } else {
+      setMonth(value)
     }
+    updateUrlParams()
   }
 
   // 取引データの更新関数
@@ -347,7 +324,7 @@ export default function LedgerPage() {
     link.href = url
 
     // 選択された勘定科目からコードを取得
-    const accountCode = getCodeFromAccountId(account) || 'unknown'
+    const accountCode = 'XX'
 
     link.download = `取引履歴_${fiscalYear}年度_${accountCode}.csv`
     document.body.appendChild(link)
@@ -415,26 +392,14 @@ export default function LedgerPage() {
   const handlePageChange = (page: number) => {
     const newPage = Math.max(1, Math.min(page, pagination.totalPages))
     setCurrentPage(newPage)
-
-    // 勘定科目からコード部分を抽出
-    const code = getCodeFromAccountId(account)
-
-    // URLパラメータを更新
-    if (code) {
-      if (month !== 'unset') {
-        updateUrlParams(fiscalYear, code, month, newPage)
-      } else {
-        updateUrlParams(fiscalYear, code, undefined, newPage)
-      }
-    } else {
-      updateUrlParams(fiscalYear, undefined, undefined, newPage)
-    }
+    updateUrlParams()
   }
 
   // ページサイズ変更ハンドラー
   const handlePageSizeChange = (size: number) => {
     setPageSize(size)
-    setCurrentPage(1) // ページサイズ変更時は1ページ目に戻る
+    setCurrentPage(1)
+    updateUrlParams()
   }
 
   // 検索条件が有効かどうかを判定

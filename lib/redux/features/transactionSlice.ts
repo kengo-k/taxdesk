@@ -56,8 +56,8 @@ interface ApiResponse {
 // 検索条件の型定義
 export interface TransactionSearchParams {
   nendo: string
-  code?: string
-  month?: string
+  code: string | null
+  month: string | null
   page: number
   pageSize: number
 }
@@ -96,6 +96,8 @@ const initialState: TransactionState = {
   error: null,
   searchParams: {
     nendo: 'unset',
+    code: null,
+    month: null,
     page: 1,
     pageSize: 10,
   },
