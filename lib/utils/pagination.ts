@@ -2,18 +2,8 @@
  * ページネーションリクエストパラメータ
  */
 export interface PaginationRequest {
-  /** 現在のページ番号（1から始まる） */
-  page: number
-  /** 1ページあたりの表示件数 */
-  perPage: number
-}
-
-/**
- * デフォルトのページネーションリクエストパラメータ
- */
-export const DEFAULT_PAGINATION_REQUEST: Required<PaginationRequest> = {
-  page: 1,
-  perPage: 10,
+  pageNo: number
+  pageSize: number
 }
 
 /**
@@ -57,8 +47,8 @@ export function normalizePaginationRequest(
   request?: PaginationRequest,
 ): Required<PaginationRequest> {
   return {
-    page: request?.page ?? DEFAULT_PAGINATION_REQUEST.page,
-    perPage: request?.perPage ?? DEFAULT_PAGINATION_REQUEST.perPage,
+    pageNo: request?.pageNo ?? 1,
+    pageSize: request?.pageSize ?? 10,
   }
 }
 
@@ -106,8 +96,8 @@ export function paginateArray<T>(
   data: T[],
   request?: PaginationRequest,
 ): PaginationResponse<T> {
-  const { page, perPage } = normalizePaginationRequest(request)
-  const pagination = calculatePagination(page, perPage, data.length)
+  const { pageNo, pageSize } = normalizePaginationRequest(request)
+  const pagination = calculatePagination(pageNo, pageSize, data.length)
 
   // 配列のインデックスは0から始まるため、startItemから1を引く
   const startIndex = pagination.startItem - 1
@@ -127,5 +117,5 @@ export function paginateArray<T>(
  * @returns SQLのoffset値（0から始まる）
  */
 export function calculateOffset(request: PaginationRequest): number {
-  return (request.page - 1) * request.perPage
+  return (request.pageNo - 1) * request.pageSize
 }

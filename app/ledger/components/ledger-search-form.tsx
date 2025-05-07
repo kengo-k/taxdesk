@@ -85,14 +85,14 @@ export function LedgerSearchForm({
               </div>
             ) : (
               <Select
-                value={fiscalYear ?? ''}
+                value={fiscalYear ?? 'none'}
                 onValueChange={onFiscalYearChange}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="会計年度を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">未設定</SelectItem>
+                  <SelectItem value="none">未設定</SelectItem>
                   {fiscalYears.map((year) => (
                     <SelectItem key={year.id} value={year.id}>
                       {year.label}
@@ -122,19 +122,19 @@ export function LedgerSearchForm({
               </div>
             ) : (
               <Select
-                value={account ?? ''}
+                value={account ?? 'none'}
                 onValueChange={onAccountChange}
-                disabled={fiscalYear === ''}
+                disabled={fiscalYear == null}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="勘定科目を選択" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">未設定</SelectItem>
+                  <SelectItem value="none">未設定</SelectItem>
                   {Array.isArray(mergedAccounts) &&
                     mergedAccounts.length > 0 &&
                     mergedAccounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
+                      <SelectItem key={account.id} value={account.code}>
                         {account.label}
                       </SelectItem>
                     ))}
@@ -148,15 +148,15 @@ export function LedgerSearchForm({
               月
             </label>
             <Select
-              value={month ?? ''}
+              value={month ?? 'none'}
               onValueChange={onMonthChange}
-              disabled={fiscalYear === '' || account === ''}
+              disabled={account == null}
             >
               <SelectTrigger>
                 <SelectValue placeholder="月を選択" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">未設定</SelectItem>
+                <SelectItem value="none">未設定</SelectItem>
                 <SelectItem value="4">4月</SelectItem>
                 <SelectItem value="5">5月</SelectItem>
                 <SelectItem value="6">6月</SelectItem>

@@ -1,3 +1,5 @@
+import { NextRequest } from 'next/server'
+
 import {
   Connection,
   RouteContext,
@@ -30,26 +32,31 @@ interface AccountCount {
 
 export function countByAccountHandler(
   conn: Connection,
-  { ctx }: { ctx: RouteContext },
+  { req, ctx }: { req: NextRequest; ctx: RouteContext },
 ) {
   return withTransaction(conn, async (tx) => {
     const { year: fiscal_year, ledger_cd } = await ctx.params
+    const searchParams = req.nextUrl.searchParams
+    const month = searchParams.get('month')
+    const pageno = searchParams.get('pageno')
+    const pagesize = searchParams.get('pagesize')
+
     const ledgers = await listLedgers(
       tx,
       {
         fiscal_year,
         ledger_cd,
-        month: null,
+        month: month || null,
       },
       {
-        page: 1,
-        perPage: 10,
+        pageNo: pageno ? Number.parseInt(pageno, 10) : 1,
+        pageSize: pagesize ? Number.parseInt(pagesize, 10) : 10,
       },
     )
     const all_count = await countLedgers(tx, {
       fiscal_year,
       ledger_cd,
-      month: null,
+      month: month || null,
     })
     return { all_count, ledgers }
   })

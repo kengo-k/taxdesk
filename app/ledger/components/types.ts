@@ -11,7 +11,6 @@ export interface MergedAccount {
   id: string
   code: string
   name: string
-  count: number
   label: string
 }
 

@@ -24,7 +24,6 @@ import {
   selectFiscalYearLoading,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
-  type TransactionSearchParams,
   deleteTransactions,
   fetchAccountCounts,
   fetchTransactions,
@@ -37,7 +36,6 @@ import {
   selectTransactionError,
   selectTransactionLoading,
   selectTransactions,
-  updateSearchParams,
 } from '@/lib/redux/features/transactionSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
@@ -101,59 +99,108 @@ export default function LedgerPage() {
   // 初期表示用の空の配列
   const [initialLoaded, setInitialLoaded] = useState(false)
 
-  // コンポーネントマウント時に年度一覧と勘定科目データを取得
+  // 年度一覧がストアにない場合は取得する
   useEffect(() => {
-    // ストアに年度データがない場合のみ取得
     if (fiscalYears.length === 0 && !fiscalYearsLoading) {
       dispatch(fetchFiscalYears())
     }
+  }, [fiscalYears.length, fiscalYearsLoading])
 
-    // URLパラメータから年度が指定されている場合は、その年度のデータを取得
-    if (nendoParam != null) {
-      dispatch(fetchAccountCounts(nendoParam))
+  useEffect(() => {
+    updateUrlParams()
+    if (fiscalYear == null) {
+      setAccount(null)
+      setMonth(null)
+      setCurrentPage(1)
+      // TODO ストアの勘定科目一覧をクリアする
+      // TODO ストアの台帳一覧をクリアする
+      return
     }
-    setInitialLoaded(true)
-  }, [dispatch, nendoParam, fiscalYears.length, fiscalYearsLoading])
+    // 年度が変更された時に勘定科目一覧(件数付き)を取得する
+    dispatch(fetchAccountCounts(fiscalYear))
+
+    if (account == null) {
+      setMonth(null)
+      setCurrentPage(1)
+      // TODO ストアの台帳一覧をクリアする
+      return
+    }
+
+    dispatch(
+      fetchTransactions({
+        nendo: fiscalYear,
+        code: account,
+        month: month,
+        page: currentPage,
+        pageSize: pageSize,
+      }),
+    )
+  }, [fiscalYear, account, month, currentPage, pageSize])
+
+  // useEffect(() => {
+  //   updateUrlParams()
+  //   setMonth(null)
+  //   setCurrentPage(1)
+  //   if (fiscalYear != null && account != null) {
+  //     dispatch(
+  //       fetchTransactions({
+  //         nendo: fiscalYear,
+  //         code: account,
+  //         month: month,
+  //         page: currentPage,
+  //         pageSize: pageSize,
+  //       }),
+  //     )
+  //   } else {
+  //     // TODO ストアの台帳一覧をクリアする
+  //   }
+  // }, [account])
+
+  // useEffect(() => {
+  //   updateUrlParams()
+  //   if (fiscalYear != null && account != null) {
+  //     dispatch(
+  //       fetchTransactions({
+  //         nendo: fiscalYear,
+  //         code: account,
+  //         month: month,
+  //         page: currentPage,
+  //         pageSize: pageSize,
+  //       }),
+  //     )
+  //   }
+  // }, [month])
+
+  // // コンポーネントマウント時に年度一覧と勘定科目データを取得
+  // useEffect(() => {
+  //   // ストアに年度データがない場合のみ取得
+  //   if (fiscalYears.length === 0 && !fiscalYearsLoading) {
+  //     dispatch(fetchFiscalYears())
+  //   }
+
+  //   // URLパラメータから年度が指定されている場合は、その年度のデータを取得
+  //   if (nendoParam != null) {
+  //     dispatch(fetchAccountCounts(nendoParam))
+  //   }
+  //   setInitialLoaded(true)
+  // }, [dispatch, nendoParam, fiscalYears.length, fiscalYearsLoading])
 
   // 勘定科目一覧と勘定科目別レコード件数をマージ
   const mergedAccounts = useMemo(() => {
-    if (!Array.isArray(accountList) || accountList.length === 0) {
-      return []
-    }
-
-    // 勘定科目別レコード件数がない場合は、件数0としてマージ
-    if (!Array.isArray(accountCounts) || accountCounts.length === 0) {
-      const merged = accountList.map((account) => {
-        return {
-          id: account.id,
-          code: account.code,
-          name: account.name,
-          count: 0,
-          label: `${account.code}: ${account.name} (0)`,
-        }
-      })
-      return merged
-    }
-    // 科目コードごとに件数を集計
     const countMap = new Map<string, number>()
     accountCounts.forEach((item) => {
-      // 既存の件数を取得（存在しない場合は0）
-      const currentCount = countMap.get(item.saimoku_cd) || 0
-      // 件数を加算して更新
-      countMap.set(item.saimoku_cd, currentCount + item.count)
+      countMap.set(item.saimoku_cd, item.count)
     })
-    // 勘定科目一覧と勘定科目別レコード件数をマージ
-    const merged = accountList.map((account) => {
+
+    return accountList.map((account) => {
       const count = countMap.get(account.code) || 0
       return {
         id: account.id,
         code: account.code,
         name: account.name,
-        count,
         label: `${account.code}: ${account.name} (${count})`,
       }
     })
-    return merged
   }, [accountList, accountCounts])
 
   // 初期表示時または年度変更時に勘定科目データを取得
@@ -167,58 +214,57 @@ export default function LedgerPage() {
     }
   }, [dispatch, fiscalYear])
 
-  // 検索条件が変更されたときにReduxの検索パラメータを更新し、取引データを取得
-  useEffect(() => {
-    if (fiscalYear == null) {
-      // TODO 全ての検索条件をクリアする
-      // TODO ストアの台帳一覧をクリアする
-      return
-    }
-    if (account == null) {
-      // TODO 勘定科目をクリアする
-      // TODO ストアの台帳一覧をクリアする
-      return
-    }
-    const searchParams: TransactionSearchParams = {
-      nendo: fiscalYear,
-      page: currentPage,
-      pageSize: pageSize,
-      code: null,
-      month: null,
-    }
+  // // 検索条件が変更されたときにReduxの検索パラメータを更新し、取引データを取得
+  // useEffect(() => {
+  //   if (fiscalYear == null) {
+  //     // TODO 全ての検索条件をクリアする
+  //     // TODO ストアの台帳一覧をクリアする
+  //     return
+  //   }
+  //   if (account == null) {
+  //     // TODO 勘定科目をクリアする
+  //     // TODO ストアの台帳一覧をクリアする
+  //     return
+  //   }
+  //   const searchParams: TransactionSearchParams = {
+  //     nendo: fiscalYear,
+  //     page: currentPage,
+  //     pageSize: pageSize,
+  //     code: null,
+  //     month: null,
+  //   }
 
-    // 勘定科目コードを取得
-    searchParams.code = account
+  //   // 勘定科目コードを取得
+  //   searchParams.code = account
 
-    // 月を設定
-    if (month != null) {
-      searchParams.month = month
-    }
+  //   // 月を設定
+  //   if (month != null) {
+  //     searchParams.month = month
+  //   }
 
-    // 検索パラメータを更新
-    dispatch(updateSearchParams(searchParams))
+  //   // 検索パラメータを更新
+  //   dispatch(updateSearchParams(searchParams))
 
-    // 取引データを取得
-    dispatch(fetchTransactions(searchParams))
-  }, [dispatch, fiscalYear, account, month, currentPage, pageSize])
+  //   // 取引データを取得
+  //   dispatch(fetchTransactions(searchParams))
+  // }, [dispatch, fiscalYear, account, month, currentPage, pageSize])
 
   // 勘定科目IDからコードを取得する関数
-  const getCodeFromAccountId = (accountId: string): string | null => {
-    if (accountId === 'unset') return null
+  // const getCodeFromAccountId = (accountId: string): string | null => {
+  //   if (accountId === 'unset') return null
 
-    // マージされた勘定科目データから検索
-    if (mergedAccounts.length > 0) {
-      const account = mergedAccounts.find((acc) => acc.id === accountId)
-      if (account) return account.code
-    }
+  //   // マージされた勘定科目データから検索
+  //   if (mergedAccounts.length > 0) {
+  //     const account = mergedAccounts.find((acc) => acc.id === accountId)
+  //     if (account) return account.code
+  //   }
 
-    return null
-  }
+  //   return null
+  // }
 
   // URLパラメータを更新する関数
   const updateUrlParams = () => {
     const params = new URLSearchParams()
-
     if (fiscalYear) {
       params.set('nendo', fiscalYear)
     }
@@ -237,7 +283,7 @@ export default function LedgerPage() {
     setAccount(null)
     setMonth(null)
     setCurrentPage(1)
-    if (value === '') {
+    if (value === 'none') {
       setFiscalYear(null)
     } else {
       setFiscalYear(value)
@@ -249,7 +295,7 @@ export default function LedgerPage() {
   const handleAccountChange = (value: string) => {
     setMonth(null)
     setCurrentPage(1)
-    if (value === '') {
+    if (value === 'none') {
       setAccount(null)
     } else {
       setAccount(value)
@@ -260,7 +306,7 @@ export default function LedgerPage() {
   // 月を変更した時のハンドラー
   const handleMonthChange = (value: string) => {
     setCurrentPage(1)
-    if (value === '') {
+    if (value === 'none') {
       setMonth(null)
     } else {
       setMonth(value)

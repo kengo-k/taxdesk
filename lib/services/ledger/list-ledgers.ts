@@ -29,7 +29,11 @@ export async function listLedgers(
   input: LedgerListRequest,
   pagination: PaginationRequest,
 ): Promise<LedgerListItem[]> {
-  const month = input.month ?? 'all'
+  const month = input.month
+    ? input.month.length === 1
+      ? `0${input.month}`
+      : input.month
+    : 'all'
   const saimoku_detail = await getSaimokuDetail(conn, {
     saimoku_cd: input.ledger_cd,
   })
@@ -105,7 +109,7 @@ export async function listLedgers(
     order by
       j.date desc,
       j.created_at desc
-    limit ${pagination.perPage} offset ${calculateOffset(pagination)}`
+    limit ${pagination.pageSize} offset ${calculateOffset(pagination)}`
 
   return rows.map((res) => {
     const sumL = res.karikata_sum

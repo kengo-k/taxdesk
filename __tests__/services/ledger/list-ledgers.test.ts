@@ -30,8 +30,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
 
@@ -106,8 +106,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
       expect(salesResult[0].acc).toBe(500000 * 12) // 500,000 yen × 12 months = 6 million yen
@@ -122,8 +122,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 2,
-          perPage: 10,
+          pageNo: 2,
+          pageSize: 10,
         },
       )
       expect(salesResultPage2.length).toBe(2) // Second page has 2 items
@@ -145,8 +145,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
       expect(cashResult[0].acc).toBe(500000 * 11 - 5000 * 3) // 500,000 yen × 11 months = 5.5 million yen (March unpaid)
@@ -168,8 +168,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
       expect(arResult[0].acc).toBe(500000) // Only March's accounts receivable of 500,000 yen remains
@@ -191,8 +191,8 @@ describe('listLedgers', () => {
           month: null,
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
       expect(suppliesResult[0].acc).toBe(5000 * 3) // 5,000 yen × 3 items = 15,000 yen
@@ -214,8 +214,8 @@ describe('listLedgers', () => {
           month: '06', // Search only June
         },
         {
-          page: 1,
-          perPage: 10,
+          pageNo: 1,
+          pageSize: 10,
         },
       )
       expect(juneCashResult.length).toBe(4) // 4 cash transactions in June (supplies purchases)

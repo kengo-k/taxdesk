@@ -113,14 +113,15 @@ export const fetchTransactions = createAsyncThunk(
     try {
       // URLパラメータを構築
       const urlParams = new URLSearchParams()
-      if (params.code) urlParams.set('code', params.code)
-      if (params.month && params.month !== 'unset')
+
+      if (params.month) {
         urlParams.set('month', params.month)
-      urlParams.set('page', params.page.toString())
-      urlParams.set('pageSize', params.pageSize.toString())
+      }
+      urlParams.set('pageno', params.page.toString())
+      urlParams.set('pagesize', params.pageSize.toString())
 
       // APIリクエスト
-      const url = `/api/fiscal-years/${params.nendo}/ledger/${params.code}`
+      const url = `/api/fiscal-years/${params.nendo}/ledger/${params.code}${urlParams.size > 0 ? `?${urlParams.toString()}` : ''}`
       const response = await fetch(url)
 
       if (!response.ok) {
