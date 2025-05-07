@@ -134,7 +134,6 @@ export function TransactionTable({
                   <td className="py-2 px-1">
                     <Input
                       type="text"
-                      // value={transaction.counterpartyAccount}
                       value={''}
                       readOnly
                       className="h-8 text-sm bg-gray-50"
@@ -154,7 +153,9 @@ export function TransactionTable({
                             <Input
                               type="text"
                               value={
-                                ''
+                                transaction.karikata_value > 0
+                                  ? formatCurrency(transaction.karikata_value)
+                                  : ''
                                 // transaction.debit > 0
                                 //   ? formatCurrency(transaction.debit)
                                 //   : ''
@@ -200,7 +201,9 @@ export function TransactionTable({
                             <Input
                               type="text"
                               value={
-                                ''
+                                transaction.kasikata_value > 0
+                                  ? formatCurrency(transaction.kasikata_value)
+                                  : ''
                                 // transaction.credit > 0
                                 //   ? formatCurrency(transaction.credit)
                                 //   : ''
