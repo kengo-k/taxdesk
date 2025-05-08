@@ -24,6 +24,7 @@ interface TransactionTableProps {
   selectedRows: string[]
   accountList: MergedAccount[]
   nendo: string
+  selectedAccountType?: 'L' | 'R' // 選択中の勘定科目のタイプ（L:左側/借方が+、R:右側/貸方が+）
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (
     id: string,
@@ -43,6 +44,7 @@ export function TransactionTable({
   selectedRows,
   accountList,
   nendo,
+  selectedAccountType = 'L', // デフォルトはL（借方が+）
   onToggleRowSelection,
   onUpdateTransaction,
   onBlur,
@@ -455,8 +457,12 @@ export function TransactionTable({
               <th className="pb-2 font-medium">日付</th>
               <th className="pb-2 font-medium">相手科目</th>
               <th className="pb-2 font-medium">名称</th>
-              <th className="pb-2 font-medium">借方 [-]</th>
-              <th className="pb-2 font-medium">貸方 [+]</th>
+              <th className="pb-2 font-medium">
+                借方 {selectedAccountType === 'L' ? '[+]' : '[-]'}
+              </th>
+              <th className="pb-2 font-medium">
+                貸方 {selectedAccountType === 'L' ? '[-]' : '[+]'}
+              </th>
               <th className="pb-2 font-medium">摘要</th>
               <th className="pb-2 font-medium">残高</th>
             </tr>

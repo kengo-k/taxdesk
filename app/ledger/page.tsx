@@ -502,6 +502,22 @@ export default function LedgerPage() {
     return ''
   }
 
+  // 選択された勘定科目の勘定科目区分タイプ（L/R）を取得
+  const getSelectedAccountType = (): 'L' | 'R' => {
+    if (account == null) {
+      return 'L' // デフォルト値
+    }
+
+    // アカウントリストから該当するアカウントを検索
+    const selectedAccount = accountList.find((acc) => acc.code === account)
+    if (selectedAccount && selectedAccount.kamoku_bunrui_type) {
+      // L（左側：借方増加）またはR（右側：貸方増加）を返す
+      return selectedAccount.kamoku_bunrui_type === 'L' ? 'L' : 'R'
+    }
+
+    return 'L' // デフォルト値
+  }
+
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-6">
@@ -575,6 +591,7 @@ export default function LedgerPage() {
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}
                       onCreateTransaction={handleCreateTransaction}
+                      selectedAccountType={getSelectedAccountType()}
                     />
 
                     {/* ページネーション */}
