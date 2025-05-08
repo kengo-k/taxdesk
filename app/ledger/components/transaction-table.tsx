@@ -31,6 +31,7 @@ interface TransactionTableProps {
     value: string | number,
   ) => void
   onBlur: (id: string, field: 'date' | 'debit' | 'credit') => void
+  onCreateTransaction?: (transaction: EditableTransaction) => void
 }
 
 // 編集中のトランザクションデータの型
@@ -45,6 +46,7 @@ export function TransactionTable({
   onToggleRowSelection,
   onUpdateTransaction,
   onBlur,
+  onCreateTransaction,
 }: TransactionTableProps) {
   // ローカルステート
   const [editableTransactions, setEditableTransactions] = useState<
@@ -55,8 +57,24 @@ export function TransactionTable({
   >({})
   const [editedRowIds, setEditedRowIds] = useState<string[]>([])
 
+  // 新規登録用のステート
+  const [newTransaction, setNewTransaction] = useState<EditableTransaction>({
+    date: '',
+    other_cd: '',
+    account_name: '',
+    karikata_value: 0,
+    kasikata_value: 0,
+    note: '',
+    nendo: nendo,
+  })
+  const [newTransactionErrors, setNewTransactionErrors] = useState<
+    Record<string, string>
+  >({})
+
   // フィールドの入力要素への参照を保持
   const inputRefs = useRef<Record<string, Record<string, HTMLInputElement>>>({})
+  // 新規登録用の参照
+  const newRowRefs = useRef<Record<string, HTMLInputElement>>({})
 
   // フィールドの表示順序（左から右）
   const fieldOrder = [
@@ -103,6 +121,14 @@ export function TransactionTable({
     })
     setEditableTransactions(initialData)
   }, [transactions, accountList, nendo])
+
+  // nendoが変更されたら新規登録用のステートを更新
+  useEffect(() => {
+    setNewTransaction((prev) => ({
+      ...prev,
+      nendo: nendo,
+    }))
+  }, [nendo])
 
   // フィールド値の変更ハンドラ
   const handleFieldChange = (
@@ -272,6 +298,143 @@ export function TransactionTable({
     return editedRowIds.includes(id)
   }
 
+  // 新規トランザクション用のフィールド変更ハンドラ
+  const handleNewFieldChange = (field: string, value: string | number) => {
+    // 新規登録用のフィールドを更新
+    setNewTransaction((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      }
+
+      // 相手科目が変更された場合、名称を更新
+      if (field === 'other_cd' && typeof value === 'string') {
+        updated.account_name = getAccountName(value)
+      }
+
+      return updated
+    })
+
+    // エラー状態をクリア
+    clearNewFieldError(field)
+  }
+
+  // 新規トランザクション用のエラーをクリア
+  const clearNewFieldError = (field: string) => {
+    setNewTransactionErrors((prev) => {
+      const { [field]: _, ...rest } = prev
+      return rest
+    })
+  }
+
+  // 新規トランザクション用のフィールドのフォーカスアウト時のバリデーション
+  const handleNewFieldBlur = (field: string) => {
+    // フィールドの値を取得
+    const value = newTransaction[field]
+
+    // 相手科目フィールドがフォーカスアウトされた場合、科目名を自動設定
+    if (field === 'other_cd' && value) {
+      const accountName = getAccountName(value as string)
+
+      setNewTransaction((prev) => ({
+        ...prev,
+        account_name: accountName || '',
+      }))
+    }
+
+    // フィールド値をバリデーション
+    const validation = validateField(field, value, newTransaction)
+
+    if (!validation.valid) {
+      // エラーを設定
+      setNewTransactionErrors((prev) => ({
+        ...prev,
+        [field]: validation.message || 'Invalid value',
+      }))
+    } else {
+      // エラーをクリア
+      clearNewFieldError(field)
+    }
+
+    // 摘要フィールドの場合、トランザクション登録を実行
+    if (field === 'note') {
+      handleSubmitNewTransaction()
+    }
+  }
+
+  // 新規トランザクションの登録処理
+  const handleSubmitNewTransaction = () => {
+    // 全体のバリデーション
+    const dataToValidate = {
+      ...newTransaction,
+      nendo: nendo,
+    }
+
+    const result = validateRow(dataToValidate)
+
+    if (!result.valid) {
+      // エラーを設定
+      setNewTransactionErrors(result.errors)
+
+      // 最も左にあるエラーフィールドを特定
+      const errorFields = Object.keys(result.errors)
+      const sortedErrorFields = fieldOrder.filter((field) =>
+        errorFields.includes(field),
+      )
+
+      // 一番左のエラーフィールドがあれば、そこにフォーカスを当てる
+      if (sortedErrorFields.length > 0) {
+        const firstErrorField = sortedErrorFields[0]
+        setTimeout(() => {
+          const inputElement = newRowRefs.current?.[firstErrorField]
+          if (inputElement) {
+            inputElement.focus()
+          }
+        }, 0)
+      }
+      return
+    }
+
+    // 親コンポーネントに新規取引データを渡す
+    if (onCreateTransaction) {
+      onCreateTransaction(newTransaction)
+    }
+
+    // 登録成功後、入力フィールドをクリア
+    setNewTransaction({
+      date: '',
+      other_cd: '',
+      account_name: '',
+      karikata_value: 0,
+      kasikata_value: 0,
+      note: '',
+      nendo: nendo,
+    })
+
+    // エラーもクリア
+    setNewTransactionErrors({})
+  }
+
+  // 新規登録用inputRef登録コールバック
+  const registerNewRowRef = (
+    field: string,
+    element: HTMLInputElement | null,
+  ) => {
+    if (element) {
+      newRowRefs.current[field] = element
+    }
+  }
+
+  // 新規フィールドにエラーがあるかチェック
+  const hasNewFieldError = (field: string): boolean => {
+    return !!newTransactionErrors[field]
+  }
+
+  // 新規フィールドのエラーメッセージを取得
+  const getNewFieldErrorMessage = (field: string): string => {
+    return newTransactionErrors[field] || ''
+  }
+
   return (
     <TooltipProvider delayDuration={0} skipDelayDuration={0}>
       <div className="overflow-x-auto">
@@ -299,6 +462,243 @@ export function TransactionTable({
             </tr>
           </thead>
           <tbody>
+            {/* 新規登録用の空の入力行を固定で表示する */}
+            <tr className="border-t bg-blue-50">
+              {deleteMode && (
+                <td className="py-2 px-1 text-center">
+                  {/* 新規登録行には削除チェックボックスは表示しない */}
+                </td>
+              )}
+              <td className="py-2 px-1 relative">
+                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
+                <div className="relative">
+                  <Tooltip open={hasNewFieldError('date')}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        {hasNewFieldError('date') && (
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          type="text"
+                          value={newTransaction.date || ''}
+                          onChange={(e) =>
+                            handleNewFieldChange('date', e.target.value)
+                          }
+                          onBlur={() => handleNewFieldBlur('date')}
+                          ref={(el) => registerNewRowRef('date', el)}
+                          placeholder="YYYYMMDD"
+                          className={`h-8 text-sm ${
+                            hasNewFieldError('date')
+                              ? 'border-red-500 pl-8'
+                              : ''
+                          }`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="start"
+                      sideOffset={5}
+                      alignOffset={0}
+                      className="bg-red-50 text-red-800 border border-red-200 z-50"
+                    >
+                      {getNewFieldErrorMessage('date')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </td>
+              <td className="py-2 px-1 relative">
+                <div className="relative">
+                  <Tooltip open={hasNewFieldError('other_cd')}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        {hasNewFieldError('other_cd') && (
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          type="text"
+                          value={newTransaction.other_cd || ''}
+                          onChange={(e) =>
+                            handleNewFieldChange('other_cd', e.target.value)
+                          }
+                          onBlur={() => handleNewFieldBlur('other_cd')}
+                          ref={(el) => registerNewRowRef('other_cd', el)}
+                          placeholder="コード"
+                          className={`h-8 text-sm ${
+                            hasNewFieldError('other_cd')
+                              ? 'border-red-500 pl-8'
+                              : ''
+                          }`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="start"
+                      sideOffset={5}
+                      alignOffset={0}
+                      className="bg-red-50 text-red-800 border border-red-200 z-50"
+                    >
+                      {getNewFieldErrorMessage('other_cd')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </td>
+              <td className="py-2 px-1">
+                <Input
+                  type="text"
+                  value={newTransaction.account_name || ''}
+                  readOnly
+                  tabIndex={-1}
+                  className="h-8 text-sm bg-gray-50"
+                />
+              </td>
+              <td className="py-2 px-1">
+                <div className="relative">
+                  <Tooltip open={hasNewFieldError('karikata_value')}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        {hasNewFieldError('karikata_value') && (
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          type="text"
+                          value={
+                            newTransaction.karikata_value > 0
+                              ? formatCurrency(newTransaction.karikata_value)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(
+                              /[^\d]/g,
+                              '',
+                            )
+                            handleNewFieldChange(
+                              'karikata_value',
+                              numericValue ? Number(numericValue) : 0,
+                            )
+                          }}
+                          onBlur={() => handleNewFieldBlur('karikata_value')}
+                          ref={(el) => registerNewRowRef('karikata_value', el)}
+                          placeholder="借方金額"
+                          className={`h-8 text-sm text-right ${
+                            hasNewFieldError('karikata_value')
+                              ? 'border-red-500 pl-8'
+                              : ''
+                          }`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="start"
+                      sideOffset={5}
+                      alignOffset={0}
+                      className="bg-red-50 text-red-800 border border-red-200 z-50"
+                    >
+                      {getNewFieldErrorMessage('karikata_value')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </td>
+              <td className="py-2 px-1">
+                <div className="relative">
+                  <Tooltip open={hasNewFieldError('kasikata_value')}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        {hasNewFieldError('kasikata_value') && (
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          type="text"
+                          value={
+                            newTransaction.kasikata_value > 0
+                              ? formatCurrency(newTransaction.kasikata_value)
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const numericValue = e.target.value.replace(
+                              /[^\d]/g,
+                              '',
+                            )
+                            handleNewFieldChange(
+                              'kasikata_value',
+                              numericValue ? Number(numericValue) : 0,
+                            )
+                          }}
+                          onBlur={() => handleNewFieldBlur('kasikata_value')}
+                          ref={(el) => registerNewRowRef('kasikata_value', el)}
+                          placeholder="貸方金額"
+                          className={`h-8 text-sm text-right ${
+                            hasNewFieldError('kasikata_value')
+                              ? 'border-red-500 pl-8'
+                              : ''
+                          }`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="start"
+                      sideOffset={5}
+                      alignOffset={0}
+                      className="bg-red-50 text-red-800 border border-red-200 z-50"
+                    >
+                      {getNewFieldErrorMessage('kasikata_value')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </td>
+              <td className="py-2 px-1">
+                <div className="relative">
+                  <Tooltip open={hasNewFieldError('note')}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        {hasNewFieldError('note') && (
+                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                            <AlertCircle className="h-4 w-4" />
+                          </div>
+                        )}
+                        <Input
+                          type="text"
+                          value={newTransaction.note || ''}
+                          onChange={(e) =>
+                            handleNewFieldChange('note', e.target.value)
+                          }
+                          onBlur={() => handleNewFieldBlur('note')}
+                          ref={(el) => registerNewRowRef('note', el)}
+                          name="note"
+                          placeholder="摘要を入力"
+                          className={`h-8 text-sm ${
+                            hasNewFieldError('note')
+                              ? 'border-red-500 pl-8'
+                              : ''
+                          }`}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      align="start"
+                      sideOffset={5}
+                      alignOffset={0}
+                      className="bg-red-50 text-red-800 border border-red-200 z-50"
+                    >
+                      {getNewFieldErrorMessage('note')}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </td>
+              <td className="py-2 px-1 text-right text-gray-500 relative">-</td>
+            </tr>
             {transactions.length > 0 ? (
               transactions.map((transaction, index) => {
                 const id = transaction.journal_id.toString()

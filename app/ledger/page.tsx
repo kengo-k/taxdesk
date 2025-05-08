@@ -336,6 +336,31 @@ export default function LedgerPage() {
     //dispatch(setShowTooltip({ id, field }))
   }
 
+  // 新規取引作成ハンドラー
+  const handleCreateTransaction = (transaction: any) => {
+    // TODO: Reduxアクションで新規取引を登録する処理
+    // この例では仮実装としてコンソールログを出力
+    console.log('新規取引を作成:', transaction)
+
+    toast({
+      title: '新規取引を登録しました',
+      description: '取引情報が登録されました。',
+    })
+
+    // 登録後に取引一覧を再読み込み
+    if (fiscalYear && account) {
+      dispatch(
+        fetchTransactions({
+          nendo: fiscalYear,
+          code: account,
+          month: month,
+          page: currentPage,
+          pageSize: pageSize,
+        }),
+      )
+    }
+  }
+
   // CSVダウンロード処理
   const handleDownloadCSV = () => {
     // CSVヘッダー
@@ -549,6 +574,7 @@ export default function LedgerPage() {
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}
+                      onCreateTransaction={handleCreateTransaction}
                     />
 
                     {/* ページネーション */}
