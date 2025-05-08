@@ -23,6 +23,7 @@ interface TransactionTableProps {
   deleteMode: boolean
   selectedRows: string[]
   accountList: MergedAccount[]
+  nendo: string
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (
     id: string,
@@ -40,6 +41,7 @@ export function TransactionTable({
   deleteMode,
   selectedRows,
   accountList,
+  nendo,
   onToggleRowSelection,
   onUpdateTransaction,
   onBlur,
@@ -86,7 +88,10 @@ export function TransactionTable({
     transactions.forEach((transaction) => {
       const id = transaction.journal_id.toString()
       // 既存のデータをコピー
-      initialData[id] = { ...transaction }
+      initialData[id] = {
+        ...transaction,
+        nendo: nendo,
+      }
 
       // 相手科目コードが存在する場合、初期表示時から名称を設定
       if (transaction.other_cd) {
@@ -97,7 +102,7 @@ export function TransactionTable({
       }
     })
     setEditableTransactions(initialData)
-  }, [transactions, accountList])
+  }, [transactions, accountList, nendo])
 
   // フィールド値の変更ハンドラ
   const handleFieldChange = (
@@ -176,7 +181,7 @@ export function TransactionTable({
       }))
     }
 
-    // フィールド値をバリデーション
+    // フィールド値をバリデーション（nendoを追加）
     const validation = validateField(field, value, transaction)
 
     if (!validation.valid) {

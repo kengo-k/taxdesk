@@ -545,6 +545,7 @@ export default function LedgerPage() {
                       deleteMode={deleteMode}
                       selectedRows={selectedRows}
                       accountList={mergedAccounts}
+                      nendo={fiscalYear || ''}
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}
