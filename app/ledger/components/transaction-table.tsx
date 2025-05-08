@@ -94,8 +94,7 @@ export function TransactionTable({
                                 )
                               }
                               //onBlur={() => onBlur(transaction.id, 'date')}
-                              // className={`h-8 text-sm ${transaction.errors.date ? 'border-red-500 pr-8' : ''}`}
-                              className={`h-8 text-sm}`}
+                              className={`h-8 text-sm border-red-500 pr-8}`}
                             />
                             {true && (
                               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
@@ -112,24 +111,45 @@ export function TransactionTable({
                           className="bg-red-50 text-red-800 border border-red-200 z-50"
                         >
                           エラーメッセージ
-                          {/* {transaction.errors.date} */}
                         </TooltipContent>
                       </Tooltip>
                     </div>
                   </td>
                   <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      value={transaction.other_cd}
-                      onChange={(e) =>
-                        onUpdateTransaction(
-                          transaction.journal_id + '',
-                          'karikata_cd',
-                          e.target.value,
-                        )
-                      }
-                      className="h-8 text-sm"
-                    />
+                    <div className="relative">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <Input
+                              type="text"
+                              value={transaction.other_cd}
+                              onChange={(e) =>
+                                onUpdateTransaction(
+                                  transaction.journal_id + '',
+                                  'karikata_cd',
+                                  e.target.value,
+                                )
+                              }
+                              className="h-8 text-sm border-red-500 pr-8"
+                            />
+                            {true && (
+                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
+                                <AlertCircle className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          align="start"
+                          sideOffset={5}
+                          alignOffset={0}
+                          className="bg-red-50 text-red-800 border border-red-200 z-50"
+                        >
+                          エラーメッセージ
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </td>
                   <td className="py-2 px-1">
                     <Input
@@ -141,13 +161,7 @@ export function TransactionTable({
                   </td>
                   <td className="py-2 px-1">
                     <div className="relative">
-                      <Tooltip
-                        open={
-                          // transaction.showTooltips.debit &&
-                          // !!transaction.errors.debit
-                          false
-                        }
-                      >
+                      <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="relative">
                             <Input
@@ -156,9 +170,6 @@ export function TransactionTable({
                                 transaction.karikata_value > 0
                                   ? formatCurrency(transaction.karikata_value)
                                   : ''
-                                // transaction.debit > 0
-                                //   ? formatCurrency(transaction.debit)
-                                //   : ''
                               }
                               onChange={(e) =>
                                 onUpdateTransaction(
@@ -168,34 +179,27 @@ export function TransactionTable({
                                 )
                               }
                               // onBlur={() => onBlur(transaction.id, 'debit')}
-                              // className={`h-8 text-sm text-right ${transaction.errors.debit ? 'border-red-500 pr-8' : ''}`}
-                              className={`h-8 text-sm text-right`}
+                              className={`h-8 text-sm text-right border-red-500 pr-8}`}
                             />
-                            {/* {transaction.errors.debit && (
+                            {true && (
                               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
                                 <AlertCircle className="h-4 w-4" />
                               </div>
-                            )} */}
+                            )}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent
                           side="top"
                           className="bg-red-50 text-red-800 border border-red-200"
                         >
-                          {/* {transaction.errors.debit} */}
+                          エラーメッセージ
                         </TooltipContent>
                       </Tooltip>
                     </div>
                   </td>
                   <td className="py-2 px-1">
                     <div className="relative">
-                      <Tooltip
-                        open={
-                          // transaction.showTooltips.credit &&
-                          // !!transaction.errors.credit
-                          false
-                        }
-                      >
+                      <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="relative">
                             <Input
@@ -204,9 +208,6 @@ export function TransactionTable({
                                 transaction.kasikata_value > 0
                                   ? formatCurrency(transaction.kasikata_value)
                                   : ''
-                                // transaction.credit > 0
-                                //   ? formatCurrency(transaction.credit)
-                                //   : ''
                               }
                               onChange={(e) =>
                                 onUpdateTransaction(
@@ -216,21 +217,21 @@ export function TransactionTable({
                                 )
                               }
                               // onBlur={() => onBlur(transaction.id, 'credit')}
-                              // className={`h-8 text-sm text-right ${transaction.errors.credit ? 'border-red-500 pr-8' : ''}`}
-                              className={`h-8 text-sm text-right`}
+                              className={`h-8 text-sm text-right border-red-500 pr-8}`}
+                              //className={`h-8 text-sm text-right`}
                             />
-                            {/* {transaction.errors.credit && (
+                            {true && (
                               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
                                 <AlertCircle className="h-4 w-4" />
                               </div>
-                            )} */}
+                            )}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent
                           side="top"
                           className="bg-red-50 text-red-800 border border-red-200"
                         >
-                          {/* {transaction.errors.credit} */}
+                          {'エラーメッセージ'}
                         </TooltipContent>
                       </Tooltip>
                     </div>
