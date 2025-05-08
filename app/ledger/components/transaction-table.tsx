@@ -1,5 +1,7 @@
 'use client'
 
+import { AlertCircle } from 'lucide-react'
+
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
@@ -34,7 +36,7 @@ export function TransactionTable({
   onBlur,
 }: TransactionTableProps) {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={0} skipDelayDuration={0}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <colgroup>
@@ -78,13 +80,7 @@ export function TransactionTable({
                   )}
                   <td className="py-2 px-1">
                     <div className="relative">
-                      <Tooltip
-                        open={
-                          // transaction.showTooltips.date &&
-                          // !!transaction.errors.date
-                          false
-                        }
-                      >
+                      <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="relative">
                             <Input
@@ -101,17 +97,21 @@ export function TransactionTable({
                               // className={`h-8 text-sm ${transaction.errors.date ? 'border-red-500 pr-8' : ''}`}
                               className={`h-8 text-sm}`}
                             />
-                            {/* {transaction.errors.date && (
+                            {true && (
                               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
                                 <AlertCircle className="h-4 w-4" />
                               </div>
-                            )} */}
+                            )}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent
                           side="top"
-                          className="bg-red-50 text-red-800 border border-red-200"
+                          align="start"
+                          sideOffset={5}
+                          alignOffset={0}
+                          className="bg-red-50 text-red-800 border border-red-200 z-50"
                         >
+                          エラーメッセージ
                           {/* {transaction.errors.date} */}
                         </TooltipContent>
                       </Tooltip>
