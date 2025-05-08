@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -458,10 +458,20 @@ export function TransactionTable({
               <th className="pb-2 font-medium">相手科目</th>
               <th className="pb-2 font-medium">名称</th>
               <th className="pb-2 font-medium">
-                借方 {selectedAccountType === 'L' ? '[+]' : '[-]'}
+                借方{' '}
+                {selectedAccountType === 'L' ? (
+                  <ArrowUpCircle className="inline-block h-4 w-4 text-green-600" />
+                ) : (
+                  <ArrowDownCircle className="inline-block h-4 w-4 text-red-600" />
+                )}
               </th>
               <th className="pb-2 font-medium">
-                貸方 {selectedAccountType === 'L' ? '[-]' : '[+]'}
+                貸方{' '}
+                {selectedAccountType === 'L' ? (
+                  <ArrowDownCircle className="inline-block h-4 w-4 text-red-600" />
+                ) : (
+                  <ArrowUpCircle className="inline-block h-4 w-4 text-green-600" />
+                )}
               </th>
               <th className="pb-2 font-medium">摘要</th>
               <th className="pb-2 font-medium">残高</th>
