@@ -172,6 +172,12 @@ export function TransactionTable({
     return account ? account.name : ''
   }
 
+  // 科目コードが存在するかチェック
+  const isValidAccountCode = (code: string): boolean => {
+    if (!code || code.length !== 3) return false
+    return accountList.some((a) => a.code === code)
+  }
+
   // エラーをクリア
   const clearFieldError = (id: string, field: string) => {
     setFieldErrors((prev) => {
@@ -195,8 +201,21 @@ export function TransactionTable({
     // フィールドの値を取得
     const value = transaction[field]
 
-    // 相手科目フィールドがフォーカスアウトされた場合、科目名を自動設定
+    // 相手科目フィールドがフォーカスアウトされた場合の特別処理
     if (field === 'other_cd' && value) {
+      // 科目コードの存在チェック
+      if (!isValidAccountCode(value as string)) {
+        // エラーを設定
+        setFieldErrors((prev) => ({
+          ...prev,
+          [id]: {
+            ...(prev[id] || {}),
+            [field]: '存在しない科目コードです',
+          },
+        }))
+        return
+      }
+
       const accountName = getAccountName(value as string)
 
       // 科目名が見つかった場合は設定、見つからない場合は空にする
@@ -334,8 +353,18 @@ export function TransactionTable({
     // フィールドの値を取得
     const value = newTransaction[field]
 
-    // 相手科目フィールドがフォーカスアウトされた場合、科目名を自動設定
+    // 相手科目フィールドがフォーカスアウトされた場合の特別処理
     if (field === 'other_cd' && value) {
+      // 科目コードの存在チェック
+      if (!isValidAccountCode(value as string)) {
+        // エラーを設定
+        setNewTransactionErrors((prev) => ({
+          ...prev,
+          [field]: '存在しない科目コードです',
+        }))
+        return
+      }
+
       const accountName = getAccountName(value as string)
 
       setNewTransaction((prev) => ({
