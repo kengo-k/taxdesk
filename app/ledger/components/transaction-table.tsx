@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { AlertCircle } from 'lucide-react'
 
@@ -49,6 +49,33 @@ export function TransactionTable({
     Record<string, Record<string, string>>
   >({})
   const [editedRowIds, setEditedRowIds] = useState<string[]>([])
+
+  // フィールドの入力要素への参照を保持
+  const inputRefs = useRef<Record<string, Record<string, HTMLInputElement>>>({})
+
+  // フィールドの表示順序（左から右）
+  const fieldOrder = [
+    'date',
+    'other_cd',
+    'karikata_value',
+    'kasikata_value',
+    'note',
+  ]
+
+  // inputRef登録用のコールバック
+  const registerInputRef = (
+    id: string,
+    field: string,
+    element: HTMLInputElement | null,
+  ) => {
+    if (!inputRefs.current[id]) {
+      inputRefs.current[id] = {}
+    }
+
+    if (element) {
+      inputRefs.current[id][field] = element
+    }
+  }
 
   // コンポーネントマウント時にトランザクションデータを初期化
   useEffect(() => {
@@ -150,6 +177,23 @@ export function TransactionTable({
         ...prev,
         [id]: result.errors,
       }))
+
+      // 最も左にあるエラーフィールドを特定
+      const errorFields = Object.keys(result.errors)
+      const sortedErrorFields = fieldOrder.filter((field) =>
+        errorFields.includes(field),
+      )
+
+      // 一番左のエラーフィールドがあれば、そこにフォーカスを当てる
+      if (sortedErrorFields.length > 0) {
+        const firstErrorField = sortedErrorFields[0]
+        setTimeout(() => {
+          const inputElement = inputRefs.current[id]?.[firstErrorField]
+          if (inputElement) {
+            inputElement.focus()
+          }
+        }, 0)
+      }
     } else {
       // 全てのエラーをクリア
       setFieldErrors((prev) => {
@@ -249,6 +293,7 @@ export function TransactionTable({
                                   handleFieldChange(id, 'date', e.target.value)
                                 }
                                 onBlur={() => handleFieldBlur(id, 'date')}
+                                ref={(el) => registerInputRef(id, 'date', el)}
                                 className={`h-8 text-sm ${
                                   hasFieldError(id, 'date')
                                     ? 'border-red-500 pl-8'
@@ -290,6 +335,9 @@ export function TransactionTable({
                                   )
                                 }
                                 onBlur={() => handleFieldBlur(id, 'other_cd')}
+                                ref={(el) =>
+                                  registerInputRef(id, 'other_cd', el)
+                                }
                                 className={`h-8 text-sm ${
                                   hasFieldError(id, 'other_cd')
                                     ? 'border-red-500 pl-8'
@@ -351,6 +399,9 @@ export function TransactionTable({
                                 onBlur={() =>
                                   handleFieldBlur(id, 'karikata_value')
                                 }
+                                ref={(el) =>
+                                  registerInputRef(id, 'karikata_value', el)
+                                }
                                 className={`h-8 text-sm text-right ${
                                   hasFieldError(id, 'karikata_value')
                                     ? 'border-red-500 pl-8'
@@ -404,6 +455,9 @@ export function TransactionTable({
                                 onBlur={() =>
                                   handleFieldBlur(id, 'kasikata_value')
                                 }
+                                ref={(el) =>
+                                  registerInputRef(id, 'kasikata_value', el)
+                                }
                                 className={`h-8 text-sm text-right ${
                                   hasFieldError(id, 'kasikata_value')
                                     ? 'border-red-500 pl-8'
@@ -443,6 +497,7 @@ export function TransactionTable({
                                 onBlur={(e) => {
                                   handleFieldBlur(id, 'note')
                                 }}
+                                ref={(el) => registerInputRef(id, 'note', el)}
                                 name="note"
                                 className={`h-8 text-sm ${
                                   hasFieldError(id, 'note')
