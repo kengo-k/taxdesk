@@ -164,6 +164,11 @@ export function TransactionTable({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="relative">
+                            {true && (
+                              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                                <AlertCircle className="h-4 w-4" />
+                              </div>
+                            )}
                             <Input
                               type="text"
                               value={
@@ -179,13 +184,8 @@ export function TransactionTable({
                                 )
                               }
                               // onBlur={() => onBlur(transaction.id, 'debit')}
-                              className={`h-8 text-sm text-right border-red-500 pr-8}`}
+                              className={`h-8 text-sm text-right border-red-500 pl-8`}
                             />
-                            {true && (
-                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
-                                <AlertCircle className="h-4 w-4" />
-                              </div>
-                            )}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent
@@ -202,6 +202,11 @@ export function TransactionTable({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="relative">
+                            {true && (
+                              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                                <AlertCircle className="h-4 w-4" />
+                              </div>
+                            )}
                             <Input
                               type="text"
                               value={
@@ -217,14 +222,9 @@ export function TransactionTable({
                                 )
                               }
                               // onBlur={() => onBlur(transaction.id, 'credit')}
-                              className={`h-8 text-sm text-right border-red-500 pr-8}`}
+                              className={`h-8 text-sm text-right border-red-500 pl-8`}
                               //className={`h-8 text-sm text-right`}
                             />
-                            {true && (
-                              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-red-500">
-                                <AlertCircle className="h-4 w-4" />
-                              </div>
-                            )}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent
