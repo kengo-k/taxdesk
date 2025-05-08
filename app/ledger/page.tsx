@@ -544,6 +544,7 @@ export default function LedgerPage() {
                       transactions={transactions}
                       deleteMode={deleteMode}
                       selectedRows={selectedRows}
+                      accountList={mergedAccounts}
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}

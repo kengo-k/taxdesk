@@ -15,12 +15,14 @@ import {
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
 
+import { MergedAccount } from './types'
 import { formatCurrency } from './utils'
 
 interface TransactionTableProps {
   transactions: LedgerListItem[]
   deleteMode: boolean
   selectedRows: string[]
+  accountList: MergedAccount[]
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (
     id: string,
@@ -37,6 +39,7 @@ export function TransactionTable({
   transactions,
   deleteMode,
   selectedRows,
+  accountList,
   onToggleRowSelection,
   onUpdateTransaction,
   onBlur,
@@ -82,10 +85,19 @@ export function TransactionTable({
     const initialData: Record<string, EditableTransaction> = {}
     transactions.forEach((transaction) => {
       const id = transaction.journal_id.toString()
+      // 既存のデータをコピー
       initialData[id] = { ...transaction }
+
+      // 相手科目コードが存在する場合、初期表示時から名称を設定
+      if (transaction.other_cd) {
+        const accountName = getAccountName(transaction.other_cd)
+        if (accountName) {
+          initialData[id].account_name = accountName
+        }
+      }
     })
     setEditableTransactions(initialData)
-  }, [transactions])
+  }, [transactions, accountList])
 
   // フィールド値の変更ハンドラ
   const handleFieldChange = (
@@ -99,16 +111,32 @@ export function TransactionTable({
     }
 
     // 対応するフィールドを更新
-    setEditableTransactions((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: value,
-      },
-    }))
+    setEditableTransactions((prev) => {
+      const updated = {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          [field]: value,
+        },
+      }
+
+      // 相手科目が変更された場合、名称をクリア
+      if (field === 'other_cd') {
+        updated[id].account_name = ''
+      }
+
+      return updated
+    })
 
     // エラー状態をクリア（編集されたので）
     clearFieldError(id, field)
+  }
+
+  // 科目コードから科目名を取得
+  const getAccountName = (code: string): string => {
+    if (!code || code.length !== 3) return ''
+    const account = accountList.find((a) => a.code === code)
+    return account ? account.name : ''
   }
 
   // エラーをクリア
@@ -133,6 +161,20 @@ export function TransactionTable({
 
     // フィールドの値を取得
     const value = transaction[field]
+
+    // 相手科目フィールドがフォーカスアウトされた場合、科目名を自動設定
+    if (field === 'other_cd' && value) {
+      const accountName = getAccountName(value as string)
+
+      // 科目名が見つかった場合は設定、見つからない場合は空にする
+      setEditableTransactions((prev) => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          account_name: accountName || '',
+        },
+      }))
+    }
 
     // フィールド値をバリデーション
     const validation = validateField(field, value, transaction)
@@ -361,8 +403,9 @@ export function TransactionTable({
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        value={''}
+                        value={editedTransaction.account_name || ''}
                         readOnly
+                        tabIndex={-1}
                         className="h-8 text-sm bg-gray-50"
                       />
                     </td>
