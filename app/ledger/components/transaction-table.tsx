@@ -24,6 +24,7 @@ interface TransactionTableProps {
   selectedRows: string[]
   accountList: MergedAccount[]
   nendo: string
+  month?: string | null // 選択された月（nullの場合は制約なし）
   selectedAccountType?: 'L' | 'R' // 選択中の勘定科目のタイプ（L:左側/借方が+、R:右側/貸方が+）
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (
@@ -44,6 +45,7 @@ export function TransactionTable({
   selectedRows,
   accountList,
   nendo,
+  month = null,
   selectedAccountType = 'L', // デフォルトはL（借方が+）
   onToggleRowSelection,
   onUpdateTransaction,
@@ -348,10 +350,37 @@ export function TransactionTable({
     })
   }
 
+  // 日付が指定された月に属しているかチェック
+  const isDateInSelectedMonth = (dateStr: string): boolean => {
+    // 月が指定されていない場合は常にtrue
+    if (!month) return true
+
+    // 日付が正しいフォーマットでない場合はfalse
+    if (!dateStr || !/^\d{8}$/.test(dateStr)) return false
+
+    const selectedMonth = parseInt(month)
+    const inputMonth = parseInt(dateStr.substring(4, 6))
+
+    // 月が一致するかチェック
+    return inputMonth === selectedMonth
+  }
+
   // 新規トランザクション用のフィールドのフォーカスアウト時のバリデーション
   const handleNewFieldBlur = (field: string) => {
     // フィールドの値を取得
     const value = newTransaction[field]
+
+    // 日付フィールドで月の選択がある場合、月のチェックを追加
+    if (field === 'date' && value && month) {
+      if (!isDateInSelectedMonth(value as string)) {
+        // 選択された月と日付が一致しない場合はエラーを設定
+        setNewTransactionErrors((prev) => ({
+          ...prev,
+          [field]: `日付は${month}月である必要があります`,
+        }))
+        return
+      }
+    }
 
     // 相手科目フィールドがフォーカスアウトされた場合の特別処理
     if (field === 'other_cd' && value) {

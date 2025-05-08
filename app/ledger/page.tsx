@@ -587,11 +587,12 @@ export default function LedgerPage() {
                       selectedRows={selectedRows}
                       accountList={mergedAccounts}
                       nendo={fiscalYear || ''}
+                      month={month}
+                      selectedAccountType={getSelectedAccountType()}
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}
                       onCreateTransaction={handleCreateTransaction}
-                      selectedAccountType={getSelectedAccountType()}
                     />
 
                     {/* ページネーション */}
