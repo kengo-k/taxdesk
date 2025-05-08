@@ -89,6 +89,21 @@ export function TransactionTable({
     'note',
   ]
 
+  // 検索月に基づいて年月の初期値を設定
+  const getInitialDatePrefix = (): string => {
+    if (!month || !nendo) return ''
+
+    const monthNum = parseInt(month)
+    // 1〜3月は年度+1の年、4〜12月は年度の年
+    const year =
+      monthNum >= 1 && monthNum <= 3 ? (parseInt(nendo) + 1).toString() : nendo
+
+    // 月を2桁にフォーマット（例：1→01）
+    const monthFormatted = monthNum.toString().padStart(2, '0')
+
+    return `${year}${monthFormatted}`
+  }
+
   // inputRef登録用のコールバック
   const registerInputRef = (
     id: string,
@@ -126,13 +141,16 @@ export function TransactionTable({
     setEditableTransactions(initialData)
   }, [transactions, accountList, nendo])
 
-  // nendoが変更されたら新規登録用のステートを更新
+  // nendoまたはmonthが変更されたら新規登録用のステートを更新
   useEffect(() => {
+    const datePrefix = getInitialDatePrefix()
+
     setNewTransaction((prev) => ({
       ...prev,
       nendo: nendo,
+      date: datePrefix, // 年月の初期値を設定
     }))
-  }, [nendo])
+  }, [nendo, month])
 
   // フィールド値の変更ハンドラ
   const handleFieldChange = (
