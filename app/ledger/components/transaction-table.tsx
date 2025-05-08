@@ -63,8 +63,11 @@ export function TransactionTable({
           </thead>
           <tbody>
             {transactions.length > 0 ? (
-              transactions.map((transaction) => (
-                <tr key={transaction.journal_id} className="border-t">
+              transactions.map((transaction, index) => (
+                <tr
+                  key={transaction.journal_id}
+                  className={`border-t ${index === 0 ? 'bg-amber-50' : ''}`}
+                >
                   {deleteMode && (
                     <td className="py-2 px-1 text-center">
                       <Checkbox
@@ -78,7 +81,10 @@ export function TransactionTable({
                       />
                     </td>
                   )}
-                  <td className="py-2 px-1">
+                  <td className="py-2 px-1 relative">
+                    {index === 0 && (
+                      <div className="absolute -left-2 top-0 bottom-0 w-1 bg-amber-400"></div>
+                    )}
                     <div className="relative">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -251,7 +257,7 @@ export function TransactionTable({
                       placeholder="摘要を入力"
                     />
                   </td>
-                  <td className="py-2 px-1 text-right text-green-600">
+                  <td className="py-2 px-1 text-right text-green-600 relative">
                     {formatCurrency(transaction.acc)}
                   </td>
                 </tr>
