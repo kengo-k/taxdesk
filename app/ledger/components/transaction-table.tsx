@@ -13,12 +13,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
+import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
 
 import { MergedAccount } from './types'
 import { formatCurrency } from './utils'
 
 interface TransactionTableProps {
+  ledger_cd: string
   transactions: LedgerListItem[]
   deleteMode: boolean
   selectedRows: string[]
@@ -33,13 +35,14 @@ interface TransactionTableProps {
     value: string | number,
   ) => void
   onBlur: (id: string, field: 'date' | 'debit' | 'credit') => void
-  onCreateTransaction?: (transaction: EditableTransaction) => void
+  onCreateTransaction: (transaction: CreateLedgerRequest) => void
 }
 
 // 編集中のトランザクションデータの型
 type EditableTransaction = Record<string, any>
 
 export function TransactionTable({
+  ledger_cd,
   transactions,
   deleteMode,
   selectedRows,
@@ -442,6 +445,7 @@ export function TransactionTable({
 
   // 新規トランザクションの登録処理
   const handleSubmitNewTransaction = () => {
+    console.log('handleSubmitNewTransaction')
     // 全体のバリデーション
     const dataToValidate = {
       ...newTransaction,
@@ -449,6 +453,7 @@ export function TransactionTable({
     }
 
     const result = validateRow(dataToValidate)
+    console.log('result', result)
 
     if (!result.valid) {
       // エラーを設定
@@ -475,12 +480,21 @@ export function TransactionTable({
 
     // 親コンポーネントに新規取引データを渡す
     if (onCreateTransaction) {
-      onCreateTransaction(newTransaction)
+      onCreateTransaction({
+        ledger_cd: ledger_cd,
+        nendo: nendo,
+        date: newTransaction.date,
+        counter_cd: newTransaction.other_cd,
+        karikata_value: newTransaction.karikata_value,
+        kasikata_value: newTransaction.kasikata_value,
+        note: newTransaction.note,
+        checked: '0',
+      })
     }
 
     // 登録成功後、入力フィールドをクリア
     setNewTransaction({
-      date: '',
+      date: month ? getInitialDatePrefix() : '',
       other_cd: '',
       account_name: '',
       karikata_value: 0,

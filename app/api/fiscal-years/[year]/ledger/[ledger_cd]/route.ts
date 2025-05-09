@@ -7,30 +7,10 @@ import {
   withTransaction,
 } from '@/lib/api-transaction'
 import { countLedgers } from '@/lib/services/ledger/count-ledgers'
+import { createLedger } from '@/lib/services/ledger/create-ledger'
 import { listLedgers } from '@/lib/services/ledger/list-ledgers'
 
-// 取引データの型定義
-interface Transaction {
-  id: string
-  date: string
-  accountCode: string
-  accountName: string
-  counterpartyAccount: string
-  description: string
-  debit: number
-  credit: number
-  summary: string
-  balance: number
-}
-
-// 勘定科目別レコード件数の型定義（counts/by-account APIと同じ）
-interface AccountCount {
-  accountCode: string
-  accountName: string
-  count: number
-}
-
-export function countByAccountHandler(
+export function listLedgersHandler(
   conn: Connection,
   { req, ctx }: { req: NextRequest; ctx: RouteContext },
 ) {
@@ -62,4 +42,33 @@ export function countByAccountHandler(
   })
 }
 
-export const GET = createApiRoute(countByAccountHandler)
+export function createLedgerHandler(
+  conn: Connection,
+  { req, ctx }: { req: NextRequest; ctx: RouteContext },
+) {
+  return withTransaction(conn, async (tx) => {
+    const { year: nendo, ledger_cd } = await ctx.params
+    const requestData = await req.json()
+
+    // リクエストデータとURLパラメータを結合
+    const createLedgerData = {
+      nendo, // URLパスから取得した年度
+      ledger_cd, // URLパスから取得した元帳科目コード
+      date: requestData.date,
+      counter_cd: requestData.other_cd || requestData.counter_cd, // other_cdまたはcounter_cdをcounter_cdとして使用
+      karikata_value:
+        requestData.karikata_value > 0 ? requestData.karikata_value : undefined,
+      kasikata_value:
+        requestData.kasikata_value > 0 ? requestData.kasikata_value : undefined,
+      note: requestData.note || null,
+      checked: requestData.checked || 'N', // チェック状態、デフォルトはN
+    }
+
+    await createLedger(tx, createLedgerData)
+
+    return { success: true, message: '取引が正常に登録されました' }
+  })
+}
+
+export const GET = createApiRoute(listLedgersHandler)
+export const POST = createApiRoute(createLedgerHandler)

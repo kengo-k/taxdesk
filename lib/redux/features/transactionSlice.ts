@@ -7,6 +7,7 @@ import {
 } from '@reduxjs/toolkit'
 
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
+import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
 
 // 取引データの型定義
@@ -166,6 +167,36 @@ export const fetchAccountCounts = createAsyncThunk<
   },
 )
 
+// 非同期アクション - 取引データの作成
+export const createTransaction = createAsyncThunk<
+  { data: LedgerListItem },
+  CreateLedgerRequest
+>(
+  'transaction/createTransaction',
+  async (transaction: CreateLedgerRequest, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${transaction.nendo}/ledger/${transaction.ledger_cd}`,
+        {
+          method: 'POST',
+          body: JSON.stringify(transaction),
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`APIエラー: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '取引データの作成中にエラーが発生しました',
+      )
+    }
+  },
+)
 // スライスの作成
 export const transactionSlice = createSlice({
   name: 'transaction',

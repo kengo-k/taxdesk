@@ -25,6 +25,7 @@ import {
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
   clearTransactions,
+  createTransaction,
   deleteTransactions,
   fetchAccountCounts,
   fetchTransactions,
@@ -337,28 +338,8 @@ export default function LedgerPage() {
   }
 
   // 新規取引作成ハンドラー
-  const handleCreateTransaction = (transaction: any) => {
-    // TODO: Reduxアクションで新規取引を登録する処理
-    // この例では仮実装としてコンソールログを出力
-    console.log('新規取引を作成:', transaction)
-
-    toast({
-      title: '新規取引を登録しました',
-      description: '取引情報が登録されました。',
-    })
-
-    // 登録後に取引一覧を再読み込み
-    if (fiscalYear && account) {
-      dispatch(
-        fetchTransactions({
-          nendo: fiscalYear,
-          code: account,
-          month: month,
-          page: currentPage,
-          pageSize: pageSize,
-        }),
-      )
-    }
+  const handleCreateTransaction = async (transaction: any) => {
+    dispatch(createTransaction(transaction))
   }
 
   // CSVダウンロード処理
@@ -582,6 +563,7 @@ export default function LedgerPage() {
                   <>
                     {/* 取引テーブル */}
                     <TransactionTable
+                      ledger_cd={account}
                       transactions={transactions}
                       deleteMode={deleteMode}
                       selectedRows={selectedRows}
