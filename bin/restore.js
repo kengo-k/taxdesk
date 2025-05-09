@@ -3,19 +3,24 @@
 /**
  * Database Restore Tool
  *
- * This tool restores database backups from S3, checking for migration compatibility
- * before performing the restore operation.
+ * This tool restores database backups from S3 or local CSV files,
+ * checking for migration compatibility before performing the restore operation.
  *
  * Environment variables:
  * - DATABASE_URL: Database connection string
- * - AWS_ACCESS_KEY_ID: AWS access key
- * - AWS_SECRET_ACCESS_KEY: AWS secret key
- * - BACKUP_BUCKETS: S3 bucket names (comma-separated)
- * - BACKUP_TARGET_ENV: The environment name (e.g., 'local', 'dev', 'prod')
+ * - AWS_ACCESS_KEY_ID: AWS access key (required for S3 restore)
+ * - AWS_SECRET_ACCESS_KEY: AWS secret key (required for S3 restore)
+ * - BACKUP_BUCKETS: S3 bucket names (comma-separated) (required for S3 restore)
+ * - BACKUP_TARGET_ENV: The environment name (e.g., 'local', 'dev', 'prod') (required for S3 restore)
  *
  * Usage:
+ *   # Restore from S3 backup
  *   node bin/restore.js --restore "20250509135352"
  *   node bin/restore.js -r "20250509135352"
+ *
+ *   # Restore from local CSV files
+ *   node bin/restore.js --local "seed"
+ *   node bin/restore.js -l "seed"
  */
 
 const { execSync } = require('child_process')
@@ -31,14 +36,42 @@ const yargs = require('yargs')
 // Configuration
 const TEMP_DIR = path.join(process.cwd(), 'tmp', 'restore')
 
+// Parse command line arguments
+const argv = yargs
+  .option('restore', {
+    alias: 'r',
+    description: 'Restore from S3 backup with timestamp',
+    type: 'string',
+  })
+  .option('local', {
+    alias: 'l',
+    description: 'Restore from local CSV files in specified directory',
+    type: 'string',
+  })
+  .check((argv) => {
+    if (!argv.restore && !argv.local) {
+      throw new Error('Either --restore or --local option is required')
+    }
+    if (argv.restore && argv.local) {
+      throw new Error('Cannot use both --restore and --local options')
+    }
+    return true
+  })
+  .help()
+  .alias('help', 'h').argv
+
 // Ensure required environment variables are set
-const requiredEnvVars = [
-  'DATABASE_URL',
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'BACKUP_BUCKETS',
-  'BACKUP_TARGET_ENV',
-]
+const requiredEnvVars = ['DATABASE_URL']
+
+// Add S3-specific environment variables if restoring from S3
+if (argv.restore) {
+  requiredEnvVars.push(
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'BACKUP_BUCKETS',
+    'BACKUP_TARGET_ENV',
+  )
+}
 
 const missingEnvVars = requiredEnvVars.filter(
   (varName) => !process.env[varName],
@@ -305,57 +338,65 @@ async function restoreBackup(argv) {
   }
 }
 
-// Command line interface
-yargs
-  .usage('Usage: $0 [options]')
-  .option('restore', {
-    alias: 'r',
-    describe: 'Restore a backup with the specified timestamp',
-    type: 'string',
-  })
-  .example(
-    'npm run restore:dev -- --restore "20250509135352"',
-    'Restore a backup',
-  )
-  .example(
-    'npm run restore:dev -- -r "20250509135352"',
-    'Restore a backup with short option',
-  )
-  .help()
-  .epilogue(
-    'For more information, check the comments at the top of this script.',
-  )
-  .wrap(yargs.terminalWidth())
+/**
+ * Restores a database from local CSV files
+ * @param {string} directory - Directory containing CSV files
+ */
+async function restoreFromLocal(directory) {
+  console.log(`Attempting to restore from local directory: ${directory}`)
 
-// Parse arguments
-const argv = yargs.argv
+  // Ensure the directory exists
+  const csvDir = path.join(process.cwd(), directory)
+  if (!fs.existsSync(csvDir)) {
+    console.error(`Directory not found: ${csvDir}`)
+    process.exit(1)
+  }
 
-// Process command based on options
+  // Get all CSV files in the directory
+  const files = fs
+    .readdirSync(csvDir)
+    .filter((file) => file.endsWith('.csv'))
+    .map((file) => ({
+      name: file,
+      path: path.join(csvDir, file),
+      tableName: path.basename(file, '.csv'),
+    }))
+
+  if (files.length === 0) {
+    console.error(`No CSV files found in directory: ${csvDir}`)
+    process.exit(1)
+  }
+
+  console.log(`Found ${files.length} CSV files to restore`)
+
+  // Import each CSV file
+  for (const file of files) {
+    try {
+      console.log(`Restoring table ${file.tableName} from ${file.name}`)
+      importTableFromCsv(file.tableName, file.path)
+    } catch (error) {
+      console.error(`Error restoring table ${file.tableName}:`, error.message)
+      process.exit(1)
+    }
+  }
+
+  console.log('Local restore completed successfully')
+}
+
+/**
+ * Main function
+ */
 async function main() {
-  if (argv.restore) {
-    // Run restore with timestamp
-    await restoreBackup(argv)
-  } else {
-    // If no option is provided, show help
-    console.log('Database Restore Tool')
-    console.log('-----------------')
-    console.log('Available options:')
-    console.log(
-      '  --restore, -r   Restore a database backup with the specified timestamp',
-    )
-    console.log('\nUsage examples:')
-    console.log(
-      '  npm run restore:dev -- --restore "20250509135352"    Restore a backup',
-    )
-    console.log(
-      '  npm run restore:dev -- -r "20250509135352"           Restore a backup with short option',
-    )
-    console.log('\nFor more details run: npm run restore:dev -- --help')
+  try {
+    if (argv.restore) {
+      await restoreBackup(argv)
+    } else if (argv.local) {
+      await restoreFromLocal(argv.local)
+    }
+  } catch (error) {
+    console.error('Restore failed:', error.message)
+    process.exit(1)
   }
 }
 
-// Run main function
-main().catch((error) => {
-  console.error('Error:', error.message)
-  process.exit(1)
-})
+main()

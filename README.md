@@ -192,17 +192,28 @@ The backup tool automatically removes query parameters from the database connect
 
 ## Database Restore Tool
 
-The project includes a complementary database restore tool that enables you to restore data from a previously created backup.
+The project includes a complementary database restore tool that enables you to restore data from a previously created backup or local CSV files.
 
 ### Prerequisites
 
-The restore tool uses the same environment variables as the backup tool.
+For S3 backup restore:
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- AWS_ENDPOINT
+- BACKUP_BUCKETS
+- BACKUP_TARGET_ENV
+
+For local CSV restore:
+
+- DATABASE_URL
 
 ### Usage
 
 The restore tool is available as an npm script:
 
-1. **Restore a backup by timestamp**:
+1. **Restore from S3 backup by timestamp**:
 
    ```bash
    npm run restore:dev -- --restore "20250509135352"
@@ -214,7 +225,36 @@ The restore tool is available as an npm script:
    npm run restore:dev -- -r "20250509135352"
    ```
 
-2. **Get help**:
+2. **Restore from local CSV files**:
+
+   ```bash
+   npm run restore:dev -- --local "seed"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run restore:dev -- -l "seed"
+   ```
+
+   The local restore command:
+
+   - Looks for CSV files in the specified directory
+   - Uses the filename (without .csv extension) as the table name
+   - Requires CSV files to have a header row
+   - Truncates each target table before importing data
+
+   Example directory structure:
+
+   ```
+   seed/
+     ├── users.csv
+     ├── accounts.csv
+     ├── transactions.csv
+     └── ...
+   ```
+
+3. **Get help**:
 
    ```bash
    npm run restore:dev -- --help
@@ -222,7 +262,9 @@ The restore tool is available as an npm script:
 
 ### Restore Process
 
-The restore process performs the following steps:
+#### S3 Backup Restore
+
+The S3 restore process performs the following steps:
 
 1. Verifies that the specified backup timestamp exists in S3
 2. Checks that the current database migration matches the backup's migration
@@ -231,4 +273,17 @@ The restore process performs the following steps:
 4. Truncates each target table and imports the corresponding CSV data
 5. Cleans up temporary files
 
-**Note**: The restore operation will fail if the current database schema version (latest migration) does not match the backup's migration version.
+**Note**: The S3 restore operation will fail if the current database schema version (latest migration) does not match the backup's migration version.
+
+#### Local CSV Restore
+
+The local CSV restore process:
+
+1. Verifies that the specified directory exists and contains CSV files
+2. For each CSV file:
+   - Extracts the table name from the filename
+   - Truncates the target table
+   - Imports the CSV data using psql's COPY command
+3. Provides detailed progress information during the restore
+
+**Note**: The local restore does not perform migration version checks, so ensure your CSV files match the current database schema.
