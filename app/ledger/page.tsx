@@ -349,6 +349,23 @@ export default function LedgerPage() {
   // 取引データの更新関数
   const handleUpdateTransaction = (transaction: UpdateLedgerRequest) => {
     dispatch(updateTransaction(transaction))
+      .unwrap()
+      .then(() => {
+        if (fiscalYear) {
+          dispatch(
+            fetchTransactions({
+              nendo: fiscalYear,
+              code: account,
+              month: month,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
+        }
+      })
+      .catch((error) => {
+        console.error('取引作成エラー:', error)
+      })
   }
 
   // フォーカスが外れた時のハンドラー
