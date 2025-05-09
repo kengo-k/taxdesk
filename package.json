@@ -12,7 +12,8 @@
     "migrate:deploy": "dotenv -e .env.local -- npx prisma migrate deploy",
     "test:migrate:dev": "dotenv -e .env.test -- npx prisma migrate dev",
     "test:migrate:deploy": "dotenv -e .env.test -- npx prisma migrate deploy",
-    "backup:dev": "dotenv -e .env.local -- node bin/backup.js"
+    "backup:dev": "dotenv -e .env.local -- node bin/backup.js",
+    "restore:dev": "dotenv -e .env.local -- node bin/restore.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

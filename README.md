@@ -158,3 +158,46 @@ Each backup includes:
 - A metadata.json file with backup information, including your comment
 
 The backup tool automatically removes query parameters from the database connection string to ensure compatibility with the psql command.
+
+## Database Restore Tool
+
+The project includes a complementary database restore tool that enables you to restore data from a previously created backup.
+
+### Prerequisites
+
+The restore tool uses the same environment variables as the backup tool.
+
+### Usage
+
+The restore tool is available as an npm script:
+
+1. **Restore a backup by timestamp**:
+
+   ```bash
+   npm run restore:dev -- --restore "20250509135352"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run restore:dev -- -r "20250509135352"
+   ```
+
+2. **Get help**:
+
+   ```bash
+   npm run restore:dev -- --help
+   ```
+
+### Restore Process
+
+The restore process performs the following steps:
+
+1. Verifies that the specified backup timestamp exists in S3
+2. Checks that the current database migration matches the backup's migration
+   - This prevents restoring data to an incompatible schema version
+3. Downloads all CSV files from the backup
+4. Truncates each target table and imports the corresponding CSV data
+5. Cleans up temporary files
+
+**Note**: The restore operation will fail if the current database schema version (latest migration) does not match the backup's migration version.
