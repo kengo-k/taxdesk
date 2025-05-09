@@ -138,7 +138,38 @@ The backup tool is available as an npm script:
    - Latest applied Prisma migration name
    - Backup comment
 
-3. **Get help**:
+3. **Download table CSV files**:
+
+   ```bash
+   npm run backup:dev -- --download "pattern"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -d "pattern"
+   ```
+
+   The download command:
+
+   - Uses the latest backup as the source
+   - Supports wildcard patterns (e.g., `*masters` for all master tables)
+   - Downloads matching CSVs to the current directory
+   - Useful for creating test fixtures or reviewing backup data
+
+   Examples:
+
+   ```bash
+   npm run backup:dev -- -d "*"               # Download all tables
+   npm run backup:dev -- -d "*masters"        # Download all master tables
+   npm run backup:dev -- -d "journals"        # Download only the journals table
+   ```
+
+   > **Important**: Always enclose pattern strings in quotes to prevent shell expansion of wildcards.
+   > Using `npm run backup:dev -- -d *masters` without quotes will cause the shell to expand the pattern
+   > before it reaches the script, leading to unexpected behavior.
+
+4. **Get help**:
 
    ```bash
    npm run backup:dev -- --help

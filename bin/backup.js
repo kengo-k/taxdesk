@@ -281,6 +281,116 @@ function streamToString(stream) {
 }
 
 /**
+ * Check if a string matches a wildcard pattern
+ * @param {string} str - String to check
+ * @param {string} pattern - Pattern with * wildcard
+ * @returns {boolean} - True if matches
+ */
+function matchWildcard(str, pattern) {
+  // Escape special regex characters except the * wildcard
+  const regexPattern = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
+    .replace(/\*/g, '.*') // Convert * to .* for regex
+
+  const regex = new RegExp(`^${regexPattern}$`)
+  return regex.test(str)
+}
+
+/**
+ * Download CSV files for specific tables from the latest backup
+ * @param {Object} argv - Command arguments
+ */
+async function downloadCsvFiles(argv) {
+  const { download: tablePattern } = argv
+
+  if (!tablePattern) {
+    console.error('Table pattern is required')
+    process.exit(1)
+  }
+
+  console.log(`Searching for tables matching pattern: ${tablePattern}`)
+
+  // Use the first bucket
+  const bucket = buckets[0]
+  const prefix = `${targetEnv}/`
+
+  try {
+    // List all backups
+    const listCommand = new ListObjectsV2Command({
+      Bucket: bucket,
+      Prefix: prefix,
+      Delimiter: '/',
+    })
+
+    const data = await s3Client.send(listCommand)
+
+    if (!data.CommonPrefixes || data.CommonPrefixes.length === 0) {
+      console.error(`No backups found in s3://${bucket}/${prefix}`)
+      process.exit(1)
+    }
+
+    // Sort by timestamp (descending) and get the latest backup
+    const backups = data.CommonPrefixes.map((p) =>
+      p.Prefix.replace(prefix, '').replace('/', ''),
+    )
+      .sort()
+      .reverse()
+
+    const latestBackup = backups[0]
+    console.log(`Using latest backup: ${latestBackup}`)
+
+    // Get metadata to find available tables
+    const metadataCommand = new GetObjectCommand({
+      Bucket: bucket,
+      Key: `${prefix}${latestBackup}/metadata.json`,
+    })
+
+    const { Body } = await s3Client.send(metadataCommand)
+    const content = await streamToString(Body)
+    const metadata = JSON.parse(content)
+
+    // Filter tables based on wildcard pattern
+    const matchingTables = metadata.tables.filter((table) =>
+      matchWildcard(table, tablePattern),
+    )
+
+    if (matchingTables.length === 0) {
+      console.error(`No tables found matching pattern: ${tablePattern}`)
+      process.exit(1)
+    }
+
+    console.log(
+      `Found ${matchingTables.length} matching tables: ${matchingTables.join(', ')}`,
+    )
+
+    // Download each matching table
+    for (const table of matchingTables) {
+      const key = `${prefix}${latestBackup}/${table}.csv`
+      const outputPath = path.join(process.cwd(), `${table}.csv`)
+
+      try {
+        const command = new GetObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        })
+
+        const { Body } = await s3Client.send(command)
+        const content = await streamToString(Body)
+        fs.writeFileSync(outputPath, content)
+        console.log(`Downloaded ${table}.csv to ${outputPath}`)
+      } catch (error) {
+        console.error(`Error downloading ${table}.csv:`, error.message)
+      }
+    }
+
+    console.log('Download completed')
+  } catch (error) {
+    console.error('Download failed:', error.message)
+    process.exit(1)
+  }
+}
+
+/**
  * Lists recent backups in S3
  */
 async function listBackups() {
@@ -357,13 +467,19 @@ yargs
     alias: 'c',
     describe: 'Create a new backup with the specified comment',
     type: 'string',
-    conflicts: 'list',
+    conflicts: ['list', 'download'],
   })
   .option('list', {
     alias: 'l',
     describe: 'List recent backups',
     type: 'boolean',
-    conflicts: 'create',
+    conflicts: ['create', 'download'],
+  })
+  .option('download', {
+    alias: 'd',
+    describe: 'Download CSV files for tables matching the specified pattern',
+    type: 'string',
+    conflicts: ['create', 'list'],
   })
   .example(
     'npm run backup -- --create "Weekly backup"',
@@ -375,6 +491,11 @@ yargs
   )
   .example('npm run backup -- --list', 'List recent backups')
   .example('npm run backup -- -l', 'List recent backups with short option')
+  .example(
+    'npm run backup -- --download "*masters"',
+    'Download all master tables',
+  )
+  .example('npm run backup -- -d "journals"', 'Download a specific table')
   .help()
   .epilogue(
     'For more information, check the comments at the top of this script.',
@@ -393,6 +514,9 @@ async function main() {
   } else if (argv.list) {
     // List backups
     await listBackups()
+  } else if (argv.download) {
+    // Download CSV files
+    await downloadCsvFiles(argv)
   } else {
     // If no option is provided, show help
     console.log('Database Backup Tool')
@@ -402,6 +526,9 @@ async function main() {
       '  --create, -c   Create a new database backup with the specified comment',
     )
     console.log('  --list, -l     List recent backups in S3')
+    console.log(
+      '  --download, -d Download CSV files for tables matching the specified pattern',
+    )
     console.log('\nUsage examples:')
     console.log(
       '  npm run backup -- --create "Weekly backup"    Create a new backup',
@@ -414,6 +541,12 @@ async function main() {
     )
     console.log(
       '  npm run backup -- -l                          List recent backups with short option',
+    )
+    console.log(
+      '  npm run backup -- --download "*masters"       Download all master tables',
+    )
+    console.log(
+      '  npm run backup -- -d "journals"               Download a specific table',
     )
     console.log('\nFor more details run: npm run backup -- --help')
   }
