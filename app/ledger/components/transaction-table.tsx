@@ -29,6 +29,7 @@ interface TransactionTableProps {
   nendo: string
   month?: string | null // 選択された月（nullの場合は制約なし）
   selectedAccountType?: 'L' | 'R' // 選択中の勘定科目のタイプ（L:左側/借方が+、R:右側/貸方が+）
+  isCurrentFiscalYear: boolean // 現在の年度かどうか
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (transaction: UpdateLedgerRequest) => void
   onBlur: (id: string, field: 'date' | 'debit' | 'credit') => void
@@ -47,6 +48,7 @@ export function TransactionTable({
   nendo,
   month = null,
   selectedAccountType = 'L', // デフォルトはL（借方が+）
+  isCurrentFiscalYear,
   onToggleRowSelection,
   onUpdateTransaction,
   onBlur,
@@ -572,6 +574,13 @@ export function TransactionTable({
   return (
     <TooltipProvider delayDuration={0} skipDelayDuration={0}>
       <div className="overflow-x-auto">
+        {!isCurrentFiscalYear && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+            <p className="text-sm">
+              過去の年度が選択されているため、データは読み取り専用です。
+            </p>
+          </div>
+        )}
         <table className="w-full border-collapse">
           <colgroup>
             {deleteMode && <col className="w-10" />}
@@ -611,242 +620,250 @@ export function TransactionTable({
           </thead>
           <tbody>
             {/* 新規登録用の空の入力行を固定で表示する */}
-            <tr className="border-t bg-blue-50">
-              {deleteMode && (
-                <td className="py-2 px-1 text-center">
-                  {/* 新規登録行には削除チェックボックスは表示しない */}
+            {isCurrentFiscalYear && (
+              <tr className="border-t bg-blue-50">
+                {deleteMode && (
+                  <td className="py-2 px-1 text-center">
+                    {/* 新規登録行には削除チェックボックスは表示しない */}
+                  </td>
+                )}
+                <td className="py-2 px-1 relative">
+                  <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
+                  <div className="relative">
+                    <Tooltip open={hasNewFieldError('date')}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          {hasNewFieldError('date') && (
+                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            value={newTransaction.date || ''}
+                            onChange={(e) =>
+                              handleNewFieldChange('date', e.target.value)
+                            }
+                            onBlur={() => handleNewFieldBlur('date')}
+                            ref={(el) => registerNewRowRef('date', el)}
+                            placeholder="YYYYMMDD"
+                            className={`h-8 text-sm ${
+                              hasNewFieldError('date')
+                                ? 'border-red-500 pl-8'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                        alignOffset={0}
+                        className="bg-red-50 text-red-800 border border-red-200 z-50"
+                      >
+                        {getNewFieldErrorMessage('date')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </td>
-              )}
-              <td className="py-2 px-1 relative">
-                <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
-                <div className="relative">
-                  <Tooltip open={hasNewFieldError('date')}>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        {hasNewFieldError('date') && (
-                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                        )}
-                        <Input
-                          type="text"
-                          value={newTransaction.date || ''}
-                          onChange={(e) =>
-                            handleNewFieldChange('date', e.target.value)
-                          }
-                          onBlur={() => handleNewFieldBlur('date')}
-                          ref={(el) => registerNewRowRef('date', el)}
-                          placeholder="YYYYMMDD"
-                          className={`h-8 text-sm ${
-                            hasNewFieldError('date')
-                              ? 'border-red-500 pl-8'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="start"
-                      sideOffset={5}
-                      alignOffset={0}
-                      className="bg-red-50 text-red-800 border border-red-200 z-50"
-                    >
-                      {getNewFieldErrorMessage('date')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-              <td className="py-2 px-1 relative">
-                <div className="relative">
-                  <Tooltip open={hasNewFieldError('other_cd')}>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        {hasNewFieldError('other_cd') && (
-                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                        )}
-                        <Input
-                          type="text"
-                          value={newTransaction.other_cd || ''}
-                          onChange={(e) =>
-                            handleNewFieldChange('other_cd', e.target.value)
-                          }
-                          onBlur={() => handleNewFieldBlur('other_cd')}
-                          ref={(el) => registerNewRowRef('other_cd', el)}
-                          placeholder="コード"
-                          className={`h-8 text-sm ${
-                            hasNewFieldError('other_cd')
-                              ? 'border-red-500 pl-8'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="start"
-                      sideOffset={5}
-                      alignOffset={0}
-                      className="bg-red-50 text-red-800 border border-red-200 z-50"
-                    >
-                      {getNewFieldErrorMessage('other_cd')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-              <td className="py-2 px-1">
-                <Input
-                  type="text"
-                  value={newTransaction.account_name || ''}
-                  readOnly
-                  tabIndex={-1}
-                  className="h-8 text-sm bg-gray-50"
-                />
-              </td>
-              <td className="py-2 px-1">
-                <div className="relative">
-                  <Tooltip open={hasNewFieldError('karikata_value')}>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        {hasNewFieldError('karikata_value') && (
-                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                        )}
-                        <Input
-                          type="text"
-                          value={
-                            newTransaction.karikata_value > 0
-                              ? formatCurrency(newTransaction.karikata_value)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const numericValue = e.target.value.replace(
-                              /[^\d]/g,
-                              '',
-                            )
-                            handleNewFieldChange(
-                              'karikata_value',
-                              numericValue ? Number(numericValue) : 0,
-                            )
-                          }}
-                          onBlur={() => handleNewFieldBlur('karikata_value')}
-                          ref={(el) => registerNewRowRef('karikata_value', el)}
-                          placeholder="借方金額"
-                          className={`h-8 text-sm text-right ${
-                            hasNewFieldError('karikata_value')
-                              ? 'border-red-500 pl-8'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="start"
-                      sideOffset={5}
-                      alignOffset={0}
-                      className="bg-red-50 text-red-800 border border-red-200 z-50"
-                    >
-                      {getNewFieldErrorMessage('karikata_value')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-              <td className="py-2 px-1">
-                <div className="relative">
-                  <Tooltip open={hasNewFieldError('kasikata_value')}>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        {hasNewFieldError('kasikata_value') && (
-                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                        )}
-                        <Input
-                          type="text"
-                          value={
-                            newTransaction.kasikata_value > 0
-                              ? formatCurrency(newTransaction.kasikata_value)
-                              : ''
-                          }
-                          onChange={(e) => {
-                            const numericValue = e.target.value.replace(
-                              /[^\d]/g,
-                              '',
-                            )
-                            handleNewFieldChange(
-                              'kasikata_value',
-                              numericValue ? Number(numericValue) : 0,
-                            )
-                          }}
-                          onBlur={() => handleNewFieldBlur('kasikata_value')}
-                          ref={(el) => registerNewRowRef('kasikata_value', el)}
-                          placeholder="貸方金額"
-                          className={`h-8 text-sm text-right ${
-                            hasNewFieldError('kasikata_value')
-                              ? 'border-red-500 pl-8'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="start"
-                      sideOffset={5}
-                      alignOffset={0}
-                      className="bg-red-50 text-red-800 border border-red-200 z-50"
-                    >
-                      {getNewFieldErrorMessage('kasikata_value')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-              <td className="py-2 px-1">
-                <div className="relative">
-                  <Tooltip open={hasNewFieldError('note')}>
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        {hasNewFieldError('note') && (
-                          <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                            <AlertCircle className="h-4 w-4" />
-                          </div>
-                        )}
-                        <Input
-                          type="text"
-                          value={newTransaction.note || ''}
-                          onChange={(e) =>
-                            handleNewFieldChange('note', e.target.value)
-                          }
-                          onBlur={() => handleNewFieldBlur('note')}
-                          ref={(el) => registerNewRowRef('note', el)}
-                          name="note"
-                          placeholder="摘要を入力"
-                          className={`h-8 text-sm ${
-                            hasNewFieldError('note')
-                              ? 'border-red-500 pl-8'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="start"
-                      sideOffset={5}
-                      alignOffset={0}
-                      className="bg-red-50 text-red-800 border border-red-200 z-50"
-                    >
-                      {getNewFieldErrorMessage('note')}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </td>
-              <td className="py-2 px-1 text-right text-gray-500 relative">-</td>
-            </tr>
+                <td className="py-2 px-1 relative">
+                  <div className="relative">
+                    <Tooltip open={hasNewFieldError('other_cd')}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          {hasNewFieldError('other_cd') && (
+                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            value={newTransaction.other_cd || ''}
+                            onChange={(e) =>
+                              handleNewFieldChange('other_cd', e.target.value)
+                            }
+                            onBlur={() => handleNewFieldBlur('other_cd')}
+                            ref={(el) => registerNewRowRef('other_cd', el)}
+                            placeholder="コード"
+                            className={`h-8 text-sm ${
+                              hasNewFieldError('other_cd')
+                                ? 'border-red-500 pl-8'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                        alignOffset={0}
+                        className="bg-red-50 text-red-800 border border-red-200 z-50"
+                      >
+                        {getNewFieldErrorMessage('other_cd')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </td>
+                <td className="py-2 px-1">
+                  <Input
+                    type="text"
+                    value={newTransaction.account_name || ''}
+                    readOnly
+                    tabIndex={-1}
+                    className="h-8 text-sm bg-gray-50"
+                  />
+                </td>
+                <td className="py-2 px-1">
+                  <div className="relative">
+                    <Tooltip open={hasNewFieldError('karikata_value')}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          {hasNewFieldError('karikata_value') && (
+                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            value={
+                              newTransaction.karikata_value > 0
+                                ? formatCurrency(newTransaction.karikata_value)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const numericValue = e.target.value.replace(
+                                /[^\d]/g,
+                                '',
+                              )
+                              handleNewFieldChange(
+                                'karikata_value',
+                                numericValue ? Number(numericValue) : 0,
+                              )
+                            }}
+                            onBlur={() => handleNewFieldBlur('karikata_value')}
+                            ref={(el) =>
+                              registerNewRowRef('karikata_value', el)
+                            }
+                            placeholder="借方金額"
+                            className={`h-8 text-sm text-right ${
+                              hasNewFieldError('karikata_value')
+                                ? 'border-red-500 pl-8'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                        alignOffset={0}
+                        className="bg-red-50 text-red-800 border border-red-200 z-50"
+                      >
+                        {getNewFieldErrorMessage('karikata_value')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </td>
+                <td className="py-2 px-1">
+                  <div className="relative">
+                    <Tooltip open={hasNewFieldError('kasikata_value')}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          {hasNewFieldError('kasikata_value') && (
+                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            value={
+                              newTransaction.kasikata_value > 0
+                                ? formatCurrency(newTransaction.kasikata_value)
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const numericValue = e.target.value.replace(
+                                /[^\d]/g,
+                                '',
+                              )
+                              handleNewFieldChange(
+                                'kasikata_value',
+                                numericValue ? Number(numericValue) : 0,
+                              )
+                            }}
+                            onBlur={() => handleNewFieldBlur('kasikata_value')}
+                            ref={(el) =>
+                              registerNewRowRef('kasikata_value', el)
+                            }
+                            placeholder="貸方金額"
+                            className={`h-8 text-sm text-right ${
+                              hasNewFieldError('kasikata_value')
+                                ? 'border-red-500 pl-8'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                        alignOffset={0}
+                        className="bg-red-50 text-red-800 border border-red-200 z-50"
+                      >
+                        {getNewFieldErrorMessage('kasikata_value')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </td>
+                <td className="py-2 px-1">
+                  <div className="relative">
+                    <Tooltip open={hasNewFieldError('note')}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          {hasNewFieldError('note') && (
+                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                              <AlertCircle className="h-4 w-4" />
+                            </div>
+                          )}
+                          <Input
+                            type="text"
+                            value={newTransaction.note || ''}
+                            onChange={(e) =>
+                              handleNewFieldChange('note', e.target.value)
+                            }
+                            onBlur={() => handleNewFieldBlur('note')}
+                            ref={(el) => registerNewRowRef('note', el)}
+                            name="note"
+                            placeholder="摘要を入力"
+                            className={`h-8 text-sm ${
+                              hasNewFieldError('note')
+                                ? 'border-red-500 pl-8'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        align="start"
+                        sideOffset={5}
+                        alignOffset={0}
+                        className="bg-red-50 text-red-800 border border-red-200 z-50"
+                      >
+                        {getNewFieldErrorMessage('note')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </td>
+                <td className="py-2 px-1 text-right text-gray-500 relative">
+                  -
+                </td>
+              </tr>
+            )}
             {transactions.length > 0 ? (
               transactions.map((transaction, index) => {
                 const id = transaction.journal_id.toString()
@@ -859,7 +876,7 @@ export function TransactionTable({
                     key={id}
                     className={`border-t ${isEdited ? 'bg-amber-50' : ''}`}
                   >
-                    {deleteMode && (
+                    {deleteMode && isCurrentFiscalYear && (
                       <td className="py-2 px-1 text-center">
                         <Checkbox
                           checked={selectedRows.includes(id)}
@@ -894,6 +911,7 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
+                                disabled={!isCurrentFiscalYear}
                               />
                             </div>
                           </TooltipTrigger>
@@ -938,6 +956,7 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
+                                disabled={!isCurrentFiscalYear}
                               />
                             </div>
                           </TooltipTrigger>
@@ -1003,6 +1022,7 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
+                                disabled={!isCurrentFiscalYear}
                               />
                             </div>
                           </TooltipTrigger>
@@ -1059,6 +1079,7 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
+                                disabled={!isCurrentFiscalYear}
                               />
                             </div>
                           </TooltipTrigger>
@@ -1101,6 +1122,7 @@ export function TransactionTable({
                                     : ''
                                 }`}
                                 placeholder="摘要を入力"
+                                disabled={!isCurrentFiscalYear}
                               />
                             </div>
                           </TooltipTrigger>

@@ -28,6 +28,7 @@ interface LedgerSearchFormProps {
   deleteMode: boolean
   selectedRows: string[]
   isSearchValid: boolean
+  isCurrentFiscalYear: boolean
   onFiscalYearChange: (value: string) => void
   onAccountChange: (value: string) => void
   onMonthChange: (value: string) => void
@@ -51,6 +52,7 @@ export function LedgerSearchForm({
   deleteMode,
   selectedRows,
   isSearchValid,
+  isCurrentFiscalYear,
   onFiscalYearChange,
   onAccountChange,
   onMonthChange,
@@ -202,7 +204,7 @@ export function LedgerSearchForm({
                 variant="outline"
                 onClick={onToggleDeleteMode}
                 className="gap-1"
-                disabled={!isSearchValid}
+                disabled={!isSearchValid || !isCurrentFiscalYear}
               >
                 <Trash2 className="h-4 w-4" />
                 削除モード

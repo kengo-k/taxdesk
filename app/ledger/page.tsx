@@ -598,6 +598,9 @@ export default function LedgerPage() {
             deleteMode={deleteMode}
             selectedRows={selectedRows}
             isSearchValid={isSearchValid}
+            isCurrentFiscalYear={
+              fiscalYears.find((fy) => fy.id === fiscalYear)?.isCurrent || false
+            }
             onFiscalYearChange={handleFiscalYearChange}
             onAccountChange={handleAccountChange}
             onMonthChange={handleMonthChange}
@@ -641,6 +644,10 @@ export default function LedgerPage() {
                       nendo={fiscalYear || ''}
                       month={month}
                       selectedAccountType={getSelectedAccountType()}
+                      isCurrentFiscalYear={
+                        fiscalYears.find((fy) => fy.id === fiscalYear)
+                          ?.isCurrent || false
+                      }
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onBlur={handleBlur}
