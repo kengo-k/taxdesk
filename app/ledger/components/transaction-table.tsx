@@ -15,6 +15,7 @@ import {
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
 import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
+import { UpdateLedgerRequest } from '@/lib/services/ledger/update-ledger'
 
 import { MergedAccount } from './types'
 import { formatCurrency } from './utils'
@@ -29,11 +30,7 @@ interface TransactionTableProps {
   month?: string | null // 選択された月（nullの場合は制約なし）
   selectedAccountType?: 'L' | 'R' // 選択中の勘定科目のタイプ（L:左側/借方が+、R:右側/貸方が+）
   onToggleRowSelection: (id: string) => void
-  onUpdateTransaction: (
-    id: string,
-    field: keyof LedgerListItem,
-    value: string | number,
-  ) => void
+  onUpdateTransaction: (transaction: UpdateLedgerRequest) => void
   onBlur: (id: string, field: 'date' | 'debit' | 'credit') => void
   onCreateTransaction: (transaction: CreateLedgerRequest) => void
 }
@@ -323,7 +320,17 @@ export function TransactionTable({
       setEditedRowIds(editedRowIds.filter((rowId) => rowId !== id))
 
       // ここで将来的に更新APIを呼び出す
-      // onUpdateRow(id, transaction)
+      onUpdateTransaction({
+        id: parseInt(id),
+        ledger_cd: ledger_cd,
+        nendo: nendo,
+        date: transaction.date,
+        counter_cd: transaction.other_cd,
+        karikata_value: transaction.karikata_value,
+        kasikata_value: transaction.kasikata_value,
+        note: transaction.note,
+        checked: '0',
+      })
     }
   }
 

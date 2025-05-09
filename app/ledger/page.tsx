@@ -41,6 +41,7 @@ import {
   updateTransaction,
 } from '@/lib/redux/features/transactionSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { UpdateLedgerRequest } from '@/lib/services/ledger/update-ledger'
 
 import { DeleteConfirmDialog } from './components/delete-confirm-dialog'
 import { LedgerSearchForm } from './components/ledger-search-form'
@@ -346,12 +347,8 @@ export default function LedgerPage() {
   }
 
   // 取引データの更新関数
-  const handleUpdateTransaction = (
-    id: string,
-    field: keyof (typeof transactions)[0],
-    value: string | number,
-  ) => {
-    dispatch(updateTransaction({ id: Number(id), field, value }))
+  const handleUpdateTransaction = (transaction: UpdateLedgerRequest) => {
+    dispatch(updateTransaction(transaction))
   }
 
   // フォーカスが外れた時のハンドラー

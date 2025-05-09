@@ -9,6 +9,7 @@ import {
 import { countLedgers } from '@/lib/services/ledger/count-ledgers'
 import { createLedger } from '@/lib/services/ledger/create-ledger'
 import { listLedgers } from '@/lib/services/ledger/list-ledgers'
+import { updateLedger } from '@/lib/services/ledger/update-ledger'
 
 export function listLedgersHandler(
   conn: Connection,
@@ -61,7 +62,7 @@ export function createLedgerHandler(
       kasikata_value:
         requestData.kasikata_value > 0 ? requestData.kasikata_value : undefined,
       note: requestData.note || null,
-      checked: requestData.checked || 'N', // チェック状態、デフォルトはN
+      checked: '0',
     }
 
     await createLedger(tx, createLedgerData)
@@ -70,5 +71,35 @@ export function createLedgerHandler(
   })
 }
 
+export function updateLedgerHandler(
+  conn: Connection,
+  { req, ctx }: { req: NextRequest; ctx: RouteContext },
+) {
+  return withTransaction(conn, async (tx) => {
+    const { year: nendo, ledger_cd } = await ctx.params
+    const requestData = await req.json()
+
+    // リクエストデータとURLパラメータを結合
+    const createLedgerData = {
+      id: requestData.id,
+      nendo, // URLパスから取得した年度
+      ledger_cd, // URLパスから取得した元帳科目コード
+      date: requestData.date,
+      counter_cd: requestData.other_cd || requestData.counter_cd, // other_cdまたはcounter_cdをcounter_cdとして使用
+      karikata_value:
+        requestData.karikata_value > 0 ? requestData.karikata_value : undefined,
+      kasikata_value:
+        requestData.kasikata_value > 0 ? requestData.kasikata_value : undefined,
+      note: requestData.note || null,
+      checked: '0',
+    }
+
+    await updateLedger(tx, createLedgerData)
+
+    return { success: true, message: '取引が正常に登録されました' }
+  })
+}
+
 export const GET = createApiRoute(listLedgersHandler)
 export const POST = createApiRoute(createLedgerHandler)
+export const PUT = createApiRoute(updateLedgerHandler)

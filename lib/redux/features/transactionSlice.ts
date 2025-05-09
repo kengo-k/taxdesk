@@ -9,6 +9,7 @@ import {
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
 import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
+import { UpdateLedgerRequest } from '@/lib/services/ledger/update-ledger'
 
 // 取引データの型定義
 export interface Transaction {
@@ -197,6 +198,38 @@ export const createTransaction = createAsyncThunk<
     }
   },
 )
+
+// 非同期アクション - 取引データの更新
+export const updateTransaction = createAsyncThunk<
+  { data: LedgerListItem },
+  UpdateLedgerRequest
+>(
+  'transaction/updateTransaction',
+  async (transaction: UpdateLedgerRequest, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${transaction.nendo}/ledger/${transaction.ledger_cd}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(transaction),
+        },
+      )
+
+      if (!response.ok) {
+        throw new Error(`APIエラー: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '取引データの作成中にエラーが発生しました',
+      )
+    }
+  },
+)
+
 // スライスの作成
 export const transactionSlice = createSlice({
   name: 'transaction',
@@ -213,29 +246,6 @@ export const transactionSlice = createSlice({
     clearTransactions: (state) => {
       state.transactions = []
       state.all_count = 0
-    },
-    // 取引データの更新
-    updateTransaction: (
-      state,
-      action: PayloadAction<{
-        id: number
-        field: keyof LedgerListItem
-        value: string | number
-      }>,
-    ) => {
-      console.log('updateTransaction', action.payload)
-      const { id, field, value } = action.payload
-      const index = state.transactions.findIndex(
-        (transaction) => transaction.journal_id === id,
-      )
-      if (index !== -1) {
-        const transaction = { ...state.transactions[index] }
-        console.log('transaction', transaction)
-        // const errors = { ...transaction.errors }
-        // const showTooltips = { ...transaction.shozwTooltips }
-        transaction[field] = value as never
-        state.transactions[index] = { ...transaction }
-      }
     },
     // フォーカスが外れた時のエラー表示
     setShowTooltip: (
@@ -347,7 +357,6 @@ const validateAmount = (amount: string): string | undefined => {
 // アクションのエクスポート
 export const {
   updateSearchParams,
-  updateTransaction,
   setShowTooltip,
   setSelectedRows,
   deleteTransactions,
