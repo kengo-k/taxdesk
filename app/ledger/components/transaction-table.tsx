@@ -267,6 +267,41 @@ export function TransactionTable({
 
     // 摘要フィールドの場合、行全体のバリデーションも実行
     if (field === 'note') {
+      // 変更の有無をチェック
+      const originalTransaction = transactions.find(
+        (t) => t.journal_id.toString() === id,
+      )
+      if (!originalTransaction) return
+
+      // 変更があるかどうかをチェック
+      const hasChanges = Object.keys(transaction).some((key) => {
+        // 特定のフィールドのみを比較
+        const fieldsToCompare = [
+          'date',
+          'other_cd',
+          'karikata_value',
+          'kasikata_value',
+          'note',
+        ]
+        if (!fieldsToCompare.includes(key)) return false
+
+        // 数値の場合は数値として比較
+        if (key === 'karikata_value' || key === 'kasikata_value') {
+          return transaction[key] !== (originalTransaction as any)[key]
+        }
+
+        // 文字列の場合は文字列として比較
+        return transaction[key] !== (originalTransaction as any)[key]
+      })
+
+      // 変更がない場合は処理を終了
+      if (!hasChanges) {
+        // 編集中リストからも削除
+        setEditedRowIds(editedRowIds.filter((rowId) => rowId !== id))
+        return
+      }
+
+      // 変更がある場合のみバリデーションを実行
       validateEntireRow(id)
     }
   }
