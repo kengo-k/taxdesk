@@ -315,8 +315,8 @@ async function listBackups() {
       .reverse()
 
     console.log(`Recent backups in environment '${targetEnv}':\n`)
-    console.log('ID | Timestamp | Comment')
-    console.log('-'.repeat(80))
+    console.log('ID | Timestamp | Migration | Comment')
+    console.log('-'.repeat(100))
 
     // Fetch metadata for each backup
     for (let i = 0; i < Math.min(backups.length, 10); i++) {
@@ -333,10 +333,11 @@ async function listBackups() {
         const metadata = JSON.parse(content)
 
         const comment = metadata.comment || 'No comment'
-        console.log(`${i + 1}. | ${backup} | ${comment}`)
+        const migrationName = metadata.migrationInfo?.migrationName || 'Unknown'
+        console.log(`${i + 1}. | ${backup} | ${migrationName} | ${comment}`)
       } catch (error) {
         // If metadata can't be retrieved, show backup without comment
-        console.log(`${i + 1}. | ${backup} | [Metadata unavailable]`)
+        console.log(`${i + 1}. | ${backup} | Unknown | [Metadata unavailable]`)
       }
     }
 
