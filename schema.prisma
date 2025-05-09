@@ -19,9 +19,10 @@ model journals {
   kasikata_cd    String   @db.VarChar(5)
   kasikata_value Int
   note           String?
-  checked        String   @db.VarChar
+  checked        String   @db.VarChar(1) @default("0")
   created_at     DateTime @db.Timestamp(6)
   updated_at     DateTime @db.Timestamp(6)
+  deleted        String   @db.VarChar(1) @default("0")
 
   @@index([nendo, checked, date], map: "journals_checked_index")
   @@index([nendo, karikata_cd, kasikata_cd, date], map: "journals_code_index")
