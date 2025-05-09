@@ -323,6 +323,28 @@ export default function LedgerPage() {
     updateUrlParams()
   }
 
+  // 新規取引作成ハンドラー
+  const handleCreateTransaction = async (transaction: any) => {
+    dispatch(createTransaction(transaction))
+      .unwrap()
+      .then(() => {
+        if (fiscalYear) {
+          dispatch(
+            fetchTransactions({
+              nendo: fiscalYear,
+              code: account,
+              month: month,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
+        }
+      })
+      .catch((error) => {
+        console.error('取引作成エラー:', error)
+      })
+  }
+
   // 取引データの更新関数
   const handleUpdateTransaction = (
     id: string,
@@ -335,11 +357,6 @@ export default function LedgerPage() {
   // フォーカスが外れた時のハンドラー
   const handleBlur = (id: string, field: 'date' | 'debit' | 'credit') => {
     //dispatch(setShowTooltip({ id, field }))
-  }
-
-  // 新規取引作成ハンドラー
-  const handleCreateTransaction = async (transaction: any) => {
-    dispatch(createTransaction(transaction))
   }
 
   // CSVダウンロード処理
