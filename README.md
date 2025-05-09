@@ -86,3 +86,69 @@ Follow these steps to set up the project after cloning the repository from Git.
    3. The Prisma client is regenerated to reflect the new schema changes.
 
    Note: This command should only be used in development environments. For production environments, it is recommended to use `migrate:deploy`.
+
+## Database Backup Tool
+
+The project includes a database backup tool that exports database tables to CSV format and uploads them to an AWS S3 bucket.
+
+### Prerequisites
+
+Before using the backup tool, set the following environment variables:
+
+```
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=ap-northeast-1
+AWS_ENDPOINT=https://s3.ap-northeast-1.amazonaws.com
+BACKUP_BUCKETS=your_bucket_name
+BACKUP_TARGET_ENV=dev
+```
+
+### Usage
+
+The backup tool is available as an npm script:
+
+1. **Create a backup with a comment**:
+
+   ```bash
+   npm run backup:dev -- --create "Your backup comment"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -c "Your backup comment"
+   ```
+
+2. **List recent backups**:
+
+   ```bash
+   npm run backup:dev -- --list
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -l
+   ```
+
+3. **Get help**:
+
+   ```bash
+   npm run backup:dev -- --help
+   ```
+
+### Backup Structure
+
+The backups are stored in S3 with the following structure:
+
+```
+s3://your_bucket_name/environment_name/timestamp/
+```
+
+Each backup includes:
+
+- CSV files for each database table
+- A metadata.json file with backup information, including your comment
+
+The backup tool automatically removes query parameters from the database connection string to ensure compatibility with the psql command.
