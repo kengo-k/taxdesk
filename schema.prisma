@@ -70,6 +70,8 @@ model saimoku_masters {
   description        String?
   created_at         DateTime                 @db.Timestamp(6)
   updated_at         DateTime                 @db.Timestamp(6)
+  valid_from         String                   @db.VarChar(8) @default("20000101")
+  valid_to           String                   @db.VarChar(8) @default("99991231")
 }
 
 model backups {
