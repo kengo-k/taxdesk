@@ -6,6 +6,7 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
+import { DeleteJournalsRequest } from '@/lib/services/journal/delete-journals'
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
 import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
@@ -230,6 +231,37 @@ export const updateTransaction = createAsyncThunk<
   },
 )
 
+// 非同期アクション - 取引データの削除
+export const deleteTransactions = createAsyncThunk<
+  { data: { deletedIds: string[] } },
+  DeleteJournalsRequest
+>('transaction/deleteTransactions', async (request, { rejectWithValue }) => {
+  try {
+    const response = await fetch(
+      `/api/fiscal-years/${request.fiscal_year}/journal`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: request.ids }),
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`APIエラー: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error
+        ? error.message
+        : '取引データの削除中にエラーが発生しました',
+    )
+  }
+})
+
 // スライスの作成
 export const transactionSlice = createSlice({
   name: 'transaction',
@@ -359,7 +391,6 @@ export const {
   updateSearchParams,
   setShowTooltip,
   setSelectedRows,
-  deleteTransactions,
   clearTransactions,
 } = transactionSlice.actions
 

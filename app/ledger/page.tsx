@@ -465,7 +465,12 @@ export default function LedgerPage() {
   // 取引削除処理
   const handleDelete = () => {
     // Reduxアクションで取引を削除
-    dispatch(deleteTransactions(selectedRows))
+    dispatch(
+      deleteTransactions({
+        fiscal_year: fiscalYear || '',
+        ids: selectedRows.map((id) => parseInt(id)),
+      }),
+    )
 
     toast({
       title: '取引を削除しました',
@@ -530,6 +535,39 @@ export default function LedgerPage() {
     return 'L' // デフォルト値
   }
 
+  const handleDeleteTransactions = async (ids: string[]) => {
+    try {
+      await dispatch(
+        deleteTransactions({
+          fiscal_year: fiscalYear || '',
+          ids: ids.map((id) => parseInt(id)),
+        }),
+      ).unwrap()
+      toast({
+        title: '削除完了',
+        description: `${ids.length}件の取引を削除しました`,
+      })
+      // 選択状態をクリア
+      setSelectedRows([])
+      // 取引一覧を再取得
+      await dispatch(
+        fetchTransactions({
+          nendo: fiscalYear || '',
+          code: account,
+          month: month || null,
+          page: currentPage,
+          pageSize,
+        }),
+      )
+    } catch (error) {
+      toast({
+        title: 'エラー',
+        description: '取引の削除に失敗しました',
+        variant: 'destructive',
+      })
+    }
+  }
+
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-6">
@@ -566,6 +604,7 @@ export default function LedgerPage() {
             onToggleDeleteMode={toggleDeleteMode}
             onDeleteClick={handleDeleteClick}
             onDownloadCSV={handleDownloadCSV}
+            onDeleteTransactions={handleDeleteTransactions}
           />
 
           {/* 元帳一覧セクション */}

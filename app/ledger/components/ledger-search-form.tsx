@@ -34,6 +34,7 @@ interface LedgerSearchFormProps {
   onToggleDeleteMode: () => void
   onDeleteClick: () => void
   onDownloadCSV: () => void
+  onDeleteTransactions: (ids: string[]) => void
 }
 
 export function LedgerSearchForm({
@@ -56,6 +57,7 @@ export function LedgerSearchForm({
   onToggleDeleteMode,
   onDeleteClick,
   onDownloadCSV,
+  onDeleteTransactions,
 }: LedgerSearchFormProps) {
   return (
     <Card className="mb-6">
@@ -186,7 +188,7 @@ export function LedgerSearchForm({
               </Button>
               <Button
                 variant="destructive"
-                onClick={onDeleteClick}
+                onClick={() => onDeleteTransactions(selectedRows)}
                 className="gap-1"
                 disabled={selectedRows.length === 0}
               >
