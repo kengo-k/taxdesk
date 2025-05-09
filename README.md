@@ -132,6 +132,12 @@ The backup tool is available as an npm script:
    npm run backup:dev -- -l
    ```
 
+   The list command displays:
+
+   - Backup timestamp
+   - Latest applied Prisma migration name
+   - Backup comment
+
 3. **Get help**:
 
    ```bash
