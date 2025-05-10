@@ -303,7 +303,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
-              title="現金残高"
+              title={`資産の内訳 (${selectedYearId}年度)`}
               value={'Loading...'}
               data={[]}
               labels={[]}
@@ -314,7 +314,7 @@ export default function Home() {
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
-              title="本年度の収入"
+              title={`収入の内訳 (${selectedYearId}年度)`}
               value={'Loading...'}
               data={[]}
               labels={[]}
@@ -325,7 +325,7 @@ export default function Home() {
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
-              title="本年度の支出"
+              title={`支出の内訳 (${selectedYearId}年度)`}
               value={
                 expenseBreakdownByYearLoading
                   ? 'Loading...'
@@ -368,7 +368,7 @@ export default function Home() {
         {/* 月別収入グラフ */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <StackedBarChart
-            title={`月別収入（${selectedYearId}年度）`}
+            title={`収入の内訳 月別（${selectedYearId}年度）`}
             data={{ labels: [], datasets: [] }}
           />
         </div>
@@ -376,7 +376,7 @@ export default function Home() {
         {/* 月別支出グラフ */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <StackedBarChart
-            title={`月別支出（${selectedYearId}年度）`}
+            title={`支出の内訳 月別（${selectedYearId}年度）`}
             data={
               expenseBreakdownLoading
                 ? { labels: [], datasets: [] }
