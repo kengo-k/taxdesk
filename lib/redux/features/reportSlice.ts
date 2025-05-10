@@ -1,12 +1,16 @@
-import type { RootState } from '../store'
-
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import { ExpenseBreakdownByMonthResponse } from '@/lib/services/reports/calc-expense-breakdown-by-month'
+import { ExpenseBreakdownByYearResponse } from '@/lib/services/reports/calc-expense-breakdown-by-year'
 
 interface ReportState {
   expenseBreakdownByMonth: {
-    data: ExpenseBreakdownByMonthResponse[]
+    data: ExpenseBreakdownByMonthResponse[] | null
+    loading: boolean
+    error: string | null
+  }
+  expenseBreakdownByYear: {
+    data: ExpenseBreakdownByYearResponse[] | null
     loading: boolean
     error: string | null
   }
@@ -14,13 +18,18 @@ interface ReportState {
 
 const initialState: ReportState = {
   expenseBreakdownByMonth: {
-    data: [],
+    data: null,
+    loading: false,
+    error: null,
+  },
+  expenseBreakdownByYear: {
+    data: null,
     loading: false,
     error: null,
   },
 }
 
-// 月次支出内訳データを取得する非同期アクション
+// 月別支出内訳の取得
 export const fetchExpenseBreakdownByMonth = createAsyncThunk(
   'report/fetchExpenseBreakdownByMonth',
   async (fiscalYear: string) => {
@@ -28,10 +37,23 @@ export const fetchExpenseBreakdownByMonth = createAsyncThunk(
       `/api/fiscal-years/${fiscalYear}/reports/expense-breakdown/by-month`,
     )
     if (!response.ok) {
-      throw new Error('月次支出内訳データの取得に失敗しました')
+      throw new Error('Failed to fetch expense breakdown by month')
     }
-    const data = await response.json()
-    return data
+    return response.json()
+  },
+)
+
+// 年度支出内訳の取得
+export const fetchExpenseBreakdownByYear = createAsyncThunk(
+  'report/fetchExpenseBreakdownByYear',
+  async (fiscalYear: string) => {
+    const response = await fetch(
+      `/api/fiscal-years/${fiscalYear}/reports/expense-breakdown`,
+    )
+    if (!response.ok) {
+      throw new Error('Failed to fetch expense breakdown by year')
+    }
+    return response.json()
   },
 )
 
@@ -39,52 +61,65 @@ const reportSlice = createSlice({
   name: 'report',
   initialState,
   reducers: {
-    // 月次支出内訳データをクリアするアクション
     clearExpenseBreakdownByMonth: (state) => {
-      state.expenseBreakdownByMonth = {
-        data: [],
-        loading: false,
-        error: null,
-      }
+      state.expenseBreakdownByMonth = initialState.expenseBreakdownByMonth
+    },
+    clearExpenseBreakdownByYear: (state) => {
+      state.expenseBreakdownByYear = initialState.expenseBreakdownByYear
     },
   },
   extraReducers: (builder) => {
+    // 月別支出内訳の取得
     builder
-      // 月次支出内訳データ取得開始
       .addCase(fetchExpenseBreakdownByMonth.pending, (state) => {
-        state.expenseBreakdownByMonth = {
-          data: [],
-          loading: true,
-          error: null,
-        }
+        state.expenseBreakdownByMonth.loading = true
+        state.expenseBreakdownByMonth.error = null
       })
-      // 月次支出内訳データ取得成功
       .addCase(fetchExpenseBreakdownByMonth.fulfilled, (state, action) => {
-        state.expenseBreakdownByMonth = {
-          data: action.payload.data,
-          loading: false,
-          error: null,
-        }
+        state.expenseBreakdownByMonth.loading = false
+        state.expenseBreakdownByMonth.data = action.payload.data
       })
-      // 月次支出内訳データ取得失敗
       .addCase(fetchExpenseBreakdownByMonth.rejected, (state, action) => {
-        state.expenseBreakdownByMonth = {
-          data: [],
-          loading: false,
-          error:
-            action.error.message || '月次支出内訳データの取得に失敗しました',
-        }
+        state.expenseBreakdownByMonth.loading = false
+        state.expenseBreakdownByMonth.error =
+          action.error.message || 'Unknown error'
+      })
+
+    // 年度支出内訳の取得
+    builder
+      .addCase(fetchExpenseBreakdownByYear.pending, (state) => {
+        state.expenseBreakdownByYear.loading = true
+        state.expenseBreakdownByYear.error = null
+      })
+      .addCase(fetchExpenseBreakdownByYear.fulfilled, (state, action) => {
+        state.expenseBreakdownByYear.loading = false
+        state.expenseBreakdownByYear.data = action.payload.data
+      })
+      .addCase(fetchExpenseBreakdownByYear.rejected, (state, action) => {
+        state.expenseBreakdownByYear.loading = false
+        state.expenseBreakdownByYear.error =
+          action.error.message || 'Unknown error'
       })
   },
 })
 
-// セレクター
-export const selectExpenseBreakdownByMonth = (state: RootState) =>
-  state.report.expenseBreakdownByMonth.data
-export const selectExpenseBreakdownByMonthLoading = (state: RootState) =>
-  state.report.expenseBreakdownByMonth.loading
-export const selectExpenseBreakdownByMonthError = (state: RootState) =>
-  state.report.expenseBreakdownByMonth.error
+// アクションのエクスポート
+export const { clearExpenseBreakdownByMonth, clearExpenseBreakdownByYear } =
+  reportSlice.actions
 
-export const { clearExpenseBreakdownByMonth } = reportSlice.actions
+// セレクターのエクスポート
+export const selectExpenseBreakdownByMonth = (state: { report: ReportState }) =>
+  state.report.expenseBreakdownByMonth.data
+
+export const selectExpenseBreakdownByMonthLoading = (state: {
+  report: ReportState
+}) => state.report.expenseBreakdownByMonth.loading
+
+export const selectExpenseBreakdownByYear = (state: { report: ReportState }) =>
+  state.report.expenseBreakdownByYear.data
+
+export const selectExpenseBreakdownByYearLoading = (state: {
+  report: ReportState
+}) => state.report.expenseBreakdownByYear.loading
+
 export default reportSlice.reducer

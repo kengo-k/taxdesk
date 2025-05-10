@@ -1,31 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import {
+  Connection,
+  RouteContext,
+  createApiRoute,
+  withTransaction,
+} from '@/lib/api-transaction'
+import { calcExpenseBreakdownByYear } from '@/lib/services/reports/calc-expense-breakdown-by-year'
 
-import { getExpenseBreakdown } from '@/lib/services/reports/get-expense-breakdown'
-
-// モック実装を使用する場合は以下のようにインポートを変更する
-// import { getExpenseBreakdownMock as getExpenseBreakdown } from '@/lib/services/reports/get-expense-breakdown'
-
-export async function GET(request: NextRequest) {
-  try {
-    // クエリパラメータから年度を取得
-    const searchParams = request.nextUrl.searchParams
-    const year = searchParams.get('year') || '2024'
-
-    // 支出内訳データを取得
-    const expenseBreakdownData = await getExpenseBreakdown(year)
-
-    return NextResponse.json({
-      success: true,
-      data: expenseBreakdownData,
-    })
-  } catch (error) {
-    console.error('支出内訳データの取得に失敗しました:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: '支出内訳データの取得に失敗しました',
-      },
-      { status: 500 },
-    )
-  }
+export function calcExpenseBreakdownByYearHandler(
+  conn: Connection,
+  { ctx }: { ctx: RouteContext },
+) {
+  return withTransaction(conn, async (tx) => {
+    const { year: fiscalYear } = await ctx.params
+    return await calcExpenseBreakdownByYear(tx, { fiscalYear })
+  })
 }
+
+export const GET = createApiRoute(calcExpenseBreakdownByYearHandler)

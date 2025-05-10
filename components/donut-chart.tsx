@@ -54,7 +54,7 @@ export function DonutChart({
                 data,
                 backgroundColor: colors,
                 borderWidth: 0,
-                borderRadius: 4,
+                borderRadius: 1,
               },
             ],
           },
@@ -65,7 +65,8 @@ export function DonutChart({
             plugins: {
               legend: {
                 display: true,
-                position: 'bottom',
+                position: 'right',
+                align: 'center',
                 labels: {
                   boxWidth: 10,
                   padding: 10,
@@ -84,7 +85,7 @@ export function DonutChart({
                             : dataset.backgroundColor
 
                         return {
-                          text: `${label}: ${value}%`,
+                          text: `${label}: ${formatCurrency(value)}`,
                           fillStyle: backgroundColor as Color,
                           strokeStyle: backgroundColor as Color,
                           lineWidth: 0,
@@ -125,11 +126,11 @@ export function DonutChart({
 
   return (
     <div className="relative h-full">
-      <h2 className="font-medium text-left mb-2">{title}</h2>
-      <div className="h-52 mb-8 relative">
-        <div className="absolute inset-0 flex items-center justify-center text-center z-10 pointer-events-none">
-          <h3 className="text-base font-medium">{value}</h3>
-        </div>
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="font-medium">{title}</h2>
+        <h3 className="text-xl font-medium">{value}</h3>
+      </div>
+      <div className="h-52  relative">
         <canvas ref={chartRef} />
       </div>
     </div>

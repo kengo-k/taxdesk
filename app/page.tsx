@@ -34,54 +34,14 @@ import {
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
   fetchExpenseBreakdownByMonth,
+  fetchExpenseBreakdownByYear,
   selectExpenseBreakdownByMonth,
   selectExpenseBreakdownByMonthLoading,
+  selectExpenseBreakdownByYear,
+  selectExpenseBreakdownByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getChartColors } from '@/lib/utils/chart-colors'
-
-// 税額シミュレーションデータの型定義
-type TaxSimulationData = {
-  yearData: {
-    income: number
-    expense: number
-    profit: number
-    taxEstimates: {
-      corporateTax: number
-      localCorporateTax: number
-      totalCorporateTax: number
-      prefecturalTax: number
-      municipalTax: number
-      corporateInhabitantTaxPerCapita: number
-      totalInhabitantTax: number
-      businessTax: number
-      specialLocalCorporateTax: number
-      totalBusinessTax: number
-      consumptionTax: number
-      localConsumptionTax: number
-      totalConsumptionTax: number
-      total: number
-    }
-    paymentSchedule: Array<{
-      period: string
-      dueDate: string
-      taxType: string
-      amount: number
-      status: string
-    }>
-  }
-  taxRates: {
-    corporateTaxRate: number
-    localCorporateTaxRate: number
-    prefecturalTaxRate: number
-    municipalTaxRate: number
-    corporateInhabitantTaxPerCapita: number
-    businessTaxRate: number
-    specialLocalCorporateTaxRate: number
-    consumptionTaxRate: number
-    localConsumptionTaxRate: number
-  }
-}
 
 export default function Home() {
   const dispatch = useAppDispatch()
@@ -95,10 +55,12 @@ export default function Home() {
   const expenseBreakdownLoading = useAppSelector(
     selectExpenseBreakdownByMonthLoading,
   )
+  const expenseBreakdownByYear = useAppSelector(selectExpenseBreakdownByYear)
+  const expenseBreakdownByYearLoading = useAppSelector(
+    selectExpenseBreakdownByYearLoading,
+  )
   const error = useAppSelector(selectFiscalYearError)
 
-  const [taxSimulationData, setTaxSimulationData] =
-    useState<TaxSimulationData | null>(null)
   const [dataError, setDataError] = useState<string | null>(null)
 
   // コンポーネントマウント時に年度一覧を取得
@@ -109,6 +71,12 @@ export default function Home() {
   useEffect(() => {
     if (selectedYearId) {
       dispatch(fetchExpenseBreakdownByMonth(selectedYearId))
+    }
+  }, [dispatch, selectedYearId])
+
+  useEffect(() => {
+    if (selectedYearId) {
+      dispatch(fetchExpenseBreakdownByYear(selectedYearId))
     }
   }, [dispatch, selectedYearId])
 
@@ -358,11 +326,41 @@ export default function Home() {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title="本年度の支出"
-              value={'Loading...'}
-              data={[]}
-              labels={[]}
-              colors={[]}
-              amounts={[]}
+              value={
+                expenseBreakdownByYearLoading
+                  ? 'Loading...'
+                  : formatCurrency(
+                      expenseBreakdownByYear?.reduce(
+                        (sum, item) => sum + item.value,
+                        0,
+                      ) || 0,
+                    )
+              }
+              data={
+                expenseBreakdownByYearLoading
+                  ? []
+                  : expenseBreakdownByYear?.map((item) => item.value) || []
+              }
+              labels={
+                expenseBreakdownByYearLoading
+                  ? []
+                  : expenseBreakdownByYear?.map(
+                      (item) => item.saimoku_ryaku_name,
+                    ) || []
+              }
+              colors={
+                expenseBreakdownByYearLoading
+                  ? []
+                  : getChartColors(
+                      'expense',
+                      expenseBreakdownByYear?.length || 0,
+                    )
+              }
+              amounts={
+                expenseBreakdownByYearLoading
+                  ? []
+                  : expenseBreakdownByYear?.map((item) => item.value) || []
+              }
             />
           </div>
         </div>
