@@ -32,7 +32,13 @@ import {
   selectFiscalYearLoading,
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
+import {
+  fetchExpenseBreakdownByMonth,
+  selectExpenseBreakdownByMonth,
+  selectExpenseBreakdownByMonthLoading,
+} from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { getChartColors } from '@/lib/utils/chart-colors'
 
 // 税額シミュレーションデータの型定義
 type TaxSimulationData = {
@@ -84,11 +90,15 @@ export default function Home() {
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
   const loading = useAppSelector(selectFiscalYearLoading)
+  const expenseBreakdownByMonth =
+    useAppSelector(selectExpenseBreakdownByMonth) || []
+  const expenseBreakdownLoading = useAppSelector(
+    selectExpenseBreakdownByMonthLoading,
+  )
   const error = useAppSelector(selectFiscalYearError)
 
   const [taxSimulationData, setTaxSimulationData] =
     useState<TaxSimulationData | null>(null)
-  const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState<string | null>(null)
 
   // コンポーネントマウント時に年度一覧を取得
@@ -96,34 +106,11 @@ export default function Home() {
     dispatch(fetchFiscalYears())
   }, [dispatch])
 
-  // APIからデータを取得
   useEffect(() => {
-    const fetchData = async () => {
-      if (!selectedYearId) return // 年度が選択されていない場合は何もしない
-
-      setDataLoading(true)
-      setDataError(null)
-
-      try {
-        // 税額シミュレーションデータの取得
-        const taxResponse = await fetch(`/api/reports/tax/${selectedYearId}`)
-        if (!taxResponse.ok) {
-          throw new Error(
-            `税額データの取得に失敗しました: ${taxResponse.status}`,
-          )
-        }
-        const taxData = await taxResponse.json()
-        setTaxSimulationData(taxData)
-      } catch (error) {
-        console.error('エラーが発生しました:', error)
-        setDataError('データの取得中にエラーが発生しました')
-      } finally {
-        setDataLoading(false)
-      }
+    if (selectedYearId) {
+      dispatch(fetchExpenseBreakdownByMonth(selectedYearId))
     }
-
-    fetchData()
-  }, [selectedYearId])
+  }, [dispatch, selectedYearId])
 
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
@@ -140,7 +127,7 @@ export default function Home() {
   }
 
   // データ読み込み中の表示
-  if (loading || dataLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
         <div className="text-center">
@@ -392,7 +379,62 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <StackedBarChart
             title={`月別支出（${selectedYearId}年度）`}
-            data={{ labels: [], datasets: [] }}
+            data={
+              expenseBreakdownLoading
+                ? { labels: [], datasets: [] }
+                : {
+                    labels: [
+                      '4月',
+                      '5月',
+                      '6月',
+                      '7月',
+                      '8月',
+                      '9月',
+                      '10月',
+                      '11月',
+                      '12月',
+                      '1月',
+                      '2月',
+                      '3月',
+                    ],
+                    datasets: Object.values(
+                      expenseBreakdownByMonth.reduce(
+                        (acc, item) => {
+                          if (!acc[item.saimoku_cd]) {
+                            acc[item.saimoku_cd] = {
+                              label: item.saimoku_full_name,
+                              data: new Array(12).fill(0),
+                              backgroundColor: '', // 一時的に空文字列を設定
+                            }
+                          }
+                          const monthIndex = (parseInt(item.month) + 8) % 12
+                          acc[item.saimoku_cd].data[monthIndex] = item.value
+                          return acc
+                        },
+                        {} as Record<
+                          string,
+                          {
+                            label: string
+                            data: number[]
+                            backgroundColor: string
+                          }
+                        >,
+                      ),
+                    )
+                      .sort((a, b) => {
+                        const sumA = a.data.reduce((sum, val) => sum + val, 0)
+                        const sumB = b.data.reduce((sum, val) => sum + val, 0)
+                        return sumB - sumA
+                      })
+                      .map((dataset, index, sortedDatasets) => ({
+                        ...dataset,
+                        backgroundColor: getChartColors(
+                          'expense',
+                          sortedDatasets.length,
+                        )[index],
+                      })),
+                  }
+            }
           />
         </div>
       </section>
