@@ -125,18 +125,20 @@ export function DonutChart({
   }, [data, labels, colors, amounts])
 
   return (
-    <div className="relative h-full">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="font-medium">{title}</h2>
-        <h3 className="text-xl font-medium">{value}</h3>
+    <div className="flex flex-col h-full">
+      <div className="flex justify-between items-start mb-4">
+        <h3 className="font-medium text-lg">{title}</h3>
+        <span className="font-bold text-lg">{value}</span>
       </div>
-      <div className="h-52 relative">
+      <div className="flex-1 flex items-center justify-center">
         {data.length === 0 ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-sm text-gray-500">データがありません</p>
+          <div className="text-center text-gray-500">
+            <p>データがありません</p>
           </div>
         ) : (
-          <canvas ref={chartRef} />
+          <div className="relative w-full h-[300px]">
+            <canvas ref={chartRef} />
+          </div>
         )}
       </div>
     </div>

@@ -334,7 +334,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`資産の内訳 (${selectedYearId}年度)`}
               value={
@@ -376,7 +376,7 @@ export default function Home() {
             />
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`収入の内訳 (${selectedYearId}年度)`}
               value={
@@ -418,7 +418,7 @@ export default function Home() {
             />
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-sm">
+          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`支出の内訳 (${selectedYearId}年度)`}
               value={
