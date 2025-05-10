@@ -38,7 +38,7 @@ export default function TaxSimulationPage() {
     sales: 7362012,
     expenses: 7202571,
     previousBusinessTax: 4500,
-    corporate_tax_deduction: 0, // 法人税控除額（例：研究開発税制による控除など）
+    corporate_tax_deduction: 1, // 法人税控除額（例：研究開発税制による控除など）
     is_consumption_tax_exempt: true, // 消費税課税区分（true: 免税事業者、false: 課税事業者）
   })
 
@@ -111,6 +111,118 @@ export default function TaxSimulationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* 各種税額とその合計額をカード形式で表示 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                {/* 法人税 */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-blue-800 mb-1">
+                    法人税
+                  </h3>
+                  <p className="text-lg font-bold text-blue-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(context.corporate_tax_final || 0)}
+                  </p>
+                </div>
+
+                {/* 地方法人税 */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-green-800 mb-1">
+                    地方法人税
+                  </h3>
+                  <p className="text-lg font-bold text-green-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(context.local_corporate_tax_final || 0)}
+                  </p>
+                </div>
+
+                {/* 都民税 */}
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-purple-800 mb-1">
+                    都民税
+                  </h3>
+                  <p className="text-lg font-bold text-purple-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(context.tokyo_tax_total || 0)}
+                  </p>
+                </div>
+
+                {/* 事業税 */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-amber-800 mb-1">
+                    事業税
+                  </h3>
+                  <p className="text-lg font-bold text-amber-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(context.business_tax_final || 0)}
+                  </p>
+                </div>
+
+                {/* 特別法人事業税 */}
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-orange-800 mb-1">
+                    特別法人事業税
+                  </h3>
+                  <p className="text-lg font-bold text-orange-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(context.special_local_corporate_tax_final || 0)}
+                  </p>
+                </div>
+
+                {/* 消費税 */}
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-teal-800 mb-1">
+                    消費税
+                  </h3>
+                  <p className="text-lg font-bold text-teal-900">
+                    {new Intl.NumberFormat('ja-JP', {
+                      style: 'currency',
+                      currency: 'JPY',
+                      maximumFractionDigits: 0,
+                    }).format(
+                      (context.consumption_tax_base || 0) +
+                        (context.local_consumption_tax || 0),
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* 合計税額 */}
+              <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 shadow-sm mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-1">
+                  合計税額
+                </h3>
+                <p className="text-xl font-bold text-gray-900">
+                  {new Intl.NumberFormat('ja-JP', {
+                    style: 'currency',
+                    currency: 'JPY',
+                    maximumFractionDigits: 0,
+                  }).format(
+                    (context.corporate_tax_final || 0) +
+                      (context.local_corporate_tax_final || 0) +
+                      (context.tokyo_tax_total || 0) +
+                      (context.business_tax_final || 0) +
+                      (context.special_local_corporate_tax_final || 0) +
+                      (context.consumption_tax_base || 0) +
+                      (context.local_consumption_tax || 0),
+                  )}
+                </p>
+              </div>
+
               <TaxCalculationDetails steps={steps} context={context} />
             </CardContent>
           </Card>
