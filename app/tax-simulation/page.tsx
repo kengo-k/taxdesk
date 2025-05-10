@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
-import { ArrowLeft, Calculator, Download, HelpCircle } from 'lucide-react'
+import { ArrowLeft, Calculator, Download } from 'lucide-react'
 
 import {
   Accordion,
@@ -28,12 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 
 // 計算ステップの定義
@@ -116,30 +110,6 @@ interface YearData {
   profit: number
   taxEstimates: TaxEstimates
   paymentSchedule: TaxPaymentSchedule[]
-}
-
-// デフォルトの空の年度データ
-const emptyYearData: YearData = {
-  income: 0,
-  expense: 0,
-  profit: 0,
-  taxEstimates: {
-    corporateTax: 0,
-    localCorporateTax: 0,
-    totalCorporateTax: 0,
-    prefecturalTax: 0,
-    municipalTax: 0,
-    corporateInhabitantTaxPerCapita: 0,
-    totalInhabitantTax: 0,
-    businessTax: 0,
-    specialLocalCorporateTax: 0,
-    totalBusinessTax: 0,
-    consumptionTax: 0,
-    localConsumptionTax: 0,
-    totalConsumptionTax: 0,
-    total: 0,
-  },
-  paymentSchedule: [],
 }
 
 // 計算処理を行う関数
@@ -314,8 +284,21 @@ const consumptionTaxSteps: CalculationStep[] = [
   },
 ]
 
+// 基本情報関連の計算ステップ
+const basicInfoSteps: CalculationStep[] = [
+  {
+    id: 'taxable_income',
+    name: '課税所得',
+    category: '基本情報',
+    formulaText: '収入 ${sales} - 支出 ${expenses}',
+    formulaParams: ['sales', 'expenses'],
+    formula: (context) => context.sales - context.expenses,
+  },
+]
+
 // すべての計算ステップを結合
 const allTaxSteps: CalculationStep[] = [
+  ...basicInfoSteps,
   ...corporateTaxSteps,
   ...inhabitantTaxSteps,
   ...businessTaxSteps,
@@ -426,118 +409,12 @@ export default function TaxSimulationPage() {
 
   // 状態管理
   const [selectedYear, setSelectedYear] = useState(yearParam)
-  const [isSimulationMode, setIsSimulationMode] = useState(
-    selectedYear === '2024',
-  )
-  const [incomeAdjustment, setIncomeAdjustment] = useState(0)
-  const [expenseAdjustment, setExpenseAdjustment] = useState(0)
+
   const [loading, setLoading] = useState(false)
-  const [yearData, setYearData] = useState<Record<string, YearData>>({
-    '2021': { ...emptyYearData },
-    '2022': { ...emptyYearData },
-    '2023': { ...emptyYearData },
-    '2024': { ...emptyYearData },
-    '2025': { ...emptyYearData },
-  })
-  const [taxRates, setTaxRates] = useState<TaxRates>({
-    // 法人税関連
-    corporateTaxRate: 23.2, // 基本税率
-    localCorporateTaxRate: 10.3, // 地方法人税率
-
-    // 住民税関連
-    prefecturalTaxRate: 1.0, // 都道府県民税
-    municipalTaxRate: 6.0, // 市町村民税
-    corporateInhabitantTaxPerCapita: 70000, // 均等割額
-
-    // 事業税関連
-    businessTaxRate: 7.0, // 基本税率
-    specialLocalCorporateTaxRate: 43.2, // 特別法人事業税率
-
-    // 消費税
-    consumptionTaxRate: 10.0, // 消費税率
-    localConsumptionTaxRate: 2.2, // 地方消費税率
-  })
-
-  // Tooltipの状態を管理
-  // const [isTooltipOpen, setIsTooltipOpen] = useState(false)
-  const [isTooltipOpen, setIsTooltipOpen] = useState(false)
-
-  // 選択された年度のデータを取得
-  const baseYearData = yearData[selectedYear] || emptyYearData
 
   // シミュレーション結果の計算
-  const simulatedIncome = baseYearData.income + incomeAdjustment
-  const simulatedExpense = baseYearData.expense + expenseAdjustment
-  const simulatedProfit = simulatedIncome - simulatedExpense
-
-  // 税額の再計算
-  const simulatedTaxes = {
-    // 法人税計算
-    corporateTax: Math.round(
-      simulatedProfit * (taxRates.corporateTaxRate / 100),
-    ),
-    localCorporateTax: Math.round(
-      Math.round(simulatedProfit * (taxRates.corporateTaxRate / 100)) *
-        (taxRates.localCorporateTaxRate / 100),
-    ),
-
-    // 住民税計算
-    prefecturalTax: Math.round(
-      Math.round(simulatedProfit * (taxRates.corporateTaxRate / 100)) *
-        (taxRates.prefecturalTaxRate / 100),
-    ),
-    municipalTax: Math.round(
-      Math.round(simulatedProfit * (taxRates.corporateTaxRate / 100)) *
-        (taxRates.municipalTaxRate / 100),
-    ),
-    corporateInhabitantTaxPerCapita: taxRates.corporateInhabitantTaxPerCapita,
-
-    // 事業税計算
-    businessTax: Math.round(simulatedProfit * (taxRates.businessTaxRate / 100)),
-    specialLocalCorporateTax: Math.round(
-      Math.round(simulatedProfit * (taxRates.businessTaxRate / 100)) *
-        (taxRates.specialLocalCorporateTaxRate / 100),
-    ),
-
-    // 消費税計算
-    consumptionTax: Math.round(
-      simulatedIncome * (taxRates.consumptionTaxRate / 100),
-    ),
-    localConsumptionTax: Math.round(
-      simulatedIncome * (taxRates.localConsumptionTaxRate / 100),
-    ),
-
-    // 合計
-    get totalCorporateTax() {
-      return this.corporateTax + this.localCorporateTax
-    },
-    get totalInhabitantTax() {
-      return (
-        this.prefecturalTax +
-        this.municipalTax +
-        this.corporateInhabitantTaxPerCapita
-      )
-    },
-    get totalBusinessTax() {
-      return this.businessTax + this.specialLocalCorporateTax
-    },
-    get totalConsumptionTax() {
-      return this.consumptionTax + this.localConsumptionTax
-    },
-    get total() {
-      return (
-        this.totalCorporateTax +
-        this.totalInhabitantTax +
-        this.totalBusinessTax +
-        this.totalConsumptionTax
-      )
-    },
-  }
-
-  // 表示する税額データ（シミュレーションモードかどうかで切り替え）
-  const displayTaxData = isSimulationMode
-    ? simulatedTaxes
-    : baseYearData.taxEstimates
+  const simulatedIncome = 0
+  const simulatedExpense = 0
 
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
@@ -546,11 +423,6 @@ export default function TaxSimulationPage() {
       currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
-  }
-
-  // パーセントのフォーマット
-  const formatPercent = (value: number): string => {
-    return `${value.toFixed(1)}%`
   }
 
   // PDFダウンロード処理
@@ -611,8 +483,8 @@ export default function TaxSimulationPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-6 mb-6">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>
                 {selectedYear}年度{' '}
@@ -630,120 +502,122 @@ export default function TaxSimulationPage() {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="text-sm text-gray-600 flex items-center">
-                      法人税関連
-                      <TooltipProvider>
-                        <Tooltip
-                          open={isTooltipOpen}
-                          onOpenChange={setIsTooltipOpen}
-                        >
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              法人税と地方法人税の合計です。
-                              <br />
-                              法人税率: {taxRates.corporateTaxRate}%
-                              <br />
-                              地方法人税率: {taxRates.localCorporateTaxRate}%
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {formatCurrency(displayTaxData.totalCorporateTax)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <h3 className="text-sm text-gray-600 flex items-center">
-                      住民税関連
-                      <TooltipProvider>
-                        <Tooltip
-                          open={isTooltipOpen}
-                          onOpenChange={setIsTooltipOpen}
-                        >
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              都道府県民税、市町村民税、均等割の合計です。
-                              <br />
-                              都道府県民税率: {taxRates.prefecturalTaxRate}%
-                              <br />
-                              市町村民税率: {taxRates.municipalTaxRate}%
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {formatCurrency(displayTaxData.totalInhabitantTax)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-amber-50 rounded-lg">
-                    <h3 className="text-sm text-gray-600 flex items-center">
-                      事業税関連
-                      <TooltipProvider>
-                        <Tooltip
-                          open={isTooltipOpen}
-                          onOpenChange={setIsTooltipOpen}
-                        >
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              法人事業税と特別法人事業税の合計です。
-                              <br />
-                              法人事業税率: {taxRates.businessTaxRate}%
-                              <br />
-                              特別法人事業税率:{' '}
-                              {taxRates.specialLocalCorporateTaxRate}%
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {formatCurrency(displayTaxData.totalBusinessTax)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <h3 className="text-sm text-gray-600 flex items-center">
-                      消費税関連
-                      <TooltipProvider>
-                        <Tooltip
-                          open={isTooltipOpen}
-                          onOpenChange={setIsTooltipOpen}
-                        >
-                          <TooltipTrigger asChild>
-                            <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              消費税と地方消費税の合計です。
-                              <br />
-                              消費税率: {taxRates.consumptionTaxRate}%
-                              <br />
-                              地方消費税率: {taxRates.localConsumptionTaxRate}%
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </h3>
-                    <p className="text-xl font-bold mt-1">
-                      {formatCurrency(displayTaxData.totalConsumptionTax)}
-                    </p>
-                  </div>
-                </div>
+                //   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                //     <div className="p-4 bg-blue-50 rounded-lg">
+                //       <h3 className="text-sm text-gray-600 flex items-center">
+                //         法人税関連
+                //         <TooltipProvider>
+                //           <Tooltip
+                //             open={isTooltipOpen}
+                //             onOpenChange={setIsTooltipOpen}
+                //           >
+                //             <TooltipTrigger asChild>
+                //               <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
+                //             </TooltipTrigger>
+                //             <TooltipContent>
+                //               <p>
+                //                 法人税と地方法人税の合計です。
+                //                 <br />
+                //                 法人税率: {taxRates.corporateTaxRate}%
+                //                 <br />
+                //                 地方法人税率: {taxRates.localCorporateTaxRate}%
+                //               </p>
+                //             </TooltipContent>
+                //           </Tooltip>
+                //         </TooltipProvider>
+                //       </h3>
+                //       <p className="text-xl font-bold mt-1">
+                //         {formatCurrency(displayTaxData.totalCorporateTax)}
+                //       </p>
+                //     </div>
+                //     <div className="p-4 bg-green-50 rounded-lg">
+                //       <h3 className="text-sm text-gray-600 flex items-center">
+                //         住民税関連
+                //         <TooltipProvider>
+                //           <Tooltip
+                //             open={isTooltipOpen}
+                //             onOpenChange={setIsTooltipOpen}
+                //           >
+                //             <TooltipTrigger asChild>
+                //               <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
+                //             </TooltipTrigger>
+                //             <TooltipContent>
+                //               <p>
+                //                 都道府県民税、市町村民税、均等割の合計です。
+                //                 <br />
+                //                 都道府県民税率: {taxRates.prefecturalTaxRate}%
+                //                 <br />
+                //                 市町村民税率: {taxRates.municipalTaxRate}%
+                //               </p>
+                //             </TooltipContent>
+                //           </Tooltip>
+                //         </TooltipProvider>
+                //       </h3>
+                //       <p className="text-xl font-bold mt-1">
+                //         {formatCurrency(displayTaxData.totalInhabitantTax)}
+                //       </p>
+                //     </div>
+                //     <div className="p-4 bg-amber-50 rounded-lg">
+                //       <h3 className="text-sm text-gray-600 flex items-center">
+                //         事業税関連
+                //         <TooltipProvider>
+                //           <Tooltip
+                //             open={isTooltipOpen}
+                //             onOpenChange={setIsTooltipOpen}
+                //           >
+                //             <TooltipTrigger asChild>
+                //               <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
+                //             </TooltipTrigger>
+                //             <TooltipContent>
+                //               <p>
+                //                 法人事業税と特別法人事業税の合計です。
+                //                 <br />
+                //                 法人事業税率: {taxRates.businessTaxRate}%
+                //                 <br />
+                //                 特別法人事業税率:{' '}
+                //                 {taxRates.specialLocalCorporateTaxRate}%
+                //               </p>
+                //             </TooltipContent>
+                //           </Tooltip>
+                //         </TooltipProvider>
+                //       </h3>
+                //       <p className="text-xl font-bold mt-1">
+                //         {formatCurrency(displayTaxData.totalBusinessTax)}
+                //       </p>
+                //     </div>
+                //     <div className="p-4 bg-purple-50 rounded-lg">
+                //       <h3 className="text-sm text-gray-600 flex items-center">
+                //         消費税関連
+                //         <TooltipProvider>
+                //           <Tooltip
+                //             open={isTooltipOpen}
+                //             onOpenChange={setIsTooltipOpen}
+                //           >
+                //             <TooltipTrigger asChild>
+                //               <HelpCircle className="h-4 w-4 ml-1 text-gray-400" />
+                //             </TooltipTrigger>
+                //             <TooltipContent>
+                //               <p>
+                //                 消費税と地方消費税の合計です。
+                //                 <br />
+                //                 消費税率: {taxRates.consumptionTaxRate}%
+                //                 <br />
+                //                 地方消費税率: {taxRates.localConsumptionTaxRate}%
+                //               </p>
+                //             </TooltipContent>
+                //           </Tooltip>
+                //         </TooltipProvider>
+                //       </h3>
+                //       <p className="text-xl font-bold mt-1">
+                //         {formatCurrency(displayTaxData.totalConsumptionTax)}
+                //       </p>
+                //     </div>
+                //   </div>
+                //
+                <br />
               )}
 
-              <div className="p-6 bg-gray-50 rounded-lg border flex flex-col md:flex-row justify-between items-center">
+              {/* <div className="p-6 bg-gray-50 rounded-lg border flex flex-col md:flex-row justify-between items-center">
                 <div>
                   <h3 className="text-lg font-medium">合計税額</h3>
                   <p className="text-sm text-gray-500">
@@ -753,7 +627,7 @@ export default function TaxSimulationPage() {
                 <div className="text-3xl font-bold text-blue-600 mt-4 md:mt-0">
                   {formatCurrency(displayTaxData.total)}
                 </div>
-              </div>
+              </div> */}
 
               {/* 税額計算の詳細 */}
               {!loading && (
@@ -772,34 +646,6 @@ export default function TaxSimulationPage() {
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
-                          {/* 基本情報 */}
-                          <div>
-                            <h4 className="font-medium mb-2">基本情報</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-sm text-gray-600">収入</p>
-                                <p className="font-medium">
-                                  {formatCurrency(baseYearData.income)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-600">支出</p>
-                                <p className="font-medium">
-                                  {formatCurrency(baseYearData.expense)}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <p className="text-sm text-gray-600">課税所得</p>
-                              <p className="font-medium">
-                                {formatCurrency(baseYearData.profit)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※課税所得 = 収入 - 支出
-                              </p>
-                            </div>
-                          </div>
-
                           {/* 計算ステップベースの表示 */}
                           {(() => {
                             // 計算に必要な入力データを準備
@@ -882,7 +728,7 @@ export default function TaxSimulationPage() {
                             )
                           })()}
 
-                          {/* 総合計 */}
+                          {/* 総合計
                           <div className="pt-4 border-t">
                             <div className="bg-blue-100 p-4 rounded border">
                               <p className="font-medium">税金総合計</p>
@@ -906,7 +752,7 @@ export default function TaxSimulationPage() {
                                 = {formatCurrency(displayTaxData.total)}
                               </p>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
