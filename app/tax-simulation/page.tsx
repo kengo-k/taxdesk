@@ -40,76 +40,11 @@ interface CalculationStep {
   category?: string // カテゴリ（「法人税」「住民税」など）
 }
 
-// 税率設定の型定義
-interface TaxRates {
-  // 法人税関連
-  corporateTaxRate: number
-  localCorporateTaxRate: number
-
-  // 住民税関連
-  prefecturalTaxRate: number
-  municipalTaxRate: number
-  corporateInhabitantTaxPerCapita: number
-
-  // 事業税関連
-  businessTaxRate: number
-  specialLocalCorporateTaxRate: number
-
-  // 消費税
-  consumptionTaxRate: number
-  localConsumptionTaxRate: number
-}
-
 // 入力データの型定義
 interface TaxInputData {
-  sales: number // 売上
-  expenses: number // 経費
-  previousBusinessTax?: number // 前年の事業税（任意）
-}
-
-// 納付予定データの型定義
-interface TaxPaymentSchedule {
-  period: string
-  dueDate: string
-  taxType: string
-  amount: number
-  status: 'upcoming' | 'paid' | 'overdue'
-}
-
-// 税額データの型定義
-interface TaxEstimates {
-  // 法人税関連
-  corporateTax: number
-  localCorporateTax: number
-  totalCorporateTax: number
-
-  // 住民税関連
-  prefecturalTax: number
-  municipalTax: number
-  corporateInhabitantTaxPerCapita: number
-  totalInhabitantTax: number
-
-  // 事業税関連
-  businessTax: number
-  specialLocalCorporateTax: number
-  totalBusinessTax: number
-
-  // 消費税関連
-  consumptionTax: number
-  localConsumptionTax: number
-  totalConsumptionTax: number
-
-  // 合計
-  total: number
-}
-
-// 年度データの型定義
-interface YearData {
-  income: number
-  expense: number
-  profit: number
-  taxEstimates: TaxEstimates
-  paymentSchedule: TaxPaymentSchedule[]
+  sales: number
+  expenses: number
+  previousBusinessTax: number
 }
 
 // 計算処理を行う関数
@@ -304,104 +239,6 @@ const allTaxSteps: CalculationStep[] = [
   ...businessTaxSteps,
   ...consumptionTaxSteps,
 ]
-
-// 納付予定データを生成する関数
-function generatePaymentSchedule(
-  year: number,
-  results: Record<string, number>,
-): TaxPaymentSchedule[] {
-  const schedule: TaxPaymentSchedule[] = []
-  const nextYear = year + 1
-
-  // 法人税関連の合計
-  const corporateTaxTotal = corporateTaxSteps.reduce(
-    (sum, step) => sum + (results[step.id] || 0),
-    0,
-  )
-
-  // 住民税関連の合計
-  const inhabitantTaxTotal = inhabitantTaxSteps.reduce(
-    (sum, step) => sum + (results[step.id] || 0),
-    0,
-  )
-
-  // 事業税関連の合計
-  const businessTaxTotal = businessTaxSteps.reduce(
-    (sum, step) => sum + (results[step.id] || 0),
-    0,
-  )
-
-  // 消費税関連の合計
-  const consumptionTaxTotal = consumptionTaxSteps.reduce(
-    (sum, step) => sum + (results[step.id] || 0),
-    0,
-  )
-
-  // 法人税（確定申告と中間申告）
-  schedule.push({
-    period: `${year}年度確定申告`,
-    dueDate: `${nextYear}/3/15`,
-    taxType: '法人税',
-    amount: corporateTaxTotal,
-    status: year < 2024 ? 'paid' : 'upcoming',
-  })
-
-  // 中間申告（前年度の半額を納付）
-  if (corporateTaxTotal > 100000) {
-    schedule.push({
-      period: `${year}年度中間申告`,
-      dueDate: `${year}/9/15`,
-      taxType: '法人税（中間）',
-      amount: Math.floor(corporateTaxTotal / 2),
-      status: year < 2024 ? 'paid' : 'upcoming',
-    })
-  }
-
-  // 住民税（法人税確定申告後）
-  schedule.push({
-    period: `${year}年度確定申告`,
-    dueDate: `${nextYear}/3/31`,
-    taxType: '住民税',
-    amount: inhabitantTaxTotal,
-    status: year < 2024 ? 'paid' : 'upcoming',
-  })
-
-  // 事業税（法人税確定申告後）
-  schedule.push({
-    period: `${year}年度確定申告`,
-    dueDate: `${nextYear}/3/31`,
-    taxType: '事業税',
-    amount: businessTaxTotal,
-    status: year < 2024 ? 'paid' : 'upcoming',
-  })
-
-  // 消費税（確定申告）
-  schedule.push({
-    period: `${year}年度確定申告`,
-    dueDate: `${nextYear}/3/31`,
-    taxType: '消費税',
-    amount: consumptionTaxTotal,
-    status: year < 2024 ? 'paid' : 'upcoming',
-  })
-
-  // 消費税（中間申告）- 前年度の実績が一定以上の場合
-  if (consumptionTaxTotal > 100000) {
-    schedule.push({
-      period: `${year}年度中間申告`,
-      dueDate: `${year}/11/30`,
-      taxType: '消費税（中間）',
-      amount: Math.floor(consumptionTaxTotal / 2),
-      status: year < 2024 ? 'paid' : 'upcoming',
-    })
-  }
-
-  // 日付順にソート
-  return schedule.sort((a, b) => {
-    const dateA = new Date(a.dueDate.replace(/(\d+)\/(\d+)\/(\d+)/, '$1-$2-$3'))
-    const dateB = new Date(b.dueDate.replace(/(\d+)\/(\d+)\/(\d+)/, '$1-$2-$3'))
-    return dateA.getTime() - dateB.getTime()
-  })
-}
 
 export default function TaxSimulationPage() {
   const searchParams = useSearchParams()
@@ -656,10 +493,12 @@ export default function TaxSimulationPage() {
                             }
 
                             // 計算実行
-                            const { results, context } = calc(
-                              allTaxSteps,
-                              inputData,
-                            )
+                            const { results, context } = calc(allTaxSteps, {
+                              sales: 7362012,
+                              expenses: 7202571,
+                              previousBusinessTax: 4500,
+                            })
+                            console.log(results)
 
                             // カテゴリごとにグループ化
                             const stepsByCategory = groupByCategory(allTaxSteps)
