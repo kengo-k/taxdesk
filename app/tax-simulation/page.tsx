@@ -21,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -29,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import {
   Tooltip,
   TooltipContent,
@@ -613,8 +611,8 @@ export default function TaxSimulationPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card className="md:col-span-2">
+        <div className="grid grid-cols-1 gap-6 mb-6">
+          <Card>
             <CardHeader>
               <CardTitle>
                 {selectedYear}年度{' '}
@@ -917,134 +915,6 @@ export default function TaxSimulationPage() {
               )}
             </CardContent>
           </Card>
-
-          {/* シミュレーションパネル - 2024年度のみ表示 */}
-          {selectedYear === '2024' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>シミュレーション</CardTitle>
-                <CardDescription>
-                  収入や支出を調整して税額の変化をシミュレーション
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        収入調整
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Slider
-                          value={[incomeAdjustment]}
-                          onValueChange={(values) =>
-                            setIncomeAdjustment(values[0])
-                          }
-                          min={-1000000}
-                          max={1000000}
-                          step={10000}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={incomeAdjustment}
-                          onChange={(e) =>
-                            setIncomeAdjustment(Number(e.target.value))
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-500">-100万円</span>
-                        <span className="text-xs text-gray-500">+100万円</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        支出調整
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Slider
-                          value={[expenseAdjustment]}
-                          onValueChange={(values) =>
-                            setExpenseAdjustment(values[0])
-                          }
-                          min={-1000000}
-                          max={1000000}
-                          step={10000}
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          value={expenseAdjustment}
-                          onChange={(e) =>
-                            setExpenseAdjustment(Number(e.target.value))
-                          }
-                          className="w-24"
-                        />
-                      </div>
-                      <div className="flex justify-between mt-1">
-                        <span className="text-xs text-gray-500">-100万円</span>
-                        <span className="text-xs text-gray-500">+100万円</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">調整後収入:</span>
-                        <span className="font-medium">
-                          {formatCurrency(simulatedIncome)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">調整後支出:</span>
-                        <span className="font-medium">
-                          {formatCurrency(simulatedExpense)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">調整後利益:</span>
-                        <span className="font-medium">
-                          {formatCurrency(simulatedProfit)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t">
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">調整前税額:</span>
-                        <span className="font-medium">
-                          {formatCurrency(baseYearData.taxEstimates.total)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-sm font-medium">調整後税額:</span>
-                        <span className="font-medium">
-                          {formatCurrency(simulatedTaxes.total)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-2 border-t">
-                        <span className="text-sm font-medium">税額差異:</span>
-                        <span
-                          className={`font-medium ${simulatedTaxes.total > baseYearData.taxEstimates.total ? 'text-red-600' : 'text-green-600'}`}
-                        >
-                          {formatCurrency(
-                            simulatedTaxes.total -
-                              baseYearData.taxEstimates.total,
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
     </div>
