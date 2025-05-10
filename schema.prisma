@@ -52,13 +52,15 @@ model kamoku_masters {
 }
 
 model nendo_masters {
-  id         Int      @id @default(autoincrement())
-  nendo      String   @db.VarChar(4)
-  start_date String   @db.VarChar(8)
-  end_date   String   @db.VarChar(8)
-  fixed      String   @db.VarChar(1)
-  created_at DateTime @db.Timestamp(6)
-  updated_at DateTime @db.Timestamp(6)
+  id                     Int      @id @default(autoincrement())
+  nendo                  String   @db.VarChar(4)
+  start_date             String   @db.VarChar(8)
+  end_date               String   @db.VarChar(8)
+  fixed                  String   @db.VarChar(1)
+  consumption_tax_type   String   @db.VarChar(15) @default("EXEMPT") // EXEMPT: 免税, SIMPLIFIED: 簡易課税, STANDARD: 一般課税
+  statutory_tax_rate     Decimal? @db.Decimal(5, 2) // 簡易課税の場合のみなし仕入率 (%) - 第一種: 90%, 第二種: 80%...
+  created_at             DateTime @db.Timestamp(6)
+  updated_at             DateTime @db.Timestamp(6)
 }
 
 model saimoku_masters {
