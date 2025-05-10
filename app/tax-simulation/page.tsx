@@ -38,6 +38,8 @@ export default function TaxSimulationPage() {
     sales: 7362012,
     expenses: 7202571,
     previousBusinessTax: 4500,
+    corporate_tax_deduction: 0, // 法人税控除額（例：研究開発税制による控除など）
+    is_consumption_tax_exempt: true, // 消費税課税区分（true: 免税事業者、false: 課税事業者）
   })
 
   // PDFダウンロード処理
