@@ -1,6 +1,5 @@
 import {
   CalculationStep,
-  TaxInputData,
   formatFormulaText,
   groupByCategory,
 } from '../calculation/calc'
@@ -43,51 +42,37 @@ export function TaxCalculationDetails({
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
-              {/* 計算ステップベースの表示 */}
-              {(() => {
-                // 計算に必要な入力データを準備
-                const inputData: TaxInputData = {
-                  sales: 7362012,
-                  expenses: 7202571,
-                  previousBusinessTax: 4500,
-                }
+              {Object.entries(groupByCategory(steps)).map(
+                ([category, steps]) => (
+                  <div key={category} className="pt-4 border-t">
+                    <h4 className="font-medium mb-2">{category}計算</h4>
 
-                // カテゴリごとにグループ化
-                const stepsByCategory = groupByCategory(steps)
-
-                // カテゴリごとに表示
-                return Object.entries(stepsByCategory).map(
-                  ([category, steps]) => (
-                    <div key={category} className="pt-4 border-t">
-                      <h4 className="font-medium mb-2">{category}計算</h4>
-
-                      {/* 各ステップの表示 */}
-                      {steps.map((step) => (
-                        <div
-                          key={step.id}
-                          className="bg-white p-3 rounded border mb-2"
-                        >
-                          <p className="text-sm font-medium">{step.name}</p>
-                          <p className="text-sm mt-1">
-                            {formatFormulaText(
-                              step.formulaText,
-                              context,
-                              formatCurrency,
-                            )}{' '}
-                            = {formatCurrency(context[step.id])}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            ※
-                            {step.formulaParams.length > 0
-                              ? `${step.formulaParams.join(', ')}をベースに計算`
-                              : '定額計算'}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ),
-                )
-              })()}
+                    {/* 各ステップの表示 */}
+                    {steps.map((step) => (
+                      <div
+                        key={step.id}
+                        className="bg-white p-3 rounded border mb-2"
+                      >
+                        <p className="text-sm font-medium">{step.name}</p>
+                        <p className="text-sm mt-1">
+                          {formatFormulaText(
+                            step.formulaText,
+                            context,
+                            formatCurrency,
+                          )}{' '}
+                          = {formatCurrency(context[step.id])}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          ※
+                          {step.formulaParams.length > 0
+                            ? `${step.formulaParams.join(', ')}をベースに計算`
+                            : '定額計算'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ),
+              )}
             </div>
           </AccordionContent>
         </AccordionItem>

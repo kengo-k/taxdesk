@@ -1,5 +1,17 @@
 import { CalculationStep } from './calc'
 
+// 基本情報関連の計算ステップ
+const basicInfoSteps: CalculationStep[] = [
+  {
+    id: 'taxable_income',
+    name: '課税所得',
+    category: '基本情報',
+    formulaText: '収入 ${sales} - 支出 ${expenses}',
+    formulaParams: ['sales', 'expenses'],
+    formula: (context) => context.sales - context.expenses,
+  },
+]
+
 // 法人税関連の計算ステップ
 const corporateTaxSteps: CalculationStep[] = [
   {
@@ -85,18 +97,6 @@ const consumptionTaxSteps: CalculationStep[] = [
     formulaText: '課税売上 ${sales} × 税率 2.2%',
     formulaParams: ['sales'],
     formula: (context) => Math.round(context.sales * 0.022),
-  },
-]
-
-// 基本情報関連の計算ステップ
-const basicInfoSteps: CalculationStep[] = [
-  {
-    id: 'taxable_income',
-    name: '課税所得',
-    category: '基本情報',
-    formulaText: '収入 ${sales} - 支出 ${expenses}',
-    formulaParams: ['sales', 'expenses'],
-    formula: (context) => context.sales - context.expenses,
   },
 ]
 
