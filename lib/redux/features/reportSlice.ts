@@ -34,7 +34,7 @@ export const fetchExpenseBreakdownByMonth = createAsyncThunk(
   'report/fetchExpenseBreakdownByMonth',
   async (fiscalYear: string) => {
     const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/expense-breakdown/by-month`,
+      `/api/fiscal-years/${fiscalYear}/reports/breakdown/expense-by-month`,
     )
     if (!response.ok) {
       throw new Error('Failed to fetch expense breakdown by month')
@@ -48,7 +48,7 @@ export const fetchExpenseBreakdownByYear = createAsyncThunk(
   'report/fetchExpenseBreakdownByYear',
   async (fiscalYear: string) => {
     const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/expense-breakdown`,
+      `/api/fiscal-years/${fiscalYear}/reports/breakdown/expense-by-year`,
     )
     if (!response.ok) {
       throw new Error('Failed to fetch expense breakdown by year')
