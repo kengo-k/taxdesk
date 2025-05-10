@@ -13,15 +13,6 @@ interface TaxCalculationDetailsProps {
   context: Record<string, any>
 }
 
-// 金額のフォーマット
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('ja-JP', {
-    style: 'currency',
-    currency: 'JPY',
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
-
 export function TaxCalculationDetails({
   steps,
   context,
@@ -62,14 +53,7 @@ export function TaxCalculationDetails({
                     >
                       <p className="text-sm font-medium">{step.name}</p>
                       <p className="text-sm mt-1">
-                        {step.formulaText(context, formatCurrency)} ={' '}
-                        {formatCurrency(context[step.id])}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        ※
-                        {step.formulaParams.length > 0
-                          ? `${step.formulaParams.join(', ')}をベースに計算`
-                          : '定額計算'}
+                        {step.formulaText(context)}
                       </p>
                     </div>
                   ))}
