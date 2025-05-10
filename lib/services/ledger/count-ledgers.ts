@@ -25,6 +25,7 @@ export async function countLedgers(
       journals j
     where
       nendo = ${input.fiscal_year}
+      and deleted = '0'
       and (
         karikata_cd = ${input.ledger_cd}
         or kasikata_cd = ${input.ledger_cd}

@@ -44,6 +44,7 @@ export async function countByAccount(
             left join journals j on
               (s.saimoku_cd = j.karikata_cd or s.saimoku_cd = j.kasikata_cd)
               and j.nendo = ${input.fiscalYear}
+              and j.deleted = '0'
       ) as saimoku
     group by
       saimoku_cd
