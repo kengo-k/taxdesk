@@ -350,14 +350,16 @@ export default function Home() {
               data={
                 assetBreakdownByYearLoading
                   ? []
-                  : assetBreakdownByYear?.map((item) => item.value) || []
+                  : [...(assetBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
               labels={
                 assetBreakdownByYearLoading
                   ? []
-                  : assetBreakdownByYear?.map(
-                      (item) => item.saimoku_ryaku_name,
-                    ) || []
+                  : [...(assetBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.saimoku_ryaku_name)
               }
               colors={
                 assetBreakdownByYearLoading
@@ -367,7 +369,9 @@ export default function Home() {
               amounts={
                 assetBreakdownByYearLoading
                   ? []
-                  : assetBreakdownByYear?.map((item) => item.value) || []
+                  : [...(assetBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
             />
           </div>
@@ -388,14 +392,16 @@ export default function Home() {
               data={
                 incomeBreakdownByYearLoading
                   ? []
-                  : incomeBreakdownByYear?.map((item) => item.value) || []
+                  : [...(incomeBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
               labels={
                 incomeBreakdownByYearLoading
                   ? []
-                  : incomeBreakdownByYear?.map(
-                      (item) => item.saimoku_ryaku_name,
-                    ) || []
+                  : [...(incomeBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.saimoku_ryaku_name)
               }
               colors={
                 incomeBreakdownByYearLoading
@@ -405,7 +411,9 @@ export default function Home() {
               amounts={
                 incomeBreakdownByYearLoading
                   ? []
-                  : incomeBreakdownByYear?.map((item) => item.value) || []
+                  : [...(incomeBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
             />
           </div>
@@ -426,14 +434,16 @@ export default function Home() {
               data={
                 expenseBreakdownByYearLoading
                   ? []
-                  : expenseBreakdownByYear?.map((item) => item.value) || []
+                  : [...(expenseBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
               labels={
                 expenseBreakdownByYearLoading
                   ? []
-                  : expenseBreakdownByYear?.map(
-                      (item) => item.saimoku_ryaku_name,
-                    ) || []
+                  : [...(expenseBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.saimoku_ryaku_name)
               }
               colors={
                 expenseBreakdownByYearLoading
@@ -446,7 +456,9 @@ export default function Home() {
               amounts={
                 expenseBreakdownByYearLoading
                   ? []
-                  : expenseBreakdownByYear?.map((item) => item.value) || []
+                  : [...(expenseBreakdownByYear || [])]
+                      .sort((a, b) => b.value - a.value)
+                      .map((item) => item.value)
               }
             />
           </div>
@@ -499,7 +511,7 @@ export default function Home() {
                       .sort((a, b) => {
                         const sumA = a.data.reduce((sum, val) => sum + val, 0)
                         const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                        return sumB - sumA
+                        return sumB - sumA // 大きい順に並び替え（上から大きい順）
                       })
                       .map(
                         (
@@ -570,7 +582,7 @@ export default function Home() {
                       .sort((a, b) => {
                         const sumA = a.data.reduce((sum, val) => sum + val, 0)
                         const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                        return sumB - sumA
+                        return sumB - sumA // 大きい順に並び替え（上から大きい順）
                       })
                       .map(
                         (
