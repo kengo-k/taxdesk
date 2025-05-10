@@ -1,3 +1,5 @@
+import { steps2024 } from './steps2024'
+
 // 計算ステップの定義
 export interface CalculationStep {
   id: string // 一意の識別子（結果をcontextに保存する際のキー名）
@@ -18,23 +20,11 @@ export interface TaxInputData {
 // 計算処理を行う関数
 export function calc(
   steps: CalculationStep[],
-  inputData: TaxInputData,
-  context: Record<string, any> = {},
-): { results: Record<string, number>; context: Record<string, any> } {
-  // 入力データをコンテキストに設定
-  context.sales = inputData.sales
-  context.expenses = inputData.expenses
-  context.previousBusinessTax = inputData.previousBusinessTax || 0
-
-  // 初期コンテキストの設定（課税所得など基本値の計算）
-  if (!context.taxable_income) {
-    context.taxable_income =
-      inputData.sales -
-      inputData.expenses -
-      (inputData.previousBusinessTax || 0)
-  }
-
-  const results: Record<string, number> = {}
+  initialContext: Record<string, any> = {},
+): Record<string, any> {
+  const context = { ...initialContext }
+  context.taxable_income =
+    context.sales - context.expenses - context.previousBusinessTax
 
   // 各ステップを順に処理
   for (const step of steps) {
@@ -43,17 +33,17 @@ export function calc(
       const value = step.formula(context)
 
       // 結果を格納
-      results[step.id] = value
+      context[step.id] = value
 
       // コンテキストに結果を追加（次のステップで参照可能に）
       context[step.id] = value
     } catch (error) {
       console.error(`Error calculating step ${step.id}:`, error)
-      results[step.id] = 0 // エラー時はデフォルト値を設定
+      context[step.id] = 0 // エラー時はデフォルト値を設定
     }
   }
 
-  return { results, context }
+  return context
 }
 
 // 数式テキスト内の変数を実際の値に置換して表示
@@ -80,4 +70,8 @@ export function groupByCategory(
     },
     {} as Record<string, CalculationStep[]>,
   )
+}
+
+export const stepMappings: Record<string, CalculationStep[]> = {
+  '2024': steps2024,
 }

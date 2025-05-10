@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
 
+import { calc, stepMappings } from './calculation/calc'
 import { TaxCalculationDetails } from './components/tax-calculation-details'
 
 export default function TaxSimulationPage() {
@@ -32,16 +33,12 @@ export default function TaxSimulationPage() {
 
   // 状態管理
   const [selectedYear, setSelectedYear] = useState(yearParam)
-  const [loading, setLoading] = useState(false)
-
-  // 金額のフォーマット
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY',
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
+  const steps = stepMappings[selectedYear]
+  const context = calc(steps, {
+    sales: 7362012,
+    expenses: 7202571,
+    previousBusinessTax: 4500,
+  })
 
   // PDFダウンロード処理
   const handleDownloadPDF = useCallback(() => {
@@ -112,7 +109,7 @@ export default function TaxSimulationPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TaxCalculationDetails loading={loading} />
+              <TaxCalculationDetails steps={steps} context={context} />
             </CardContent>
           </Card>
         </div>

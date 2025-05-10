@@ -1,10 +1,9 @@
 import {
+  CalculationStep,
   TaxInputData,
-  calc,
   formatFormulaText,
   groupByCategory,
 } from '../calculation/calc'
-import { steps } from '../calculation/steps2024'
 import { Calculator } from 'lucide-react'
 
 import {
@@ -15,10 +14,14 @@ import {
 } from '@/components/ui/accordion'
 
 interface TaxCalculationDetailsProps {
-  loading: boolean
+  steps: CalculationStep[]
+  context: Record<string, any>
 }
 
-export function TaxCalculationDetails({ loading }: TaxCalculationDetailsProps) {
+export function TaxCalculationDetails({
+  steps,
+  context,
+}: TaxCalculationDetailsProps) {
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('ja-JP', {
@@ -26,14 +29,6 @@ export function TaxCalculationDetails({ loading }: TaxCalculationDetailsProps) {
       currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    )
   }
 
   return (
@@ -57,9 +52,6 @@ export function TaxCalculationDetails({ loading }: TaxCalculationDetailsProps) {
                   previousBusinessTax: 4500,
                 }
 
-                // 計算実行
-                const { results, context } = calc(steps, inputData)
-
                 // カテゴリごとにグループ化
                 const stepsByCategory = groupByCategory(steps)
 
@@ -82,7 +74,7 @@ export function TaxCalculationDetails({ loading }: TaxCalculationDetailsProps) {
                               context,
                               formatCurrency,
                             )}{' '}
-                            = {formatCurrency(results[step.id])}
+                            = {formatCurrency(context[step.id])}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
                             ※

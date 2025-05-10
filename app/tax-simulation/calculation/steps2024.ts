@@ -101,7 +101,7 @@ const basicInfoSteps: CalculationStep[] = [
 ]
 
 // すべての計算ステップを結合
-export const steps: CalculationStep[] = [
+export const steps2024: CalculationStep[] = [
   ...basicInfoSteps,
   ...corporateTaxSteps,
   ...inhabitantTaxSteps,
