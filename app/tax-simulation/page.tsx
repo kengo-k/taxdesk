@@ -53,6 +53,11 @@ function calc(
   inputData: TaxInputData,
   context: Record<string, any> = {},
 ): { results: Record<string, number>; context: Record<string, any> } {
+  // 入力データをコンテキストに設定
+  context.sales = inputData.sales
+  context.expenses = inputData.expenses
+  context.previousBusinessTax = inputData.previousBusinessTax || 0
+
   // 初期コンテキストの設定（課税所得など基本値の計算）
   if (!context.taxable_income) {
     context.taxable_income =
@@ -65,14 +70,19 @@ function calc(
 
   // 各ステップを順に処理
   for (const step of steps) {
-    // 計算実行
-    const value = step.formula(context)
+    try {
+      // 計算実行
+      const value = step.formula(context)
 
-    // 結果を格納
-    results[step.id] = value
+      // 結果を格納
+      results[step.id] = value
 
-    // コンテキストに結果を追加（次のステップで参照可能に）
-    context[step.id] = value
+      // コンテキストに結果を追加（次のステップで参照可能に）
+      context[step.id] = value
+    } catch (error) {
+      console.error(`Error calculating step ${step.id}:`, error)
+      results[step.id] = 0 // エラー時はデフォルト値を設定
+    }
   }
 
   return { results, context }
@@ -487,18 +497,16 @@ export default function TaxSimulationPage() {
                           {(() => {
                             // 計算に必要な入力データを準備
                             const inputData: TaxInputData = {
-                              sales: simulatedIncome,
-                              expenses: simulatedExpense,
-                              previousBusinessTax: 0, // 前年の事業税（サンプルとして0を設定）
+                              sales: 7362012,
+                              expenses: 7202571,
+                              previousBusinessTax: 4500, // 前年の事業税（サンプルとして0を設定）
                             }
 
                             // 計算実行
-                            const { results, context } = calc(allTaxSteps, {
-                              sales: 7362012,
-                              expenses: 7202571,
-                              previousBusinessTax: 4500,
-                            })
-                            console.log(results)
+                            const { results, context } = calc(
+                              allTaxSteps,
+                              inputData,
+                            )
 
                             // カテゴリごとにグループ化
                             const stepsByCategory = groupByCategory(allTaxSteps)
