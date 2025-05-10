@@ -130,8 +130,14 @@ export function DonutChart({
         <h2 className="font-medium">{title}</h2>
         <h3 className="text-xl font-medium">{value}</h3>
       </div>
-      <div className="h-52  relative">
-        <canvas ref={chartRef} />
+      <div className="h-52 relative">
+        {data.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-sm text-gray-500">データがありません</p>
+          </div>
+        ) : (
+          <canvas ref={chartRef} />
+        )}
       </div>
     </div>
   )
