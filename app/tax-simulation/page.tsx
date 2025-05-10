@@ -38,6 +38,43 @@ import {
 } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 
+// 計算ステップの定義
+interface CalculationStep {
+  id: string // 一意の識別子（結果をcontextに保存する際のキー名）
+  name: string // 表示名（「事業税」など）
+  formulaText: string // 数式の表示テキスト（${paramName}で変数を埋め込み可能）
+  formula: (context: Record<string, any>) => number // 実際の計算処理
+  formulaParams: string[] // 計算に必要なパラメータ（contextから取得）
+  category?: string // カテゴリ（「法人税」「住民税」など）
+}
+
+// 税率設定の型定義
+interface TaxRates {
+  // 法人税関連
+  corporateTaxRate: number
+  localCorporateTaxRate: number
+
+  // 住民税関連
+  prefecturalTaxRate: number
+  municipalTaxRate: number
+  corporateInhabitantTaxPerCapita: number
+
+  // 事業税関連
+  businessTaxRate: number
+  specialLocalCorporateTaxRate: number
+
+  // 消費税
+  consumptionTaxRate: number
+  localConsumptionTaxRate: number
+}
+
+// 入力データの型定義
+interface TaxInputData {
+  sales: number // 売上
+  expenses: number // 経費
+  previousBusinessTax?: number // 前年の事業税（任意）
+}
+
 // 納付予定データの型定義
 interface TaxPaymentSchedule {
   period: string
@@ -74,26 +111,6 @@ interface TaxEstimates {
   total: number
 }
 
-// 税率設定の型定義
-interface TaxRates {
-  // 法人税関連
-  corporateTaxRate: number
-  localCorporateTaxRate: number
-
-  // 住民税関連
-  prefecturalTaxRate: number
-  municipalTaxRate: number
-  corporateInhabitantTaxPerCapita: number
-
-  // 事業税関連
-  businessTaxRate: number
-  specialLocalCorporateTaxRate: number
-
-  // 消費税
-  consumptionTaxRate: number
-  localConsumptionTaxRate: number
-}
-
 // 年度データの型定義
 interface YearData {
   income: number
@@ -127,33 +144,234 @@ const emptyYearData: YearData = {
   paymentSchedule: [],
 }
 
+// 計算処理を行う関数
+function calc(
+  steps: CalculationStep[],
+  inputData: TaxInputData,
+  context: Record<string, any> = {},
+): { results: Record<string, number>; context: Record<string, any> } {
+  // 初期コンテキストの設定（課税所得など基本値の計算）
+  if (!context.taxable_income) {
+    context.taxable_income =
+      inputData.sales -
+      inputData.expenses -
+      (inputData.previousBusinessTax || 0)
+  }
+
+  const results: Record<string, number> = {}
+
+  // 各ステップを順に処理
+  for (const step of steps) {
+    // 計算実行
+    const value = step.formula(context)
+
+    // 結果を格納
+    results[step.id] = value
+
+    // コンテキストに結果を追加（次のステップで参照可能に）
+    context[step.id] = value
+  }
+
+  return { results, context }
+}
+
+// 数式テキスト内の変数を実際の値に置換して表示
+function formatFormulaText(
+  formulaText: string,
+  context: Record<string, any>,
+  formatFunc: (val: number) => string,
+): string {
+  return formulaText.replace(/\${(\w+)}/g, (_, paramName) => {
+    return formatFunc(context[paramName])
+  })
+}
+
+// カテゴリごとにステップをグループ化
+function groupByCategory(
+  steps: CalculationStep[],
+): Record<string, CalculationStep[]> {
+  return steps.reduce(
+    (acc, step) => {
+      const category = step.category || 'その他'
+      if (!acc[category]) acc[category] = []
+      acc[category].push(step)
+      return acc
+    },
+    {} as Record<string, CalculationStep[]>,
+  )
+}
+
+// カテゴリごとの合計を計算
+function getCategoryTotal(
+  category: string,
+  steps: CalculationStep[],
+  results: Record<string, number>,
+): number {
+  return steps
+    .filter((step) => step.category === category)
+    .reduce((total, step) => total + results[step.id], 0)
+}
+
+// カテゴリに応じた背景色を取得
+function getCategoryColor(category: string): string {
+  switch (category) {
+    case '法人税':
+      return 'blue'
+    case '住民税':
+      return 'green'
+    case '事業税':
+      return 'amber'
+    case '消費税':
+      return 'purple'
+    default:
+      return 'gray'
+  }
+}
+
+// 法人税関連の計算ステップ
+const corporateTaxSteps: CalculationStep[] = [
+  {
+    id: 'corporate_tax_base',
+    name: '法人税（基本税額）',
+    category: '法人税',
+    formulaText: '課税所得 ${taxable_income} × 税率 23.2%',
+    formulaParams: ['taxable_income'],
+    formula: (context) => Math.round(context.taxable_income * 0.232),
+  },
+  {
+    id: 'local_corporate_tax',
+    name: '地方法人税',
+    category: '法人税',
+    formulaText: '法人税額 ${corporate_tax_base} × 税率 10.3%',
+    formulaParams: ['corporate_tax_base'],
+    formula: (context) => Math.round(context.corporate_tax_base * 0.103),
+  },
+]
+
+// 住民税関連の計算ステップ
+const inhabitantTaxSteps: CalculationStep[] = [
+  {
+    id: 'prefectural_tax',
+    name: '都道府県民税（法人税割）',
+    category: '住民税',
+    formulaText: '法人税額 ${corporate_tax_base} × 税率 1.0%',
+    formulaParams: ['corporate_tax_base'],
+    formula: (context) => Math.round(context.corporate_tax_base * 0.01),
+  },
+  {
+    id: 'municipal_tax',
+    name: '市町村民税（法人税割）',
+    category: '住民税',
+    formulaText: '法人税額 ${corporate_tax_base} × 税率 6.0%',
+    formulaParams: ['corporate_tax_base'],
+    formula: (context) => Math.round(context.corporate_tax_base * 0.06),
+  },
+  {
+    id: 'per_capita_tax',
+    name: '均等割',
+    category: '住民税',
+    formulaText: '定額 70,000円',
+    formulaParams: [],
+    formula: () => 70000,
+  },
+]
+
+// 事業税関連の計算ステップ
+const businessTaxSteps: CalculationStep[] = [
+  {
+    id: 'business_tax_base',
+    name: '法人事業税',
+    category: '事業税',
+    formulaText: '課税所得 ${taxable_income} × 税率 7.0%',
+    formulaParams: ['taxable_income'],
+    formula: (context) => Math.round(context.taxable_income * 0.07),
+  },
+  {
+    id: 'special_local_corporate_tax',
+    name: '特別法人事業税',
+    category: '事業税',
+    formulaText: '法人事業税額 ${business_tax_base} × 税率 43.2%',
+    formulaParams: ['business_tax_base'],
+    formula: (context) => Math.round(context.business_tax_base * 0.432),
+  },
+]
+
+// 消費税関連の計算ステップ
+const consumptionTaxSteps: CalculationStep[] = [
+  {
+    id: 'consumption_tax_base',
+    name: '消費税（国税）',
+    category: '消費税',
+    formulaText: '課税売上 ${sales} × 税率 7.8%',
+    formulaParams: ['sales'],
+    formula: (context) => Math.round(context.sales * 0.078),
+  },
+  {
+    id: 'local_consumption_tax',
+    name: '地方消費税',
+    category: '消費税',
+    formulaText: '課税売上 ${sales} × 税率 2.2%',
+    formulaParams: ['sales'],
+    formula: (context) => Math.round(context.sales * 0.022),
+  },
+]
+
+// すべての計算ステップを結合
+const allTaxSteps: CalculationStep[] = [
+  ...corporateTaxSteps,
+  ...inhabitantTaxSteps,
+  ...businessTaxSteps,
+  ...consumptionTaxSteps,
+]
+
 // 納付予定データを生成する関数
 function generatePaymentSchedule(
   year: number,
-  corporateTax: number,
-  localTax: number,
-  businessTax: number,
-  consumptionTax: number,
+  results: Record<string, number>,
 ): TaxPaymentSchedule[] {
   const schedule: TaxPaymentSchedule[] = []
   const nextYear = year + 1
+
+  // 法人税関連の合計
+  const corporateTaxTotal = corporateTaxSteps.reduce(
+    (sum, step) => sum + (results[step.id] || 0),
+    0,
+  )
+
+  // 住民税関連の合計
+  const inhabitantTaxTotal = inhabitantTaxSteps.reduce(
+    (sum, step) => sum + (results[step.id] || 0),
+    0,
+  )
+
+  // 事業税関連の合計
+  const businessTaxTotal = businessTaxSteps.reduce(
+    (sum, step) => sum + (results[step.id] || 0),
+    0,
+  )
+
+  // 消費税関連の合計
+  const consumptionTaxTotal = consumptionTaxSteps.reduce(
+    (sum, step) => sum + (results[step.id] || 0),
+    0,
+  )
 
   // 法人税（確定申告と中間申告）
   schedule.push({
     period: `${year}年度確定申告`,
     dueDate: `${nextYear}/3/15`,
     taxType: '法人税',
-    amount: corporateTax,
+    amount: corporateTaxTotal,
     status: year < 2024 ? 'paid' : 'upcoming',
   })
 
   // 中間申告（前年度の半額を納付）
-  if (corporateTax > 100000) {
+  if (corporateTaxTotal > 100000) {
     schedule.push({
       period: `${year}年度中間申告`,
       dueDate: `${year}/9/15`,
       taxType: '法人税（中間）',
-      amount: Math.floor(corporateTax / 2),
+      amount: Math.floor(corporateTaxTotal / 2),
       status: year < 2024 ? 'paid' : 'upcoming',
     })
   }
@@ -163,7 +381,7 @@ function generatePaymentSchedule(
     period: `${year}年度確定申告`,
     dueDate: `${nextYear}/3/31`,
     taxType: '住民税',
-    amount: localTax,
+    amount: inhabitantTaxTotal,
     status: year < 2024 ? 'paid' : 'upcoming',
   })
 
@@ -172,7 +390,7 @@ function generatePaymentSchedule(
     period: `${year}年度確定申告`,
     dueDate: `${nextYear}/3/31`,
     taxType: '事業税',
-    amount: businessTax,
+    amount: businessTaxTotal,
     status: year < 2024 ? 'paid' : 'upcoming',
   })
 
@@ -181,17 +399,17 @@ function generatePaymentSchedule(
     period: `${year}年度確定申告`,
     dueDate: `${nextYear}/3/31`,
     taxType: '消費税',
-    amount: consumptionTax,
+    amount: consumptionTaxTotal,
     status: year < 2024 ? 'paid' : 'upcoming',
   })
 
   // 消費税（中間申告）- 前年度の実績が一定以上の場合
-  if (consumptionTax > 100000) {
+  if (consumptionTaxTotal > 100000) {
     schedule.push({
       period: `${year}年度中間申告`,
       dueDate: `${year}/11/30`,
       taxType: '消費税（中間）',
-      amount: Math.floor(consumptionTax / 2),
+      amount: Math.floor(consumptionTaxTotal / 2),
       status: year < 2024 ? 'paid' : 'upcoming',
     })
   }
@@ -584,230 +802,87 @@ export default function TaxSimulationPage() {
                             </div>
                           </div>
 
-                          {/* 法人税計算 */}
-                          <div className="pt-4 border-t">
-                            <h4 className="font-medium mb-2">法人税計算</h4>
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                法人税（国税）
-                              </p>
-                              <p className="text-sm mt-1">
-                                課税所得 {formatCurrency(baseYearData.profit)} ×
-                                税率 {formatPercent(taxRates.corporateTaxRate)}{' '}
-                                = {formatCurrency(displayTaxData.corporateTax)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※課税所得をベースに計算
-                              </p>
-                            </div>
+                          {/* 計算ステップベースの表示 */}
+                          {(() => {
+                            // 計算に必要な入力データを準備
+                            const inputData: TaxInputData = {
+                              sales: simulatedIncome,
+                              expenses: simulatedExpense,
+                              previousBusinessTax: 0, // 前年の事業税（サンプルとして0を設定）
+                            }
 
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                地方法人税（国税）
-                              </p>
-                              <p className="text-sm mt-1">
-                                法人税額{' '}
-                                {formatCurrency(displayTaxData.corporateTax)} ×
-                                税率{' '}
-                                {formatPercent(taxRates.localCorporateTaxRate)}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.localCorporateTax,
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※法人税額をベースに計算
-                              </p>
-                            </div>
+                            // 計算実行
+                            const { results, context } = calc(
+                              allTaxSteps,
+                              inputData,
+                            )
 
-                            <div className="bg-blue-50 p-3 rounded border">
-                              <p className="text-sm font-medium">法人税合計</p>
-                              <p className="text-sm mt-1">
-                                法人税{' '}
-                                {formatCurrency(displayTaxData.corporateTax)} +
-                                地方法人税{' '}
-                                {formatCurrency(
-                                  displayTaxData.localCorporateTax,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.totalCorporateTax,
-                                )}
-                              </p>
-                            </div>
-                          </div>
+                            // カテゴリごとにグループ化
+                            const stepsByCategory = groupByCategory(allTaxSteps)
 
-                          {/* 住民税計算 */}
-                          <div className="pt-4 border-t">
-                            <h4 className="font-medium mb-2">住民税計算</h4>
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                都道府県民税（法人税割）
-                              </p>
-                              <p className="text-sm mt-1">
-                                法人税額{' '}
-                                {formatCurrency(displayTaxData.corporateTax)} ×
-                                税率{' '}
-                                {formatPercent(taxRates.prefecturalTaxRate)} ={' '}
-                                {formatCurrency(displayTaxData.prefecturalTax)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※法人税額をベースに計算
-                              </p>
-                            </div>
+                            // カテゴリごとに表示
+                            return Object.entries(stepsByCategory).map(
+                              ([category, steps]) => (
+                                <div key={category} className="pt-4 border-t">
+                                  <h4 className="font-medium mb-2">
+                                    {category}計算
+                                  </h4>
 
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                市町村民税（法人税割）
-                              </p>
-                              <p className="text-sm mt-1">
-                                法人税額{' '}
-                                {formatCurrency(displayTaxData.corporateTax)} ×
-                                税率 {formatPercent(taxRates.municipalTaxRate)}{' '}
-                                = {formatCurrency(displayTaxData.municipalTax)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※法人税額をベースに計算
-                              </p>
-                            </div>
+                                  {/* 各ステップの表示 */}
+                                  {steps.map((step) => (
+                                    <div
+                                      key={step.id}
+                                      className="bg-white p-3 rounded border mb-2"
+                                    >
+                                      <p className="text-sm font-medium">
+                                        {step.name}
+                                      </p>
+                                      <p className="text-sm mt-1">
+                                        {formatFormulaText(
+                                          step.formulaText,
+                                          context,
+                                          formatCurrency,
+                                        )}{' '}
+                                        = {formatCurrency(results[step.id])}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-1">
+                                        ※
+                                        {step.formulaParams.length > 0
+                                          ? `${step.formulaParams.join(', ')}をベースに計算`
+                                          : '定額計算'}
+                                      </p>
+                                    </div>
+                                  ))}
 
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">均等割</p>
-                              <p className="text-sm mt-1">
-                                定額 ={' '}
-                                {formatCurrency(
-                                  displayTaxData.corporateInhabitantTaxPerCapita,
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※資本金等の額と従業員数に応じた定額
-                              </p>
-                            </div>
-
-                            <div className="bg-green-50 p-3 rounded border">
-                              <p className="text-sm font-medium">住民税合計</p>
-                              <p className="text-sm mt-1">
-                                都道府県民税{' '}
-                                {formatCurrency(displayTaxData.prefecturalTax)}{' '}
-                                + 市町村民税{' '}
-                                {formatCurrency(displayTaxData.municipalTax)} +
-                                均等割{' '}
-                                {formatCurrency(
-                                  displayTaxData.corporateInhabitantTaxPerCapita,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.totalInhabitantTax,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* 事業税計算 */}
-                          <div className="pt-4 border-t">
-                            <h4 className="font-medium mb-2">事業税計算</h4>
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">法人事業税</p>
-                              <p className="text-sm mt-1">
-                                課税所得 {formatCurrency(baseYearData.profit)} ×
-                                税率 {formatPercent(taxRates.businessTaxRate)} ={' '}
-                                {formatCurrency(displayTaxData.businessTax)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※課税所得をベースに計算
-                              </p>
-                            </div>
-
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                特別法人事業税
-                              </p>
-                              <p className="text-sm mt-1">
-                                法人事業税額{' '}
-                                {formatCurrency(displayTaxData.businessTax)} ×
-                                税率{' '}
-                                {formatPercent(
-                                  taxRates.specialLocalCorporateTaxRate,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.specialLocalCorporateTax,
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※法人事業税額をベースに計算
-                              </p>
-                            </div>
-
-                            <div className="bg-amber-50 p-3 rounded border">
-                              <p className="text-sm font-medium">事業税合計</p>
-                              <p className="text-sm mt-1">
-                                法人事業税{' '}
-                                {formatCurrency(displayTaxData.businessTax)} +
-                                特別法人事業税{' '}
-                                {formatCurrency(
-                                  displayTaxData.specialLocalCorporateTax,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.totalBusinessTax,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* 消費税計算 */}
-                          <div className="pt-4 border-t">
-                            <h4 className="font-medium mb-2">消費税計算</h4>
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">
-                                消費税（国税）
-                              </p>
-                              <p className="text-sm mt-1">
-                                課税売上 {formatCurrency(baseYearData.income)} ×
-                                税率{' '}
-                                {formatPercent(taxRates.consumptionTaxRate)} ={' '}
-                                {formatCurrency(displayTaxData.consumptionTax)}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※簡易計算方式（課税売上高をベースに計算）
-                              </p>
-                            </div>
-
-                            <div className="bg-white p-3 rounded border mb-2">
-                              <p className="text-sm font-medium">地方消費税</p>
-                              <p className="text-sm mt-1">
-                                課税売上 {formatCurrency(baseYearData.income)} ×
-                                税率{' '}
-                                {formatPercent(
-                                  taxRates.localConsumptionTaxRate,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.localConsumptionTax,
-                                )}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                ※消費税額の22/78相当額
-                              </p>
-                            </div>
-
-                            <div className="bg-purple-50 p-3 rounded border">
-                              <p className="text-sm font-medium">消費税合計</p>
-                              <p className="text-sm mt-1">
-                                消費税{' '}
-                                {formatCurrency(displayTaxData.consumptionTax)}{' '}
-                                + 地方消費税{' '}
-                                {formatCurrency(
-                                  displayTaxData.localConsumptionTax,
-                                )}{' '}
-                                ={' '}
-                                {formatCurrency(
-                                  displayTaxData.totalConsumptionTax,
-                                )}
-                              </p>
-                            </div>
-                          </div>
+                                  {/* カテゴリ小計 */}
+                                  <div
+                                    className={`bg-${getCategoryColor(category)}-50 p-3 rounded border`}
+                                  >
+                                    <p className="text-sm font-medium">
+                                      {category}合計
+                                    </p>
+                                    <p className="text-sm mt-1">
+                                      {steps.map((step, index) => (
+                                        <span key={step.id}>
+                                          {index > 0 && ' + '}
+                                          {step.name}{' '}
+                                          {formatCurrency(results[step.id])}
+                                        </span>
+                                      ))}{' '}
+                                      ={' '}
+                                      {formatCurrency(
+                                        getCategoryTotal(
+                                          category,
+                                          allTaxSteps,
+                                          results,
+                                        ),
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              ),
+                            )
+                          })()}
 
                           {/* 総合計 */}
                           <div className="pt-4 border-t">
