@@ -4,7 +4,10 @@ import { steps2024 } from './steps2024'
 export interface CalculationStep {
   id: string // 一意の識別子（結果をcontextに保存する際のキー名）
   name: string // 表示名（「事業税」など）
-  formulaText: string // 数式の表示テキスト（${paramName}で変数を埋め込み可能）
+  formulaText: (
+    context: Record<string, any>,
+    formatFunc: (val: number) => string,
+  ) => string // 数式の表示テキストを生成する関数
   formula: (context: Record<string, any>) => number // 実際の計算処理
   formulaParams: string[] // 計算に必要なパラメータ（contextから取得）
   category?: string // カテゴリ（「法人税」「住民税」など）
@@ -46,7 +49,7 @@ export function calc(
   return context
 }
 
-// 数式テキスト内の変数を実際の値に置換して表示
+// 数式テキストを生成する関数（後方互換性のために残す）
 export function formatFormulaText(
   formulaText: string,
   context: Record<string, any>,
