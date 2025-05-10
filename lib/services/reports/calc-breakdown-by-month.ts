@@ -1,8 +1,13 @@
+import {
+  KAMOKU_BUNRUI_TYPE,
+  KamokuBunruiType,
+} from '@/lib/constants/kamoku-bunrui'
 import { Connection } from '@/lib/types'
 
 export interface BreakdownByMonthRequest {
   fiscalYear: string
   kamokuBunruiCd: string
+  kamokuBunruiType: KamokuBunruiType
 }
 
 export interface BreakdownByMonthResponse {
@@ -73,16 +78,26 @@ export async function calcBreakdownByMonth(
     )
   })
 
-  // 貸方の結果を処理（借方から引く）
+  // 貸方の結果を処理
   kasikata.forEach((item) => {
     if (!mergedResults.has(item.saimoku_cd)) {
       mergedResults.set(item.saimoku_cd, new Map())
     }
     const monthMap = mergedResults.get(item.saimoku_cd)!
-    monthMap.set(
-      item.month,
-      (monthMap.get(item.month) || 0) - Number(item.value),
-    )
+    const currentValue = monthMap.get(item.month) || 0
+    const kasikataValue = Number(item.value)
+
+    // 科目分類に応じて計算方法を切り替え
+    switch (input.kamokuBunruiType) {
+      case KAMOKU_BUNRUI_TYPE.LEFT:
+        monthMap.set(item.month, currentValue - kasikataValue)
+        break
+      case KAMOKU_BUNRUI_TYPE.RIGHT:
+        monthMap.set(item.month, kasikataValue - currentValue)
+        break
+      default:
+        throw new Error(`Invalid kamoku bunrui type: ${input.kamokuBunruiType}`)
+    }
   })
 
   // 最終的な結果を生成

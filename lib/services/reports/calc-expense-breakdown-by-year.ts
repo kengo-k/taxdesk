@@ -1,4 +1,7 @@
-import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
+import {
+  KAMOKU_BUNRUI,
+  KAMOKU_BUNRUI_TYPE,
+} from '@/lib/constants/kamoku-bunrui'
 import { Connection } from '@/lib/types'
 
 import {
@@ -8,7 +11,7 @@ import {
 
 export type ExpenseBreakdownByYearRequest = Omit<
   BreakdownByMonthRequest,
-  'kamokuBunruiCd'
+  'kamokuBunruiCd' | 'kamokuBunruiType'
 >
 export type ExpenseBreakdownByYearResponse = Awaited<
   ReturnType<typeof calcBreakdownByYear>
@@ -21,5 +24,6 @@ export async function calcExpenseBreakdownByYear(
   return calcBreakdownByYear(conn, {
     ...input,
     kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+    kamokuBunruiType: KAMOKU_BUNRUI_TYPE.LEFT,
   })
 }

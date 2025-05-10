@@ -12,7 +12,9 @@ export function calcIncomeBreakdownByYearHandler(
 ) {
   return withTransaction(conn, async (tx) => {
     const { year: fiscalYear } = await ctx.params
-    return await calcIncomeBreakdownByYear(tx, { fiscalYear })
+    return await calcIncomeBreakdownByYear(tx, {
+      fiscalYear,
+    })
   })
 }
 

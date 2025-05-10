@@ -28,7 +28,6 @@ import {
   fetchFiscalYears,
   selectAllFiscalYears,
   selectFiscalYear,
-  selectFiscalYearError,
   selectFiscalYearLoading,
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
@@ -39,10 +38,18 @@ import {
   fetchExpenseBreakdownByYear,
   fetchIncomeBreakdownByMonth,
   fetchIncomeBreakdownByYear,
+  selectAssetBreakdownByMonth,
+  selectAssetBreakdownByMonthLoading,
+  selectAssetBreakdownByYear,
+  selectAssetBreakdownByYearLoading,
   selectExpenseBreakdownByMonth,
   selectExpenseBreakdownByMonthLoading,
   selectExpenseBreakdownByYear,
   selectExpenseBreakdownByYearLoading,
+  selectIncomeBreakdownByMonth,
+  selectIncomeBreakdownByMonthLoading,
+  selectIncomeBreakdownByYear,
+  selectIncomeBreakdownByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getChartColors } from '@/lib/utils/chart-colors'
@@ -54,6 +61,8 @@ export default function Home() {
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
   const loading = useAppSelector(selectFiscalYearLoading)
+
+  // 費用データ
   const expenseBreakdownByMonth =
     useAppSelector(selectExpenseBreakdownByMonth) || []
   const expenseBreakdownLoading = useAppSelector(
@@ -63,7 +72,28 @@ export default function Home() {
   const expenseBreakdownByYearLoading = useAppSelector(
     selectExpenseBreakdownByYearLoading,
   )
-  const error = useAppSelector(selectFiscalYearError)
+
+  // 資産データ
+  const assetBreakdownByMonth =
+    useAppSelector(selectAssetBreakdownByMonth) || []
+  const assetBreakdownLoading = useAppSelector(
+    selectAssetBreakdownByMonthLoading,
+  )
+  const assetBreakdownByYear = useAppSelector(selectAssetBreakdownByYear)
+  const assetBreakdownByYearLoading = useAppSelector(
+    selectAssetBreakdownByYearLoading,
+  )
+
+  // 収入データ
+  const incomeBreakdownByMonth =
+    useAppSelector(selectIncomeBreakdownByMonth) || []
+  const incomeBreakdownLoading = useAppSelector(
+    selectIncomeBreakdownByMonthLoading,
+  )
+  const incomeBreakdownByYear = useAppSelector(selectIncomeBreakdownByYear)
+  const incomeBreakdownByYearLoading = useAppSelector(
+    selectIncomeBreakdownByYearLoading,
+  )
 
   const [dataError, setDataError] = useState<string | null>(null)
 
@@ -110,11 +140,11 @@ export default function Home() {
   }
 
   // エラー表示
-  if (error || dataError) {
+  if (dataError) {
     return (
       <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
         <div className="text-center">
-          <p className="text-lg mb-2 text-red-500">{error || dataError}</p>
+          <p className="text-lg mb-2 text-red-500">{dataError}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             再読み込み
           </Button>
@@ -307,22 +337,76 @@ export default function Home() {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title={`資産の内訳 (${selectedYearId}年度)`}
-              value={'Loading...'}
-              data={[]}
-              labels={[]}
-              colors={[]}
-              amounts={[]}
+              value={
+                assetBreakdownByYearLoading
+                  ? 'Loading...'
+                  : formatCurrency(
+                      assetBreakdownByYear?.reduce(
+                        (sum, item) => sum + item.value,
+                        0,
+                      ) || 0,
+                    )
+              }
+              data={
+                assetBreakdownByYearLoading
+                  ? []
+                  : assetBreakdownByYear?.map((item) => item.value) || []
+              }
+              labels={
+                assetBreakdownByYearLoading
+                  ? []
+                  : assetBreakdownByYear?.map(
+                      (item) => item.saimoku_ryaku_name,
+                    ) || []
+              }
+              colors={
+                assetBreakdownByYearLoading
+                  ? []
+                  : getChartColors('asset', assetBreakdownByYear?.length || 0)
+              }
+              amounts={
+                assetBreakdownByYearLoading
+                  ? []
+                  : assetBreakdownByYear?.map((item) => item.value) || []
+              }
             />
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <DonutChart
               title={`収入の内訳 (${selectedYearId}年度)`}
-              value={'Loading...'}
-              data={[]}
-              labels={[]}
-              colors={[]}
-              amounts={[]}
+              value={
+                incomeBreakdownByYearLoading
+                  ? 'Loading...'
+                  : formatCurrency(
+                      incomeBreakdownByYear?.reduce(
+                        (sum, item) => sum + item.value,
+                        0,
+                      ) || 0,
+                    )
+              }
+              data={
+                incomeBreakdownByYearLoading
+                  ? []
+                  : incomeBreakdownByYear?.map((item) => item.value) || []
+              }
+              labels={
+                incomeBreakdownByYearLoading
+                  ? []
+                  : incomeBreakdownByYear?.map(
+                      (item) => item.saimoku_ryaku_name,
+                    ) || []
+              }
+              colors={
+                incomeBreakdownByYearLoading
+                  ? []
+                  : getChartColors('income', incomeBreakdownByYear?.length || 0)
+              }
+              amounts={
+                incomeBreakdownByYearLoading
+                  ? []
+                  : incomeBreakdownByYear?.map((item) => item.value) || []
+              }
             />
           </div>
 
@@ -372,7 +456,70 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <StackedBarChart
             title={`収入の内訳 月別（${selectedYearId}年度）`}
-            data={{ labels: [], datasets: [] }}
+            data={
+              incomeBreakdownLoading
+                ? { labels: [], datasets: [] }
+                : {
+                    labels: [
+                      '4月',
+                      '5月',
+                      '6月',
+                      '7月',
+                      '8月',
+                      '9月',
+                      '10月',
+                      '11月',
+                      '12月',
+                      '1月',
+                      '2月',
+                      '3月',
+                    ],
+                    datasets: Object.values(
+                      incomeBreakdownByMonth.reduce(
+                        (acc, item) => {
+                          if (!acc[item.saimoku_cd]) {
+                            acc[item.saimoku_cd] = {
+                              label: item.saimoku_full_name,
+                              data: new Array(12).fill(0),
+                            }
+                          }
+                          const monthIndex = (parseInt(item.month) + 8) % 12
+                          acc[item.saimoku_cd].data[monthIndex] = item.value
+                          return acc
+                        },
+                        {} as Record<
+                          string,
+                          {
+                            label: string
+                            data: number[]
+                          }
+                        >,
+                      ),
+                    )
+                      .sort((a, b) => {
+                        const sumA = a.data.reduce((sum, val) => sum + val, 0)
+                        const sumB = b.data.reduce((sum, val) => sum + val, 0)
+                        return sumB - sumA
+                      })
+                      .map(
+                        (
+                          dataset: { label: string; data: number[] },
+                          index: number,
+                          sortedDatasets: { label: string; data: number[] }[],
+                        ) => {
+                          const colors: string[] = getChartColors(
+                            'income',
+                            sortedDatasets.length,
+                          )
+                          return {
+                            label: dataset.label,
+                            data: dataset.data,
+                            backgroundColor: colors[index] || colors[0],
+                          }
+                        },
+                      ),
+                  }
+            }
           />
         </div>
 
@@ -405,7 +552,6 @@ export default function Home() {
                             acc[item.saimoku_cd] = {
                               label: item.saimoku_full_name,
                               data: new Array(12).fill(0),
-                              backgroundColor: '', // 一時的に空文字列を設定
                             }
                           }
                           const monthIndex = (parseInt(item.month) + 8) % 12
@@ -417,7 +563,6 @@ export default function Home() {
                           {
                             label: string
                             data: number[]
-                            backgroundColor: string
                           }
                         >,
                       ),
@@ -427,13 +572,23 @@ export default function Home() {
                         const sumB = b.data.reduce((sum, val) => sum + val, 0)
                         return sumB - sumA
                       })
-                      .map((dataset, index, sortedDatasets) => ({
-                        ...dataset,
-                        backgroundColor: getChartColors(
-                          'expense',
-                          sortedDatasets.length,
-                        )[index],
-                      })),
+                      .map(
+                        (
+                          dataset: { label: string; data: number[] },
+                          index: number,
+                          sortedDatasets: { label: string; data: number[] }[],
+                        ) => {
+                          const colors: string[] = getChartColors(
+                            'expense',
+                            sortedDatasets.length,
+                          )
+                          return {
+                            label: dataset.label,
+                            data: dataset.data,
+                            backgroundColor: colors[index] || colors[0],
+                          }
+                        },
+                      ),
                   }
             }
           />
