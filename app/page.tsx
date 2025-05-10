@@ -33,8 +33,12 @@ import {
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
+  fetchAssetBreakdownByMonth,
+  fetchAssetBreakdownByYear,
   fetchExpenseBreakdownByMonth,
   fetchExpenseBreakdownByYear,
+  fetchIncomeBreakdownByMonth,
+  fetchIncomeBreakdownByYear,
   selectExpenseBreakdownByMonth,
   selectExpenseBreakdownByMonthLoading,
   selectExpenseBreakdownByYear,
@@ -71,12 +75,11 @@ export default function Home() {
   useEffect(() => {
     if (selectedYearId) {
       dispatch(fetchExpenseBreakdownByMonth(selectedYearId))
-    }
-  }, [dispatch, selectedYearId])
-
-  useEffect(() => {
-    if (selectedYearId) {
       dispatch(fetchExpenseBreakdownByYear(selectedYearId))
+      dispatch(fetchIncomeBreakdownByMonth(selectedYearId))
+      dispatch(fetchIncomeBreakdownByYear(selectedYearId))
+      dispatch(fetchAssetBreakdownByMonth(selectedYearId))
+      dispatch(fetchAssetBreakdownByYear(selectedYearId))
     }
   }, [dispatch, selectedYearId])
 
