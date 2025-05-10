@@ -6,20 +6,20 @@ import {
   calcBreakdownByYear,
 } from './calc-breakdown-by-year'
 
-export type ExpenseBreakdownByYearRequest = Omit<
+export type IncomeBreakdownByYearRequest = Omit<
   BreakdownByMonthRequest,
   'kamokuBunruiCd'
 >
-export type ExpenseBreakdownByYearResponse = Awaited<
+export type IncomeBreakdownByYearResponse = Awaited<
   ReturnType<typeof calcBreakdownByYear>
 >[number]
 
-export async function calcExpenseBreakdownByYear(
+export async function calcIncomeBreakdownByYear(
   conn: Connection,
-  input: ExpenseBreakdownByYearRequest,
-): Promise<ExpenseBreakdownByYearResponse[]> {
+  input: IncomeBreakdownByYearRequest,
+): Promise<IncomeBreakdownByYearResponse[]> {
   return calcBreakdownByYear(conn, {
     ...input,
-    kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+    kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
   })
 }
