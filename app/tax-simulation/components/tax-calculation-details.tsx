@@ -1,30 +1,11 @@
-'use client'
+import { Calculator } from 'lucide-react'
 
-import { useCallback, useState } from 'react'
-
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-
-import { ArrowLeft, Download } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { toast } from '@/components/ui/use-toast'
-
-import { TaxCalculationDetails } from './components/tax-calculation-details'
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 // 計算ステップの定義
 interface CalculationStep {
@@ -108,33 +89,6 @@ function groupByCategory(
     },
     {} as Record<string, CalculationStep[]>,
   )
-}
-
-// カテゴリごとの合計を計算
-function getCategoryTotal(
-  category: string,
-  steps: CalculationStep[],
-  results: Record<string, number>,
-): number {
-  return steps
-    .filter((step) => step.category === category)
-    .reduce((total, step) => total + results[step.id], 0)
-}
-
-// カテゴリに応じた背景色を取得
-function getCategoryColor(category: string): string {
-  switch (category) {
-    case '法人税':
-      return 'blue'
-    case '住民税':
-      return 'green'
-    case '事業税':
-      return 'amber'
-    case '消費税':
-      return 'purple'
-    default:
-      return 'gray'
-  }
 }
 
 // 法人税関連の計算ステップ
@@ -246,14 +200,11 @@ const allTaxSteps: CalculationStep[] = [
   ...consumptionTaxSteps,
 ]
 
-export default function TaxSimulationPage() {
-  const searchParams = useSearchParams()
-  const yearParam = searchParams.get('year') || '2024'
+interface TaxCalculationDetailsProps {
+  loading: boolean
+}
 
-  // 状態管理
-  const [selectedYear, setSelectedYear] = useState(yearParam)
-  const [loading, setLoading] = useState(false)
-
+export function TaxCalculationDetails({ loading }: TaxCalculationDetailsProps) {
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('ja-JP', {
@@ -263,83 +214,78 @@ export default function TaxSimulationPage() {
     }).format(amount)
   }
 
-  // PDFダウンロード処理
-  const handleDownloadPDF = useCallback(() => {
-    toast({
-      title: 'PDFをダウンロードしました',
-      description: `${selectedYear}年度の税額シミュレーション結果をダウンロードしました。`,
-    })
-  }, [selectedYear])
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <main className="flex-1 container mx-auto px-4 py-6">
-        <div className="mb-6 flex items-center">
-          <Link
-            href="/"
-            className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            戻る
-          </Link>
-          <h2 className="text-lg font-bold">
-            {selectedYear === '2024' ? '税額シミュレーション' : '確定税額詳細'}
-          </h2>
-        </div>
+    <div className="mt-6">
+      <Accordion type="single" collapsible defaultValue="calculation">
+        <AccordionItem value="calculation">
+          <AccordionTrigger>
+            <span className="flex items-center">
+              <Calculator className="h-4 w-4 mr-2" />
+              税額計算の詳細
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
+              {/* 計算ステップベースの表示 */}
+              {(() => {
+                // 計算に必要な入力データを準備
+                const inputData: TaxInputData = {
+                  sales: 7362012,
+                  expenses: 7202571,
+                  previousBusinessTax: 4500,
+                }
 
-        {/* 年度選択と操作ボタン */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    会計年度
-                  </label>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="会計年度を選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2021">2021年度</SelectItem>
-                      <SelectItem value="2022">2022年度</SelectItem>
-                      <SelectItem value="2023">2023年度</SelectItem>
-                      <SelectItem value="2024">2024年度</SelectItem>
-                      <SelectItem value="2025">2025年度</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                // 計算実行
+                const { results, context } = calc(allTaxSteps, inputData)
 
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleDownloadPDF}>
-                  <Download className="h-4 w-4 mr-2" />
-                  PDFダウンロード
-                </Button>
-              </div>
+                // カテゴリごとにグループ化
+                const stepsByCategory = groupByCategory(allTaxSteps)
+
+                // カテゴリごとに表示
+                return Object.entries(stepsByCategory).map(
+                  ([category, steps]) => (
+                    <div key={category} className="pt-4 border-t">
+                      <h4 className="font-medium mb-2">{category}計算</h4>
+
+                      {/* 各ステップの表示 */}
+                      {steps.map((step) => (
+                        <div
+                          key={step.id}
+                          className="bg-white p-3 rounded border mb-2"
+                        >
+                          <p className="text-sm font-medium">{step.name}</p>
+                          <p className="text-sm mt-1">
+                            {formatFormulaText(
+                              step.formulaText,
+                              context,
+                              formatCurrency,
+                            )}{' '}
+                            = {formatCurrency(results[step.id])}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            ※
+                            {step.formulaParams.length > 0
+                              ? `${step.formulaParams.join(', ')}をベースに計算`
+                              : '定額計算'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ),
+                )
+              })()}
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 gap-6 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedYear}年度{' '}
-                {selectedYear === '2024' ? '税額見込み' : '確定税額'}
-              </CardTitle>
-              <CardDescription>
-                {selectedYear === '2024'
-                  ? '現在の収支に基づく年間税額見込み'
-                  : `${selectedYear}年度の確定税額`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TaxCalculationDetails loading={loading} />
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }
