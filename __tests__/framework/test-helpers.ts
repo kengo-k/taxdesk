@@ -88,7 +88,7 @@ export function withTransactionForTest(
  * Prismaメタデータから型マップを取得する関数
  */
 function getTypeMapFromPrisma(tableName: string): {
-  [key: string]: 'string' | 'number' | 'boolean' | 'date'
+  [key: string]: 'string' | 'number' | 'boolean' | 'date' | 'json'
 } {
   // インスタンスではなくPrismaクラスから直接DMMFにアクセス
   // @ts-ignore - Prismaは@prisma/clientからインポートされていないため
@@ -106,8 +106,9 @@ function getTypeMapFromPrisma(tableName: string): {
   }
 
   // フィールドの型情報からTypeMapを構築
-  const typeMap: { [key: string]: 'string' | 'number' | 'boolean' | 'date' } =
-    {}
+  const typeMap: {
+    [key: string]: 'string' | 'number' | 'boolean' | 'date' | 'json'
+  } = {}
   for (const field of model.fields) {
     // Prismaの型情報をCSVヘルパーの型に変換
     if (
@@ -120,6 +121,8 @@ function getTypeMapFromPrisma(tableName: string): {
       typeMap[field.name] = 'boolean'
     } else if (field.type === 'DateTime') {
       typeMap[field.name] = 'date'
+    } else if (field.type === 'Json' || field.type === 'Jsonb') {
+      typeMap[field.name] = 'json'
     }
     // 他は文字列型として扱う（変換不要）
   }
@@ -146,7 +149,14 @@ export async function importCsvToPrisma(
   convertedRecords = records.map((record: any) => {
     const newRecord = { ...record }
     for (const [key, type] of Object.entries(fieldTypeMap)) {
-      if (newRecord[key] !== undefined) {
+      // 空文字列をSQL NULLとして扱う（フィールドを削除）
+      if (newRecord[key] === '') {
+        delete newRecord[key] // SQL NULLとして扱うためにフィールドを削除
+        continue
+      }
+
+      // undefinedでなく、nullでもない場合に型変換を適用
+      if (newRecord[key] !== undefined && newRecord[key] !== null) {
         switch (type) {
           case 'number':
             newRecord[key] = Number(newRecord[key])
@@ -156,6 +166,21 @@ export async function importCsvToPrisma(
             break
           case 'date':
             newRecord[key] = new Date(newRecord[key])
+            break
+          case 'json':
+            try {
+              // 文字列の"null"の場合はJSONのnull値として扱う
+              if (newRecord[key] === 'null') {
+                newRecord[key] = null
+              } else {
+                // それ以外はJSONとしてパース
+                newRecord[key] = JSON.parse(newRecord[key])
+              }
+            } catch (error) {
+              console.error(`JSON解析エラー (${key}): ${error}`)
+              // 解析エラーの場合はnullとして扱う
+              newRecord[key] = null
+            }
             break
           // stringの場合は変換不要
         }

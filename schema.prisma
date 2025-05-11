@@ -71,7 +71,7 @@ model saimoku_masters {
   saimoku_ryaku_name String
   saimoku_kana_name  String
   description        String?
-  split_ratio        Decimal?                 @db.Decimal(4, 2)
+  custom_fields      Json?
   created_at         DateTime                 @db.Timestamp(6)
   updated_at         DateTime                 @db.Timestamp(6)
   valid_from         String                   @db.VarChar(8) @default("20000101")
