@@ -23,14 +23,16 @@ export class TestEnvironment {
 
   private async setupBaseMasterData(): Promise<void> {
     try {
-      await prisma.nendo_masters.deleteMany()
-      await prisma.kamoku_bunrui_masters.deleteMany()
-      await prisma.kamoku_masters.deleteMany()
-      await prisma.saimoku_masters.deleteMany()
-      await importCsvToPrisma(prisma, 'seed/nendo_masters.csv')
-      await importCsvToPrisma(prisma, 'seed/kamoku_bunrui_masters.csv')
-      await importCsvToPrisma(prisma, 'seed/kamoku_masters.csv')
-      await importCsvToPrisma(prisma, 'seed/saimoku_masters.csv')
+      await prisma.$transaction(async (tx) => {
+        await tx.nendo_masters.deleteMany()
+        await tx.kamoku_bunrui_masters.deleteMany()
+        await tx.kamoku_masters.deleteMany()
+        await tx.saimoku_masters.deleteMany()
+        await importCsvToPrisma(tx, 'seed/nendo_masters.csv')
+        await importCsvToPrisma(tx, 'seed/kamoku_bunrui_masters.csv')
+        await importCsvToPrisma(tx, 'seed/kamoku_masters.csv')
+        await importCsvToPrisma(tx, 'seed/saimoku_masters.csv')
+      })
     } catch (error) {
       console.error('Error setting up basic master data:', error)
       throw error
