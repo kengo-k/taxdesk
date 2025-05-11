@@ -81,13 +81,13 @@ describe('createLedger', () => {
   )
 
   it(
-    'should throw ApiError when both debit and credit amounts are unset for A11 and E61 account codes',
+    'should throw ApiError when both debit and credit amounts are unset for A11 and E04 account codes',
     withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210401',
         ledger_cd: 'A11',
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -104,14 +104,14 @@ describe('createLedger', () => {
   )
 
   it(
-    'should throw ApiError when both debit and credit amounts are set for A11 and E61 account codes',
+    'should throw ApiError when both debit and credit amounts are set for A11 and E04 account codes',
     withTransactionForTest([], async (tx) => {
       const input = {
         nendo: '2021',
         date: '20210401',
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         kasikata_value: 1000,
         note: 'test',
         checked: '0',
@@ -136,7 +136,7 @@ describe('createLedger', () => {
         date: 'invalid',
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -160,7 +160,7 @@ describe('createLedger', () => {
         date: '20210230',
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -184,7 +184,7 @@ describe('createLedger', () => {
         date: '20210331', // 2020年度の最終日
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -208,7 +208,7 @@ describe('createLedger', () => {
         date: '20210401',
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -231,7 +231,7 @@ describe('createLedger', () => {
         nendo: '2021',
         date: '20210331', // 2020年度の最終日
         ledger_cd: 'A11',
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }
@@ -267,7 +267,7 @@ describe('createLedger', () => {
         date: '20210401',
         ledger_cd: 'A11',
         karikata_value: 1000,
-        counter_cd: 'E61',
+        counter_cd: 'E04',
         note: 'test',
         checked: '0',
       }

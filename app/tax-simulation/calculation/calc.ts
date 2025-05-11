@@ -63,6 +63,7 @@ export function groupByCategory(
 }
 
 export const stepMappings: Record<string, CalculationStep[]> = {
+  '2023': steps2024,
   '2024': steps2024,
 }
 

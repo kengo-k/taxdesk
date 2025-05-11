@@ -89,7 +89,7 @@ describe('listLedgers', () => {
         await createLedger(tx, {
           nendo: '2021',
           date: '20210601',
-          ledger_cd: 'E61', // Supplies Expense
+          ledger_cd: 'E04', // Supplies Expense
           karikata_value: 5000,
           counter_cd: 'A11', // Cash
           note: '消耗品購入',
@@ -187,7 +187,7 @@ describe('listLedgers', () => {
         tx,
         {
           fiscal_year: '2021',
-          ledger_cd: 'E61', // Supplies Expense
+          ledger_cd: 'E04', // Supplies Expense
           month: null,
         },
         {
@@ -200,7 +200,7 @@ describe('listLedgers', () => {
       // Verify supplies expense count
       const suppliesCount = await countLedgers(tx, {
         fiscal_year: '2021',
-        ledger_cd: 'E61',
+        ledger_cd: 'E04',
         month: null,
       })
       expect(suppliesCount).toBe(3) // 3 items of supplies purchased
