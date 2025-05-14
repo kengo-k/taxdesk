@@ -22,6 +22,7 @@ export interface LedgerListItem {
   kasikata_sum: number
   note: string | null
   acc: number
+  checked: string
 }
 
 export async function listLedgers(
@@ -77,6 +78,7 @@ export async function listLedgers(
           between current row and unbounded following
       ) as integer) kasikata_sum,
       note,
+      j.checked,
       j.created_at
     from
       (
@@ -93,6 +95,7 @@ export async function listLedgers(
             else karikata_cd
           end as other_cd,
           note,
+          checked,
           created_at
         from
           journals j

@@ -7,6 +7,7 @@ import {
 } from '@reduxjs/toolkit'
 
 import { DeleteJournalsRequest } from '@/lib/services/journal/delete-journals'
+import { UpdateJournalCheckedRequest } from '@/lib/services/journal/update-journal-checked'
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
 import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
@@ -230,6 +231,40 @@ export const updateTransaction = createAsyncThunk<
     }
   },
 )
+
+// 非同期アクション - 取引データの確認状態更新
+export const updateJournalChecked = createAsyncThunk<
+  { success: boolean; message: string },
+  UpdateJournalCheckedRequest
+>('transaction/updateJournalChecked', async (request, { rejectWithValue }) => {
+  try {
+    const response = await fetch(
+      `/api/fiscal-years/${request.fiscal_year}/journal/checked`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: request.id,
+          checked: request.checked,
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`APIエラー: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error
+        ? error.message
+        : '取引データの確認状態更新中にエラーが発生しました',
+    )
+  }
+})
 
 // 非同期アクション - 取引データの削除
 export const deleteTransactions = createAsyncThunk<

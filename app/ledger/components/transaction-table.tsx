@@ -12,6 +12,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { toast } from '@/components/ui/use-toast'
+import { updateJournalChecked } from '@/lib/redux/features/transactionSlice'
+import { useAppDispatch } from '@/lib/redux/hooks'
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
 import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
@@ -54,6 +57,8 @@ export function TransactionTable({
   onBlur,
   onCreateTransaction,
 }: TransactionTableProps) {
+  // Reduxディスパッチを取得
+  const dispatch = useAppDispatch()
   // ローカルステート
   const [editableTransactions, setEditableTransactions] = useState<
     Record<string, EditableTransaction>
@@ -366,7 +371,7 @@ export function TransactionTable({
         karikata_value: transaction.karikata_value,
         kasikata_value: transaction.kasikata_value,
         note: transaction.note,
-        checked: '0',
+        checked: transaction.checked || '0',
       })
     }
   }
@@ -591,6 +596,7 @@ export function TransactionTable({
             <col className="w-28" />
             <col className="w-auto" />
             <col className="w-28" />
+            <col className="w-16" />
           </colgroup>
           <thead>
             <tr className="text-center text-sm">
@@ -616,6 +622,7 @@ export function TransactionTable({
               </th>
               <th className="pb-2 font-medium">摘要</th>
               <th className="pb-2 font-medium">残高</th>
+              <th className="pb-2 font-medium">確認</th>
             </tr>
           </thead>
           <tbody>
@@ -862,6 +869,13 @@ export function TransactionTable({
                 <td className="py-2 px-1 text-right text-gray-500 relative">
                   -
                 </td>
+                <td className="py-2 px-1 text-center">
+                  <Checkbox
+                    checked={false}
+                    disabled={true}
+                    aria-label="新規取引の確認"
+                  />
+                </td>
               </tr>
             )}
             {transactions.length > 0 ? (
@@ -886,9 +900,7 @@ export function TransactionTable({
                       </td>
                     )}
                     <td className="py-2 px-1 relative">
-                      {isEdited && (
-                        <div className="absolute -left-2 top-0 bottom-0 w-1 bg-amber-400"></div>
-                      )}
+                      {/* バーの表示を削除 */}
                       <div className="relative">
                         <Tooltip open={hasFieldError(id, 'date')}>
                           <TooltipTrigger asChild>
@@ -911,7 +923,10 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
-                                disabled={!isCurrentFiscalYear}
+                                disabled={
+                                  !isCurrentFiscalYear ||
+                                  editedTransaction.checked === '1'
+                                }
                               />
                             </div>
                           </TooltipTrigger>
@@ -956,7 +971,10 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
-                                disabled={!isCurrentFiscalYear}
+                                disabled={
+                                  !isCurrentFiscalYear ||
+                                  editedTransaction.checked === '1'
+                                }
                               />
                             </div>
                           </TooltipTrigger>
@@ -1022,7 +1040,10 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
-                                disabled={!isCurrentFiscalYear}
+                                disabled={
+                                  !isCurrentFiscalYear ||
+                                  editedTransaction.checked === '1'
+                                }
                               />
                             </div>
                           </TooltipTrigger>
@@ -1079,7 +1100,10 @@ export function TransactionTable({
                                     ? 'border-red-500 pl-8'
                                     : ''
                                 }`}
-                                disabled={!isCurrentFiscalYear}
+                                disabled={
+                                  !isCurrentFiscalYear ||
+                                  editedTransaction.checked === '1'
+                                }
                               />
                             </div>
                           </TooltipTrigger>
@@ -1122,7 +1146,10 @@ export function TransactionTable({
                                     : ''
                                 }`}
                                 placeholder="摘要を入力"
-                                disabled={!isCurrentFiscalYear}
+                                disabled={
+                                  !isCurrentFiscalYear ||
+                                  editedTransaction.checked === '1'
+                                }
                               />
                             </div>
                           </TooltipTrigger>
@@ -1141,13 +1168,50 @@ export function TransactionTable({
                     <td className="py-2 px-1 text-right text-green-600 relative">
                       {formatCurrency(transaction.acc)}
                     </td>
+                    <td className="py-2 px-1 text-center">
+                      <Checkbox
+                        checked={editedTransaction.checked === '1'}
+                        onCheckedChange={(checked) => {
+                          // ローカルステートを更新
+                          handleFieldChange(id, 'checked', checked ? '1' : '0')
+
+                          // 確認状態のみを更新するAPIを呼び出す
+                          dispatch(
+                            updateJournalChecked({
+                              id: parseInt(id),
+                              fiscal_year: nendo,
+                              checked: checked ? '1' : '0',
+                            }),
+                          )
+                            .unwrap()
+                            .then(() => {
+                              // 成功時の処理（必要に応じて）
+                            })
+                            .catch((error) => {
+                              // エラー時は元の状態に戻す
+                              handleFieldChange(
+                                id,
+                                'checked',
+                                checked ? '0' : '1',
+                              )
+                              toast({
+                                title: 'エラー',
+                                description: '確認状態の更新に失敗しました',
+                                variant: 'destructive',
+                              })
+                            })
+                        }}
+                        aria-label={`取引 ${id} の確認`}
+                        disabled={!isCurrentFiscalYear}
+                      />
+                    </td>
                   </tr>
                 )
               })
             ) : (
               <tr>
                 <td
-                  colSpan={deleteMode ? 8 : 7}
+                  colSpan={deleteMode ? 9 : 8}
                   className="py-8 text-center text-gray-500"
                 >
                   該当する取引データがありません
