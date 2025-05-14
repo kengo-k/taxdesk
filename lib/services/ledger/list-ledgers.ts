@@ -7,6 +7,8 @@ export interface LedgerListRequest {
   ledger_cd: string
   fiscal_year: string
   month: string | null
+  checked: string | null // '0'=未確認, '1'=確認済み, null=指定なし
+  note: string | null // 摘要（部分一致検索）
 }
 
 export interface LedgerListItem {
@@ -35,6 +37,9 @@ export async function listLedgers(
       ? `0${input.month}`
       : input.month
     : 'all'
+  const checked = input.checked ? (input.checked === '0' ? '0' : '1') : 'all'
+  const useNoteCondition = input.note ? 1 : 0
+  const note = input.note ? `%${input.note}%` : '%%'
   const saimoku_detail = await getSaimokuDetail(conn, {
     saimoku_cd: input.ledger_cd,
   })
@@ -110,6 +115,11 @@ export async function listLedgers(
     where
       (case when ${month} = 'all' then 'all' else ${month} end)
       = (case when ${month} = 'all' then 'all' else substring(j.date, 5, 2) end)
+      and (case when ${checked} = 'all' then 'all' else ${checked} end)
+      = (case when ${checked} = 'all' then 'all' else j.checked end)
+      and (
+        ${useNoteCondition} = 0 or j.note like ${note}
+      )
     order by
       j.date desc,
       j.created_at desc

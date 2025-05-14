@@ -62,6 +62,8 @@ export interface TransactionSearchParams {
   nendo: string
   code: string | null
   month: string | null
+  checked: string | null // '0'=未確認, '1'=確認済み, null=指定なし
+  note: string | null // 摘要（部分一致検索）
   page: number
   pageSize: number
 }
@@ -102,6 +104,8 @@ const initialState: TransactionState = {
     nendo: 'unset',
     code: null,
     month: null,
+    checked: null,
+    note: null,
     page: 1,
     pageSize: 10,
   },
@@ -120,6 +124,12 @@ export const fetchTransactions = createAsyncThunk(
 
       if (params.month) {
         urlParams.set('month', params.month)
+      }
+      if (params.checked) {
+        urlParams.set('checked', params.checked)
+      }
+      if (params.note) {
+        urlParams.set('note', params.note)
       }
       urlParams.set('pageno', params.page.toString())
       urlParams.set('pagesize', params.pageSize.toString())

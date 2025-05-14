@@ -80,6 +80,8 @@ export default function LedgerPage() {
   const nendoParam = searchParams.get('nendo')
   const codeParam = searchParams.get('code')
   const monthParam = searchParams.get('month')
+  const checkedParam = searchParams.get('checked')
+  const noteParam = searchParams.get('note')
   const pageNoParam = searchParams.get('pageno')
   const pageSizeParam = searchParams.get('pagesize')
 
@@ -87,6 +89,8 @@ export default function LedgerPage() {
   const [fiscalYear, setFiscalYear] = useState<string | null>(nendoParam)
   const [account, setAccount] = useState<string | null>(codeParam)
   const [month, setMonth] = useState<string | null>(monthParam)
+  const [checked, setChecked] = useState<string | null>(checkedParam) // '0'=未確認, '1'=確認済み, null=指定なし
+  const [note, setNote] = useState<string | null>(noteParam) // 摘要（部分一致検索）
 
   const [currentPage, setCurrentPage] = useState(
     pageNoParam ? Number.parseInt(pageNoParam, 10) : 1,
@@ -115,6 +119,8 @@ export default function LedgerPage() {
     if (fiscalYear == null) {
       setAccount(null)
       setMonth(null)
+      setChecked(null)
+      setNote(null)
       setCurrentPage(1)
       dispatch(clearTransactions())
       // TODO ストアの勘定科目一覧をクリアする
@@ -125,6 +131,8 @@ export default function LedgerPage() {
 
     if (account == null) {
       setMonth(null)
+      setChecked(null)
+      setNote(null)
       setCurrentPage(1)
       dispatch(clearTransactions())
       return
@@ -135,11 +143,13 @@ export default function LedgerPage() {
         nendo: fiscalYear,
         code: account,
         month: month,
+        checked: checked,
+        note: note,
         page: currentPage,
         pageSize: pageSize,
       }),
     )
-  }, [fiscalYear, account, month, currentPage, pageSize])
+  }, [fiscalYear, account, month, checked, note, currentPage, pageSize])
 
   // useEffect(() => {
   //   updateUrlParams()
@@ -278,6 +288,12 @@ export default function LedgerPage() {
     if (month) {
       params.set('month', month)
     }
+    if (checked) {
+      params.set('checked', checked)
+    }
+    if (note) {
+      params.set('note', note)
+    }
     if (currentPage) {
       params.set('pageno', currentPage.toString())
     }
@@ -324,6 +340,52 @@ export default function LedgerPage() {
     updateUrlParams()
   }
 
+  // 確認状態を変更した時のハンドラー
+  const handleCheckedChange = (value: string) => {
+    setCurrentPage(1)
+    if (value === 'none') {
+      setChecked(null)
+    } else {
+      setChecked(value)
+    }
+
+    // 検索条件が変更されたら取引データを再取得
+    if (fiscalYear && account) {
+      dispatch(
+        fetchTransactions({
+          nendo: fiscalYear,
+          code: account,
+          month: month,
+          checked: value === 'none' ? null : value,
+          note: note,
+          page: currentPage,
+          pageSize: pageSize,
+        }),
+      )
+    }
+  }
+
+  // 摘要を変更した時のハンドラー
+  const handleNoteChange = (value: string) => {
+    setCurrentPage(1)
+    setNote(value === '' ? null : value)
+
+    // 検索条件が変更されたら取引データを再取得
+    if (fiscalYear && account) {
+      dispatch(
+        fetchTransactions({
+          nendo: fiscalYear,
+          code: account,
+          month: month,
+          checked: checked,
+          note: value === '' ? null : value,
+          page: currentPage,
+          pageSize: pageSize,
+        }),
+      )
+    }
+  }
+
   // 新規取引作成ハンドラー
   const handleCreateTransaction = async (transaction: any) => {
     dispatch(createTransaction(transaction))
@@ -335,6 +397,8 @@ export default function LedgerPage() {
               nendo: fiscalYear,
               code: account,
               month: month,
+              checked: checked,
+              note: note,
               page: currentPage,
               pageSize: pageSize,
             }),
@@ -357,6 +421,8 @@ export default function LedgerPage() {
               nendo: fiscalYear,
               code: account,
               month: month,
+              checked: checked,
+              note: note,
               page: currentPage,
               pageSize: pageSize,
             }),
@@ -555,6 +621,8 @@ export default function LedgerPage() {
           nendo: fiscalYear || '',
           code: account,
           month: month || null,
+          checked: checked,
+          note: note,
           page: currentPage,
           pageSize,
         }),
@@ -588,6 +656,8 @@ export default function LedgerPage() {
             fiscalYear={fiscalYear}
             account={account}
             month={month}
+            checked={checked}
+            note={note}
             fiscalYears={fiscalYears}
             mergedAccounts={mergedAccounts}
             fiscalYearsLoading={fiscalYearsLoading}
@@ -604,6 +674,8 @@ export default function LedgerPage() {
             onFiscalYearChange={handleFiscalYearChange}
             onAccountChange={handleAccountChange}
             onMonthChange={handleMonthChange}
+            onCheckedChange={handleCheckedChange}
+            onNoteChange={handleNoteChange}
             onToggleDeleteMode={toggleDeleteMode}
             onDeleteClick={handleDeleteClick}
             onDownloadCSV={handleDownloadCSV}

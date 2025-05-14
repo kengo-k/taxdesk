@@ -19,6 +19,8 @@ export function listLedgersHandler(
     const { year: fiscal_year, ledger_cd } = await ctx.params
     const searchParams = req.nextUrl.searchParams
     const month = searchParams.get('month')
+    const checked = searchParams.get('checked')
+    const note = searchParams.get('note')
     const pageno = searchParams.get('pageno')
     const pagesize = searchParams.get('pagesize')
 
@@ -28,6 +30,8 @@ export function listLedgersHandler(
         fiscal_year,
         ledger_cd,
         month: month || null,
+        checked: checked || null,
+        note: note || null,
       },
       {
         pageNo: pageno ? Number.parseInt(pageno, 10) : 1,
@@ -38,6 +42,8 @@ export function listLedgersHandler(
       fiscal_year,
       ledger_cd,
       month: month || null,
+      checked: checked || null,
+      note: note || null,
     })
     return { all_count, ledgers }
   })
