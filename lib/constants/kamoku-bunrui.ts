@@ -1,10 +1,11 @@
 export const KAMOKU_BUNRUI = {
-  ASSET: '1', // 資産
-  LIABILITY: '2', // 負債
-  EQUITY: '3', // 資本
-  REVENUE: '4', // 収益
-  EXPENSE: '5', // 費用
-  TAX: '6', // 税金
+  ASSET: 'A', // 資産
+  LIABILITY: 'B', // 負債
+  EQUITY: 'C', // 純資産
+  REVENUE: 'D', // 収益
+  EXPENSE: 'E', // 費用
+  TAX: 'F', // 法人税等
+  CLOSING: 'G', // 決算
 } as const
 
 export const KAMOKU_BUNRUI_TYPE = {
