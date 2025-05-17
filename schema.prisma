@@ -24,6 +24,11 @@ model journals {
   updated_at     DateTime @db.Timestamp(6)
   deleted        String   @db.VarChar(1) @default("0")
 
+  // Foreign key references
+  nendo_master   nendo_masters @relation(fields: [nendo], references: [nendo])
+  karikata       saimoku_masters @relation("KarikataJournals", fields: [karikata_cd], references: [saimoku_cd])
+  kasikata       saimoku_masters @relation("KasikataJournals", fields: [kasikata_cd], references: [saimoku_cd])
+
   @@index([nendo, checked, date], map: "journals_checked_index")
   @@index([nendo, karikata_cd, kasikata_cd, date], map: "journals_code_index")
   @@index([nendo, date], map: "journals_default_index")
@@ -31,30 +36,39 @@ model journals {
 
 model kamoku_bunrui_masters {
   id                 Int      @id @default(autoincrement())
-  kamoku_bunrui_cd   String   @db.VarChar(1)
+  kamoku_bunrui_cd   String   @db.VarChar(1) @unique
   kamoku_bunrui_name String   @db.VarChar(8)
   kamoku_bunrui_type String   @db.VarChar(1)
   kurikoshi_flg      String   @db.VarChar(1)
   created_at         DateTime @db.Timestamp(6)
   updated_at         DateTime @db.Timestamp(6)
+
+  // Relations
+  kamoku_masters     kamoku_masters[]
 }
 
 model kamoku_masters {
   id                Int      @id @default(autoincrement())
-  kamoku_cd         String   @db.VarChar(2)
+  kamoku_cd         String   @db.VarChar(2) @unique
   kamoku_full_name  String
   kamoku_ryaku_name String
   kamoku_kana_name  String
   kamoku_bunrui_cd  String   @db.VarChar(1)
   description       String?
-  custom_fields      Json?
+  custom_fields     Json?
   created_at        DateTime @db.Timestamp(6)
   updated_at        DateTime @db.Timestamp(6)
+
+  // Foreign key references
+  kamoku_bunrui     kamoku_bunrui_masters @relation(fields: [kamoku_bunrui_cd], references: [kamoku_bunrui_cd])
+
+  // Relations
+  saimoku_masters   saimoku_masters[]
 }
 
 model nendo_masters {
   id                     Int      @id @default(autoincrement())
-  nendo                  String   @db.VarChar(4)
+  nendo                  String   @db.VarChar(4) @unique
   start_date             String   @db.VarChar(8)
   end_date               String   @db.VarChar(8)
   fixed                  String   @db.VarChar(1)
@@ -62,12 +76,15 @@ model nendo_masters {
   statutory_tax_rate     Decimal? @db.Decimal(5, 2) // 簡易課税の場合のみなし仕入率 (%) - 第一種: 90%, 第二種: 80%...
   created_at             DateTime @db.Timestamp(6)
   updated_at             DateTime @db.Timestamp(6)
+
+  // Relations
+  journals              journals[]
 }
 
 model saimoku_masters {
   id                 Int                      @id @default(autoincrement())
   kamoku_cd          String                   @db.VarChar(2)
-  saimoku_cd         String                   @db.VarChar(3)
+  saimoku_cd         String                   @db.VarChar(3) @unique
   saimoku_full_name  String
   saimoku_ryaku_name String
   saimoku_kana_name  String
@@ -77,6 +94,13 @@ model saimoku_masters {
   updated_at         DateTime                 @db.Timestamp(6)
   valid_from         String                   @db.VarChar(8) @default("20000101")
   valid_to           String                   @db.VarChar(8) @default("99991231")
+
+  // Foreign key references
+  kamoku_master      kamoku_masters @relation(fields: [kamoku_cd], references: [kamoku_cd])
+
+  // Relations
+  karikata_journals  journals[] @relation("KarikataJournals")
+  kasikata_journals  journals[] @relation("KasikataJournals")
 }
 
 model backups {
