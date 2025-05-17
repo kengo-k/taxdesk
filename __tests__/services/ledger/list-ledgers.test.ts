@@ -28,6 +28,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'A31', // Accounts Receivable
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -104,6 +106,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'D11', // Sales
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -120,6 +124,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'D11', // Sales
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 2,
@@ -133,6 +139,8 @@ describe('listLedgers', () => {
         fiscal_year: '2021',
         ledger_cd: 'D11',
         month: null,
+        checked: '0',
+        note: null,
       })
       expect(salesCount).toBe(12) // 12 months of sales
 
@@ -143,6 +151,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'A11', // Cash
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -156,6 +166,8 @@ describe('listLedgers', () => {
         fiscal_year: '2021',
         ledger_cd: 'A11',
         month: null,
+        checked: '0',
+        note: null,
       })
       expect(cashCount).toBe(11 + 3) // 11 months of cash receipts (March unpaid)
 
@@ -166,6 +178,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'A31', // Accounts Receivable
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -179,6 +193,8 @@ describe('listLedgers', () => {
         fiscal_year: '2021',
         ledger_cd: 'A31',
         month: null,
+        checked: '0',
+        note: null,
       })
       expect(arCount).toBe(23) // Only March's accounts receivable
 
@@ -189,6 +205,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'E04', // Supplies Expense
           month: null,
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -202,6 +220,8 @@ describe('listLedgers', () => {
         fiscal_year: '2021',
         ledger_cd: 'E04',
         month: null,
+        checked: '0',
+        note: null,
       })
       expect(suppliesCount).toBe(3) // 3 items of supplies purchased
 
@@ -212,6 +232,8 @@ describe('listLedgers', () => {
           fiscal_year: '2021',
           ledger_cd: 'A11', // Cash
           month: '06', // Search only June
+          checked: '0',
+          note: null,
         },
         {
           pageNo: 1,
@@ -224,6 +246,8 @@ describe('listLedgers', () => {
         fiscal_year: '2021',
         ledger_cd: 'A11',
         month: '06',
+        checked: '0',
+        note: null,
       })
       expect(juneCashCount).toBe(4) // 4 cash transactions in June (supplies purchases)
     }),

@@ -277,6 +277,8 @@ describe('createLedger', () => {
         fiscal_year: '2021',
         ledger_cd: 'A11',
         month: 'all',
+        checked: '0',
+        note: null,
       })
       expect(initialCount).toBe(0)
 
@@ -288,6 +290,8 @@ describe('createLedger', () => {
         fiscal_year: '2021',
         ledger_cd: 'A11',
         month: 'all',
+        checked: '0',
+        note: null,
       })
       expect(finalCount).toBe(1)
     }),
