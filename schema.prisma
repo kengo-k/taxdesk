@@ -47,6 +47,7 @@ model kamoku_masters {
   kamoku_kana_name  String
   kamoku_bunrui_cd  String   @db.VarChar(1)
   description       String?
+  custom_fields      Json?
   created_at        DateTime @db.Timestamp(6)
   updated_at        DateTime @db.Timestamp(6)
 }
