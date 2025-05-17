@@ -6,7 +6,7 @@ describe('calcExpenseBreakdownByMonth', () => {
     'should calculate expense breakdown by month correctly',
     withTransactionForTest(['calc-expense-breakdown-by-month'], async (tx) => {
       const result = await calcExpenseBreakdownByMonth(tx, {
-        fiscalYear: '2025',
+        fiscalYear: '2024',
       })
 
       // 結果が存在することを確認
