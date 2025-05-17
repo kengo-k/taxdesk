@@ -32,26 +32,11 @@ import {
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
-  // 既存のアクションとセレクター
-  fetchAssetBreakdownByMonth,
-  fetchAssetBreakdownByYear,
-  fetchExpenseBreakdownByMonth,
-  fetchExpenseBreakdownByYear, // 新しいアクションとセレクター
   fetchGenericAssetByYear,
   fetchGenericExpenseByMonth,
   fetchGenericExpenseByYear,
   fetchGenericRevenueByMonth,
   fetchGenericRevenueByYear,
-  fetchIncomeBreakdownByMonth,
-  fetchIncomeBreakdownByYear,
-  selectAssetBreakdownByMonth,
-  selectAssetBreakdownByMonthLoading,
-  selectAssetBreakdownByYear,
-  selectAssetBreakdownByYearLoading,
-  selectExpenseBreakdownByMonth,
-  selectExpenseBreakdownByMonthLoading,
-  selectExpenseBreakdownByYear,
-  selectExpenseBreakdownByYearLoading,
   selectGenericAssetByYear,
   selectGenericAssetByYearLoading,
   selectGenericExpenseByMonth,
@@ -62,10 +47,6 @@ import {
   selectGenericRevenueByMonthLoading,
   selectGenericRevenueByYear,
   selectGenericRevenueByYearLoading,
-  selectIncomeBreakdownByMonth,
-  selectIncomeBreakdownByMonthLoading,
-  selectIncomeBreakdownByYear,
-  selectIncomeBreakdownByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getChartColors } from '@/lib/utils/chart-colors'
@@ -78,40 +59,7 @@ export default function Home() {
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
   const loading = useAppSelector(selectFiscalYearLoading)
 
-  // 既存の費用データ
-  const expenseBreakdownByMonth =
-    useAppSelector(selectExpenseBreakdownByMonth) || []
-  const expenseBreakdownLoading = useAppSelector(
-    selectExpenseBreakdownByMonthLoading,
-  )
-  const expenseBreakdownByYear = useAppSelector(selectExpenseBreakdownByYear)
-  const expenseBreakdownByYearLoading = useAppSelector(
-    selectExpenseBreakdownByYearLoading,
-  )
-
-  // 既存の資産データ
-  const assetBreakdownByMonth =
-    useAppSelector(selectAssetBreakdownByMonth) || []
-  const assetBreakdownLoading = useAppSelector(
-    selectAssetBreakdownByMonthLoading,
-  )
-  const assetBreakdownByYear = useAppSelector(selectAssetBreakdownByYear)
-  const assetBreakdownByYearLoading = useAppSelector(
-    selectAssetBreakdownByYearLoading,
-  )
-
-  // 既存の収入データ
-  const incomeBreakdownByMonth =
-    useAppSelector(selectIncomeBreakdownByMonth) || []
-  const incomeBreakdownLoading = useAppSelector(
-    selectIncomeBreakdownByMonthLoading,
-  )
-  const incomeBreakdownByYear = useAppSelector(selectIncomeBreakdownByYear)
-  const incomeBreakdownByYearLoading = useAppSelector(
-    selectIncomeBreakdownByYearLoading,
-  )
-
-  // 新しい汎用API用のデータ
+  // 汎用API用のデータ
   // 費用データ
   const genericExpenseByMonth =
     useAppSelector(selectGenericExpenseByMonth) || []
@@ -149,15 +97,7 @@ export default function Home() {
 
   useEffect(() => {
     if (selectedYearId) {
-      // 既存のAPI呼び出し
-      dispatch(fetchExpenseBreakdownByMonth(selectedYearId))
-      dispatch(fetchExpenseBreakdownByYear(selectedYearId))
-      dispatch(fetchIncomeBreakdownByMonth(selectedYearId))
-      dispatch(fetchIncomeBreakdownByYear(selectedYearId))
-      dispatch(fetchAssetBreakdownByMonth(selectedYearId))
-      dispatch(fetchAssetBreakdownByYear(selectedYearId))
-
-      // 新しい汎用API呼び出し
+      // 汎用API呼び出し
       dispatch(fetchGenericExpenseByMonth(selectedYearId))
       dispatch(fetchGenericExpenseByYear(selectedYearId))
       dispatch(fetchGenericRevenueByMonth(selectedYearId))
@@ -391,43 +331,38 @@ export default function Home() {
             <DonutChart
               title={`資産の内訳 (${selectedYearId}年度)`}
               value={
-                // 既存APIと新APIの両方のローディング状態を考慮
-                assetBreakdownByYearLoading || genericAssetByYearLoading
+                genericAssetByYearLoading
                   ? 'Loading...'
                   : formatCurrency(
-                      // 新APIのデータがあればそれを使用、なければ既存APIのデータを使用
-                      (genericAssetByYear || assetBreakdownByYear)?.reduce(
+                      genericAssetByYear?.reduce(
                         (sum, item) => sum + item.value,
                         0,
                       ) || 0,
                     )
               }
               data={
-                assetBreakdownByYearLoading || genericAssetByYearLoading
+                genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || assetBreakdownByYear || [])]
+                  : [...(genericAssetByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
               labels={
-                assetBreakdownByYearLoading || genericAssetByYearLoading
+                genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || assetBreakdownByYear || [])]
+                  : [...(genericAssetByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.saimoku_ryaku_name)
               }
               colors={
-                assetBreakdownByYearLoading || genericAssetByYearLoading
+                genericAssetByYearLoading
                   ? []
-                  : getChartColors(
-                      'asset',
-                      (genericAssetByYear || assetBreakdownByYear)?.length || 0,
-                    )
+                  : getChartColors('asset', genericAssetByYear?.length || 0)
               }
               amounts={
-                assetBreakdownByYearLoading || genericAssetByYearLoading
+                genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || assetBreakdownByYear || [])]
+                  : [...(genericAssetByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
@@ -438,42 +373,38 @@ export default function Home() {
             <DonutChart
               title={`収入の内訳 (${selectedYearId}年度)`}
               value={
-                incomeBreakdownByYearLoading || genericRevenueByYearLoading
+                genericRevenueByYearLoading
                   ? 'Loading...'
                   : formatCurrency(
-                      (genericRevenueByYear || incomeBreakdownByYear)?.reduce(
+                      genericRevenueByYear?.reduce(
                         (sum, item) => sum + item.value,
                         0,
                       ) || 0,
                     )
               }
               data={
-                incomeBreakdownByYearLoading || genericRevenueByYearLoading
+                genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || incomeBreakdownByYear || [])]
+                  : [...(genericRevenueByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
               labels={
-                incomeBreakdownByYearLoading || genericRevenueByYearLoading
+                genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || incomeBreakdownByYear || [])]
+                  : [...(genericRevenueByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.saimoku_ryaku_name)
               }
               colors={
-                incomeBreakdownByYearLoading || genericRevenueByYearLoading
+                genericRevenueByYearLoading
                   ? []
-                  : getChartColors(
-                      'income',
-                      (genericRevenueByYear || incomeBreakdownByYear)?.length ||
-                        0,
-                    )
+                  : getChartColors('income', genericRevenueByYear?.length || 0)
               }
               amounts={
-                incomeBreakdownByYearLoading || genericRevenueByYearLoading
+                genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || incomeBreakdownByYear || [])]
+                  : [...(genericRevenueByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
@@ -484,42 +415,38 @@ export default function Home() {
             <DonutChart
               title={`支出の内訳 (${selectedYearId}年度)`}
               value={
-                expenseBreakdownByYearLoading || genericExpenseByYearLoading
+                genericExpenseByYearLoading
                   ? 'Loading...'
                   : formatCurrency(
-                      (genericExpenseByYear || expenseBreakdownByYear)?.reduce(
+                      genericExpenseByYear?.reduce(
                         (sum, item) => sum + item.value,
                         0,
                       ) || 0,
                     )
               }
               data={
-                expenseBreakdownByYearLoading || genericExpenseByYearLoading
+                genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || expenseBreakdownByYear || [])]
+                  : [...(genericExpenseByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
               labels={
-                expenseBreakdownByYearLoading || genericExpenseByYearLoading
+                genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || expenseBreakdownByYear || [])]
+                  : [...(genericExpenseByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.saimoku_ryaku_name)
               }
               colors={
-                expenseBreakdownByYearLoading || genericExpenseByYearLoading
+                genericExpenseByYearLoading
                   ? []
-                  : getChartColors(
-                      'expense',
-                      (genericExpenseByYear || expenseBreakdownByYear)
-                        ?.length || 0,
-                    )
+                  : getChartColors('expense', genericExpenseByYear?.length || 0)
               }
               amounts={
-                expenseBreakdownByYearLoading || genericExpenseByYearLoading
+                genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || expenseBreakdownByYear || [])]
+                  : [...(genericExpenseByYear || [])]
                       .sort((a, b) => b.value - a.value)
                       .map((item) => item.value)
               }
@@ -532,7 +459,7 @@ export default function Home() {
           <StackedBarChart
             title={`収入の内訳 月別（${selectedYearId}年度）`}
             data={
-              incomeBreakdownLoading || genericRevenueByMonthLoading
+              genericRevenueByMonthLoading
                 ? { labels: [], datasets: [] }
                 : {
                     labels: [
@@ -550,7 +477,7 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: Object.values(
-                      (genericRevenueByMonth || incomeBreakdownByMonth).reduce(
+                      genericRevenueByMonth.reduce(
                         (acc, item) => {
                           if (!acc[item.saimoku_cd]) {
                             acc[item.saimoku_cd] = {
@@ -603,7 +530,7 @@ export default function Home() {
           <StackedBarChart
             title={`支出の内訳 月別（${selectedYearId}年度）`}
             data={
-              expenseBreakdownLoading || genericExpenseByMonthLoading
+              genericExpenseByMonthLoading
                 ? { labels: [], datasets: [] }
                 : {
                     labels: [
@@ -621,7 +548,7 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: Object.values(
-                      (genericExpenseByMonth || expenseBreakdownByMonth).reduce(
+                      genericExpenseByMonth.reduce(
                         (acc, item) => {
                           if (!acc[item.saimoku_cd]) {
                             acc[item.saimoku_cd] = {
