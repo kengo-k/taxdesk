@@ -24,10 +24,10 @@ export class TestEnvironment {
   private async setupBaseMasterData(): Promise<void> {
     try {
       await prisma.$transaction(async (tx) => {
-        await tx.nendo_masters.deleteMany()
-        await tx.kamoku_bunrui_masters.deleteMany()
-        await tx.kamoku_masters.deleteMany()
         await tx.saimoku_masters.deleteMany()
+        await tx.kamoku_masters.deleteMany()
+        await tx.kamoku_bunrui_masters.deleteMany()
+        await tx.nendo_masters.deleteMany()
         await importCsvToPrisma(tx, 'seed/nendo_masters.csv')
         await importCsvToPrisma(tx, 'seed/kamoku_bunrui_masters.csv')
         await importCsvToPrisma(tx, 'seed/kamoku_masters.csv')
