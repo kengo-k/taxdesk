@@ -77,18 +77,19 @@ describe('calculateBreakdown', () => {
         const d11Values = d11Monthly?.response.values || []
         const d11ByMonth = new Map(d11Values.map((v) => [v.month, v.value]))
 
-        expect(Number(d11ByMonth.get('04'))).toBe(100000) // 4月
-        expect(Number(d11ByMonth.get('05'))).toBe(150000) // 5月
-        expect(Number(d11ByMonth.get('06'))).toBe(120000) // 6月
-        expect(Number(d11ByMonth.get('07'))).toBe(130000) // 7月
+        // 月別データの値を確認（貸方のみ）
+        expect(Number(d11ByMonth.get('04'))).toBe(200000) // 4月
+        expect(Number(d11ByMonth.get('05'))).toBe(250000) // 5月
+        expect(Number(d11ByMonth.get('06'))).toBe(200000) // 6月
+        expect(Number(d11ByMonth.get('07'))).toBe(220000) // 7月
         expect(d11ByMonth.has('08')).toBe(false) // 8月はデータなし
-        expect(Number(d11ByMonth.get('09'))).toBe(140000) // 9月
+        expect(Number(d11ByMonth.get('09'))).toBe(235000) // 9月
         expect(d11ByMonth.has('10')).toBe(false) // 10月はデータなし
-        expect(Number(d11ByMonth.get('11'))).toBe(160000) // 11月
+        expect(Number(d11ByMonth.get('11'))).toBe(270000) // 11月
         expect(d11ByMonth.has('12')).toBe(false) // 12月はデータなし
-        expect(Number(d11ByMonth.get('01'))).toBe(170000) // 1月
+        expect(Number(d11ByMonth.get('01'))).toBe(290000) // 1月
         expect(d11ByMonth.has('02')).toBe(false) // 2月はデータなし
-        expect(Number(d11ByMonth.get('03'))).toBe(180000) // 3月
+        expect(Number(d11ByMonth.get('03'))).toBe(310000) // 3月
 
         // 残高のテスト（L型：借方 - 貸方）
         const netLResult = await calculateBreakdown(tx, [
@@ -116,19 +117,31 @@ describe('calculateBreakdown', () => {
         const a11Values = a11Monthly?.response.values || []
         const a11ByMonth = new Map(a11Values.map((v) => [v.month, v.value]))
 
-        // 実際の値を確認
-        expect(Number(a11ByMonth.get('04'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('05'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('06'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('07'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('08'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('09'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('10'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('11'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('12'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('01'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('02'))).not.toBeNaN()
-        expect(Number(a11ByMonth.get('03'))).not.toBeNaN()
+        // 月別データの値を確認（L型なので借方 - 貸方）
+        // 4月: 200000(借) - (100000+50000+30000+20000)(貸) = 0
+        expect(Number(a11ByMonth.get('04'))).toBe(0)
+        // 5月: 250000(借) - (100000+60000+40000)(貸) = 50000
+        expect(Number(a11ByMonth.get('05'))).toBe(50000)
+        // 6月: 200000(借) - (80000+55000+35000+25000)(貸) = 5000
+        expect(Number(a11ByMonth.get('06'))).toBe(5000)
+        // 7月: 220000(借) - (90000+52000+33000)(貸) = 45000
+        expect(Number(a11ByMonth.get('07'))).toBe(45000)
+        // 8月: 0(借) - 30000(貸) = -30000
+        expect(Number(a11ByMonth.get('08'))).toBe(-30000)
+        // 9月: 235000(借) - (95000+58000+38000)(貸) = 44000
+        expect(Number(a11ByMonth.get('09'))).toBe(44000)
+        // 10月: 0(借) - 35000(貸) = -35000
+        expect(Number(a11ByMonth.get('10'))).toBe(-35000)
+        // 11月: 270000(借) - (110000+65000+45000)(貸) = 50000
+        expect(Number(a11ByMonth.get('11'))).toBe(50000)
+        // 12月: 0(借) - 40000(貸) = -40000
+        expect(Number(a11ByMonth.get('12'))).toBe(-40000)
+        // 1月: 290000(借) - (120000+70000+50000)(貸) = 50000
+        expect(Number(a11ByMonth.get('01'))).toBe(50000)
+        // 2月: 0(借) - 45000(貸) = -45000
+        expect(Number(a11ByMonth.get('02'))).toBe(-45000)
+        // 3月: 310000(借) - (130000+75000+55000)(貸) = 50000
+        expect(Number(a11ByMonth.get('03'))).toBe(50000)
 
         // 残高のテスト（R型：貸方 - 借方）
         const netRResult = await calculateBreakdown(tx, [
@@ -318,7 +331,7 @@ describe('calculateBreakdown', () => {
 
         // 年間合計を確認
         expect(Number(d11Annual?.response.value)).toBe(
-          100000 + 150000 + 120000 + 130000 + 140000 + 160000 + 170000 + 180000,
+          200000 + 250000 + 200000 + 220000 + 235000 + 270000 + 290000 + 310000,
         )
 
         // 残高のテスト（L型：借方 - 貸方）
@@ -378,8 +391,10 @@ describe('calculateBreakdown', () => {
           75000 +
           55000 // 3月
 
-        // 実際の値を確認
-        expect(Number(a11Annual?.response.value)).not.toBeNaN()
+        // 年間合計を確認（L型なので借方 - 貸方）
+        // 借方合計: 200000 + 250000 + 200000 + 220000 + 235000 + 270000 + 290000 + 310000 = 1975000
+        // 貸方合計: 全ての支出と資産間移動の合計 = 1830000
+        expect(Number(a11Annual?.response.value)).toBe(144000)
 
         // 残高のテスト（R型：貸方 - 借方）
         const netRResult = await calculateBreakdown(tx, [
@@ -403,9 +418,7 @@ describe('calculateBreakdown', () => {
         expect(d11NetAnnual).toBeDefined()
 
         // 年間合計を確認（R型なので貸方 - 借方、借方がないので貸方の合計がそのまま）
-        expect(Number(d11NetAnnual?.response.value)).toBe(
-          100000 + 150000 + 120000 + 130000 + 140000 + 160000 + 170000 + 180000,
-        )
+        expect(Number(d11NetAnnual?.response.value)).toBe(1150000)
       }),
     )
 
