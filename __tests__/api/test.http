@@ -1,0 +1,137 @@
+### 会計年度一覧取得
+
+GET http://localhost:3000/api/master/fiscal-years
+
+### 内訳取得: 資産内訳(細目別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "A",
+            "breakdownLevel": "saimoku",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 資産内訳(科目分類別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "A",
+            "breakdownLevel": "kamoku_bunrui",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 売上内訳(細目別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "D",
+            "breakdownLevel": "saimoku",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 売上内訳(科目分類別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "D",
+            "breakdownLevel": "kamoku_bunrui",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 経費内訳(細目別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "E",
+            "breakdownLevel": "saimoku",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 経費内訳(科目分類別/年間)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "E",
+            "breakdownLevel": "kamoku_bunrui",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
+
+### 内訳取得: 経費内訳(細目別/月別)
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "E",
+            "breakdownLevel": "saimoku",
+            "breakdownType": "net",
+            "timeUnit": "month"
+        }
+    ]
+}
+
+### 内訳取得: 複数リクエスト（収入&支出）
+
+POST http://localhost:3000/api/fiscal-years/2023/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "D",
+            "breakdownLevel": "kamoku_bunrui",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        },
+        {
+            "kamokuBunruiCd": "E",
+            "breakdownLevel": "kamoku_bunrui",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        }
+    ]
+}
