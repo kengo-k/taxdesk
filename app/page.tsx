@@ -37,16 +37,16 @@ import {
   fetchGenericExpenseByYear,
   fetchGenericRevenueByMonth,
   fetchGenericRevenueByYear,
-  selectGenericAssetByYear,
-  selectGenericAssetByYearLoading,
-  selectGenericExpenseByMonth,
-  selectGenericExpenseByMonthLoading,
-  selectGenericExpenseByYear,
-  selectGenericExpenseByYearLoading,
-  selectGenericRevenueByMonth,
-  selectGenericRevenueByMonthLoading,
-  selectGenericRevenueByYear,
-  selectGenericRevenueByYearLoading,
+  selectSaimokuNetAssetsByYear,
+  selectSaimokuNetAssetsByYearLoading,
+  selectSaimokuNetExpensesByMonth,
+  selectSaimokuNetExpensesByMonthLoading,
+  selectSaimokuNetExpensesByYear,
+  selectSaimokuNetExpensesByYearLoading,
+  selectSaimokuNetRevenuesByMonth,
+  selectSaimokuNetRevenuesByMonthLoading,
+  selectSaimokuNetRevenuesByYear,
+  selectSaimokuNetRevenuesByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getChartColors } from '@/lib/utils/chart-colors'
@@ -59,33 +59,33 @@ export default function Home() {
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
   const loading = useAppSelector(selectFiscalYearLoading)
 
-  // 汎用API用のデータ
+  // 内訳データ
   // 費用データ
   const genericExpenseByMonth =
-    useAppSelector(selectGenericExpenseByMonth) || []
+    useAppSelector(selectSaimokuNetExpensesByMonth) || []
   const genericExpenseByMonthLoading = useAppSelector(
-    selectGenericExpenseByMonthLoading,
+    selectSaimokuNetExpensesByMonthLoading,
   )
-  const genericExpenseByYear = useAppSelector(selectGenericExpenseByYear)
+  const genericExpenseByYear = useAppSelector(selectSaimokuNetExpensesByYear)
   const genericExpenseByYearLoading = useAppSelector(
-    selectGenericExpenseByYearLoading,
+    selectSaimokuNetExpensesByYearLoading,
   )
 
   // 資産データ
-  const genericAssetByYear = useAppSelector(selectGenericAssetByYear)
+  const genericAssetByYear = useAppSelector(selectSaimokuNetAssetsByYear)
   const genericAssetByYearLoading = useAppSelector(
-    selectGenericAssetByYearLoading,
+    selectSaimokuNetAssetsByYearLoading,
   )
 
   // 収入データ
   const genericRevenueByMonth =
-    useAppSelector(selectGenericRevenueByMonth) || []
+    useAppSelector(selectSaimokuNetRevenuesByMonth) || []
   const genericRevenueByMonthLoading = useAppSelector(
-    selectGenericRevenueByMonthLoading,
+    selectSaimokuNetRevenuesByMonthLoading,
   )
-  const genericRevenueByYear = useAppSelector(selectGenericRevenueByYear)
+  const genericRevenueByYear = useAppSelector(selectSaimokuNetRevenuesByYear)
   const genericRevenueByYearLoading = useAppSelector(
-    selectGenericRevenueByYearLoading,
+    selectSaimokuNetRevenuesByYearLoading,
   )
 
   const [dataError, setDataError] = useState<string | null>(null)

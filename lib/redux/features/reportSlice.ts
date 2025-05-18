@@ -42,65 +42,84 @@ interface GenericBreakdownResponse {
   }[]
 }
 
+// 税額計算に必要なデータの型定義
+// 年度ごとに必要なパラメータが変わる可能性があるため、
+// 柔軟な型定義としています
+export type TaxCalculationData = Record<string, any>
+
 export interface ReportState {
-  // 汎用API用の状態
-  genericBreakdown: {
-    assetByYear: {
+  // 内訳データ用の状態
+  breakdown: {
+    saimokuNetAssetsByYear: {
       data: YearlyBreakdownItem[] | null
       loading: boolean
       error: string | null
     }
-    revenueByYear: {
+    saimokuNetRevenuesByYear: {
       data: YearlyBreakdownItem[] | null
       loading: boolean
       error: string | null
     }
-    expenseByYear: {
+    saimokuNetExpensesByYear: {
       data: YearlyBreakdownItem[] | null
       loading: boolean
       error: string | null
     }
-    revenueByMonth: {
+    saimokuNetRevenuesByMonth: {
       data: MonthlyBreakdownItem[] | null
       loading: boolean
       error: string | null
     }
-    expenseByMonth: {
+    saimokuNetExpensesByMonth: {
       data: MonthlyBreakdownItem[] | null
       loading: boolean
       error: string | null
     }
   }
+
+  // 税額計算用の状態
+  taxCalculation: {
+    data: TaxCalculationData | null
+    loading: boolean
+    error: string | null
+  }
 }
 
 const initialState: ReportState = {
-  // 汎用API用の初期状態
-  genericBreakdown: {
-    assetByYear: {
+  // 内訳データ用の初期状態
+  breakdown: {
+    saimokuNetAssetsByYear: {
       data: null,
       loading: false,
       error: null,
     },
-    revenueByYear: {
+    saimokuNetRevenuesByYear: {
       data: null,
       loading: false,
       error: null,
     },
-    expenseByYear: {
+    saimokuNetExpensesByYear: {
       data: null,
       loading: false,
       error: null,
     },
-    revenueByMonth: {
+    saimokuNetRevenuesByMonth: {
       data: null,
       loading: false,
       error: null,
     },
-    expenseByMonth: {
+    saimokuNetExpensesByMonth: {
       data: null,
       loading: false,
       error: null,
     },
+  },
+
+  // 税額計算用の初期状態
+  taxCalculation: {
+    data: null,
+    loading: false,
+    error: null,
   },
 }
 
@@ -255,6 +274,125 @@ export const fetchGenericExpenseByMonth = createAsyncThunk(
   },
 )
 
+/**
+ * 税額計算に必要なデータを取得するThunkアクション
+ *
+ * 収益、費用、利息収入などのデータを取得し、税額計算に必要なパラメータを構築します。
+ * 特に、利息収入に対する源泉徴収税額を取得するために、利息収入の内訳データを取得します。
+ */
+export const fetchTaxCalculationData = createAsyncThunk(
+  'report/fetchTaxCalculationData',
+  async (fiscalYear: string) => {
+    // 収益データの取得
+    const revenueResponse = await fetch(
+      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            {
+              kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
+              breakdownLevel: 'saimoku',
+              breakdownType: 'net',
+              timeUnit: 'annual',
+            },
+          ],
+        }),
+      },
+    )
+
+    if (!revenueResponse.ok) {
+      throw new Error('Failed to fetch revenue data')
+    }
+
+    const revenueData = await revenueResponse.json()
+    const revenueItems = convertToYearlyBreakdownFormat(revenueData.data)
+
+    // 費用データの取得
+    const expenseResponse = await fetch(
+      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [
+            {
+              kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+              breakdownLevel: 'saimoku',
+              breakdownType: 'net',
+              timeUnit: 'annual',
+            },
+          ],
+        }),
+      },
+    )
+
+    if (!expenseResponse.ok) {
+      throw new Error('Failed to fetch expense data')
+    }
+
+    const expenseData = await expenseResponse.json()
+    const expenseItems = convertToYearlyBreakdownFormat(expenseData.data)
+
+    // 税額計算に必要なデータを抽出
+    let sales = 0
+    let interest_revenue = 0
+    let expenses = 0
+    let national_withheld_tax = 0
+    let local_withheld_tax = 0
+
+    // 収益データから売上高と利息収入を抽出
+    for (const item of revenueItems) {
+      // 利息収入の特定（科目コードや名前で判断）
+      if (
+        item.saimoku_full_name.includes('利息') ||
+        item.saimoku_cd === '5002'
+      ) {
+        interest_revenue += item.value
+
+        // 利息収入に対する源泉徴収税額の計算（例: 利息収入の20.315%）
+        // 実際の源泉徴収税率は法律に基づいて設定する必要があります
+        const withholdingTaxRate = 0.20315 // 所得税15.315% + 住民税5%
+        const totalWithholdingTax = interest_revenue * withholdingTaxRate
+
+        // 国税と地方税に分割
+        national_withheld_tax = interest_revenue * 0.15315 // 所得税+復興特別所得税
+        local_withheld_tax = interest_revenue * 0.05 // 住民税
+      } else {
+        // その他の収益は売上高として計上
+        sales += item.value
+      }
+    }
+
+    // 費用データから費用合計を計算
+    for (const item of expenseItems) {
+      expenses += item.value
+    }
+
+    // 前年度事業税は現時点では0とする（実際には前年度データから取得する必要がある）
+    const previous_business_tax = 0
+
+    // 法人税控除額は現時点では0とする
+    const corporate_tax_deduction = 0
+
+    // 消費税課税区分は現時点では免税事業者とする
+    const is_consumption_tax_exempt = true
+
+    // 税額計算データを返す
+    return {
+      sales,
+      interest_revenue,
+      expenses,
+      previous_business_tax,
+      national_withheld_tax,
+      local_withheld_tax,
+      corporate_tax_deduction,
+      is_consumption_tax_exempt,
+    } as TaxCalculationData
+  },
+)
+
 // レスポンスデータの変換ロジック
 const convertToYearlyBreakdownFormat = (
   data: GenericBreakdownResponse,
@@ -303,160 +441,189 @@ export const reportSlice = createSlice({
   name: 'report',
   initialState,
   reducers: {
-    // 汎用API用のクリアアクション
-    clearGenericAssetByYear: (state) => {
-      state.genericBreakdown.assetByYear =
-        initialState.genericBreakdown.assetByYear
+    // 内訳データ用のクリアアクション
+    clearSaimokuNetAssetsByYear: (state) => {
+      state.breakdown.saimokuNetAssetsByYear =
+        initialState.breakdown.saimokuNetAssetsByYear
     },
-    clearGenericRevenueByYear: (state) => {
-      state.genericBreakdown.revenueByYear =
-        initialState.genericBreakdown.revenueByYear
+    clearSaimokuNetRevenuesByYear: (state) => {
+      state.breakdown.saimokuNetRevenuesByYear =
+        initialState.breakdown.saimokuNetRevenuesByYear
     },
-    clearGenericExpenseByYear: (state) => {
-      state.genericBreakdown.expenseByYear =
-        initialState.genericBreakdown.expenseByYear
+    clearSaimokuNetExpensesByYear: (state) => {
+      state.breakdown.saimokuNetExpensesByYear =
+        initialState.breakdown.saimokuNetExpensesByYear
     },
-    clearGenericRevenueByMonth: (state) => {
-      state.genericBreakdown.revenueByMonth =
-        initialState.genericBreakdown.revenueByMonth
+    clearSaimokuNetRevenuesByMonth: (state) => {
+      state.breakdown.saimokuNetRevenuesByMonth =
+        initialState.breakdown.saimokuNetRevenuesByMonth
     },
-    clearGenericExpenseByMonth: (state) => {
-      state.genericBreakdown.expenseByMonth =
-        initialState.genericBreakdown.expenseByMonth
+    clearSaimokuNetExpensesByMonth: (state) => {
+      state.breakdown.saimokuNetExpensesByMonth =
+        initialState.breakdown.saimokuNetExpensesByMonth
     },
   },
   extraReducers: (builder) => {
-    // 汎用API用のReducers
+    // 内訳データ用のReducers
     // 資産の年別集計
     builder
       .addCase(fetchGenericAssetByYear.pending, (state) => {
-        state.genericBreakdown.assetByYear.loading = true
-        state.genericBreakdown.assetByYear.error = null
+        state.breakdown.saimokuNetAssetsByYear.loading = true
+        state.breakdown.saimokuNetAssetsByYear.error = null
       })
       .addCase(fetchGenericAssetByYear.fulfilled, (state, action) => {
-        state.genericBreakdown.assetByYear.loading = false
-        state.genericBreakdown.assetByYear.data =
+        state.breakdown.saimokuNetAssetsByYear.loading = false
+        state.breakdown.saimokuNetAssetsByYear.data =
           convertToYearlyBreakdownFormat(action.payload)
       })
       .addCase(fetchGenericAssetByYear.rejected, (state, action) => {
-        state.genericBreakdown.assetByYear.loading = false
-        state.genericBreakdown.assetByYear.error =
+        state.breakdown.saimokuNetAssetsByYear.loading = false
+        state.breakdown.saimokuNetAssetsByYear.error =
           action.error.message || 'Unknown error'
       })
 
     // 収益の年別集計
     builder
       .addCase(fetchGenericRevenueByYear.pending, (state) => {
-        state.genericBreakdown.revenueByYear.loading = true
-        state.genericBreakdown.revenueByYear.error = null
+        state.breakdown.saimokuNetRevenuesByYear.loading = true
+        state.breakdown.saimokuNetRevenuesByYear.error = null
       })
       .addCase(fetchGenericRevenueByYear.fulfilled, (state, action) => {
-        state.genericBreakdown.revenueByYear.loading = false
-        state.genericBreakdown.revenueByYear.data =
+        state.breakdown.saimokuNetRevenuesByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByYear.data =
           convertToYearlyBreakdownFormat(action.payload)
       })
       .addCase(fetchGenericRevenueByYear.rejected, (state, action) => {
-        state.genericBreakdown.revenueByYear.loading = false
-        state.genericBreakdown.revenueByYear.error =
+        state.breakdown.saimokuNetRevenuesByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByYear.error =
           action.error.message || 'Unknown error'
       })
 
     // 費用の年別集計
     builder
       .addCase(fetchGenericExpenseByYear.pending, (state) => {
-        state.genericBreakdown.expenseByYear.loading = true
-        state.genericBreakdown.expenseByYear.error = null
+        state.breakdown.saimokuNetExpensesByYear.loading = true
+        state.breakdown.saimokuNetExpensesByYear.error = null
       })
       .addCase(fetchGenericExpenseByYear.fulfilled, (state, action) => {
-        state.genericBreakdown.expenseByYear.loading = false
-        state.genericBreakdown.expenseByYear.data =
+        state.breakdown.saimokuNetExpensesByYear.loading = false
+        state.breakdown.saimokuNetExpensesByYear.data =
           convertToYearlyBreakdownFormat(action.payload)
       })
       .addCase(fetchGenericExpenseByYear.rejected, (state, action) => {
-        state.genericBreakdown.expenseByYear.loading = false
-        state.genericBreakdown.expenseByYear.error =
+        state.breakdown.saimokuNetExpensesByYear.loading = false
+        state.breakdown.saimokuNetExpensesByYear.error =
           action.error.message || 'Unknown error'
       })
 
     // 収益の月別集計
     builder
       .addCase(fetchGenericRevenueByMonth.pending, (state) => {
-        state.genericBreakdown.revenueByMonth.loading = true
-        state.genericBreakdown.revenueByMonth.error = null
+        state.breakdown.saimokuNetRevenuesByMonth.loading = true
+        state.breakdown.saimokuNetRevenuesByMonth.error = null
       })
       .addCase(fetchGenericRevenueByMonth.fulfilled, (state, action) => {
-        state.genericBreakdown.revenueByMonth.loading = false
-        state.genericBreakdown.revenueByMonth.data =
+        state.breakdown.saimokuNetRevenuesByMonth.loading = false
+        state.breakdown.saimokuNetRevenuesByMonth.data =
           convertToMonthlyBreakdownFormat(action.payload)
       })
       .addCase(fetchGenericRevenueByMonth.rejected, (state, action) => {
-        state.genericBreakdown.revenueByMonth.loading = false
-        state.genericBreakdown.revenueByMonth.error =
+        state.breakdown.saimokuNetRevenuesByMonth.loading = false
+        state.breakdown.saimokuNetRevenuesByMonth.error =
           action.error.message || 'Unknown error'
       })
 
     // 費用の月別集計
     builder
       .addCase(fetchGenericExpenseByMonth.pending, (state) => {
-        state.genericBreakdown.expenseByMonth.loading = true
-        state.genericBreakdown.expenseByMonth.error = null
+        state.breakdown.saimokuNetExpensesByMonth.loading = true
+        state.breakdown.saimokuNetExpensesByMonth.error = null
       })
       .addCase(fetchGenericExpenseByMonth.fulfilled, (state, action) => {
-        state.genericBreakdown.expenseByMonth.loading = false
-        state.genericBreakdown.expenseByMonth.data =
+        state.breakdown.saimokuNetExpensesByMonth.loading = false
+        state.breakdown.saimokuNetExpensesByMonth.data =
           convertToMonthlyBreakdownFormat(action.payload)
       })
       .addCase(fetchGenericExpenseByMonth.rejected, (state, action) => {
-        state.genericBreakdown.expenseByMonth.loading = false
-        state.genericBreakdown.expenseByMonth.error =
+        state.breakdown.saimokuNetExpensesByMonth.loading = false
+        state.breakdown.saimokuNetExpensesByMonth.error =
           action.error.message || 'Unknown error'
+      })
+
+    // 税額計算データ
+    builder
+      .addCase(fetchTaxCalculationData.pending, (state) => {
+        state.taxCalculation.loading = true
+        state.taxCalculation.error = null
+      })
+      .addCase(fetchTaxCalculationData.fulfilled, (state, action) => {
+        state.taxCalculation.loading = false
+        state.taxCalculation.data = action.payload
+      })
+      .addCase(fetchTaxCalculationData.rejected, (state, action) => {
+        state.taxCalculation.loading = false
+        state.taxCalculation.error = action.error.message || 'Unknown error'
       })
   },
 })
 
 export const {
-  // 汎用API用のクリアアクション
-  clearGenericAssetByYear,
-  clearGenericRevenueByYear,
-  clearGenericExpenseByYear,
-  clearGenericRevenueByMonth,
-  clearGenericExpenseByMonth,
+  // 内訳データ用のクリアアクション
+  clearSaimokuNetAssetsByYear,
+  clearSaimokuNetRevenuesByYear,
+  clearSaimokuNetExpensesByYear,
+  clearSaimokuNetRevenuesByMonth,
+  clearSaimokuNetExpensesByMonth,
 } = reportSlice.actions
 
 export default reportSlice.reducer
 
-// 汎用API用のセレクター
-export const selectGenericAssetByYear = (state: { report: ReportState }) =>
-  state.report.genericBreakdown.assetByYear.data
+// 内訳データ用のセレクター
+export const selectSaimokuNetAssetsByYear = (state: { report: ReportState }) =>
+  state.report.breakdown.saimokuNetAssetsByYear.data
 
-export const selectGenericAssetByYearLoading = (state: {
+export const selectSaimokuNetAssetsByYearLoading = (state: {
   report: ReportState
-}) => state.report.genericBreakdown.assetByYear.loading
+}) => state.report.breakdown.saimokuNetAssetsByYear.loading
 
-export const selectGenericRevenueByYear = (state: { report: ReportState }) =>
-  state.report.genericBreakdown.revenueByYear.data
-
-export const selectGenericRevenueByYearLoading = (state: {
+export const selectSaimokuNetRevenuesByYear = (state: {
   report: ReportState
-}) => state.report.genericBreakdown.revenueByYear.loading
+}) => state.report.breakdown.saimokuNetRevenuesByYear.data
 
-export const selectGenericExpenseByYear = (state: { report: ReportState }) =>
-  state.report.genericBreakdown.expenseByYear.data
-
-export const selectGenericExpenseByYearLoading = (state: {
+export const selectSaimokuNetRevenuesByYearLoading = (state: {
   report: ReportState
-}) => state.report.genericBreakdown.expenseByYear.loading
+}) => state.report.breakdown.saimokuNetRevenuesByYear.loading
 
-export const selectGenericRevenueByMonth = (state: { report: ReportState }) =>
-  state.report.genericBreakdown.revenueByMonth.data
-
-export const selectGenericRevenueByMonthLoading = (state: {
+export const selectSaimokuNetExpensesByYear = (state: {
   report: ReportState
-}) => state.report.genericBreakdown.revenueByMonth.loading
+}) => state.report.breakdown.saimokuNetExpensesByYear.data
 
-export const selectGenericExpenseByMonth = (state: { report: ReportState }) =>
-  state.report.genericBreakdown.expenseByMonth.data
-
-export const selectGenericExpenseByMonthLoading = (state: {
+export const selectSaimokuNetExpensesByYearLoading = (state: {
   report: ReportState
-}) => state.report.genericBreakdown.expenseByMonth.loading
+}) => state.report.breakdown.saimokuNetExpensesByYear.loading
+
+export const selectSaimokuNetRevenuesByMonth = (state: {
+  report: ReportState
+}) => state.report.breakdown.saimokuNetRevenuesByMonth.data
+
+export const selectSaimokuNetRevenuesByMonthLoading = (state: {
+  report: ReportState
+}) => state.report.breakdown.saimokuNetRevenuesByMonth.loading
+
+export const selectSaimokuNetExpensesByMonth = (state: {
+  report: ReportState
+}) => state.report.breakdown.saimokuNetExpensesByMonth.data
+
+export const selectSaimokuNetExpensesByMonthLoading = (state: {
+  report: ReportState
+}) => state.report.breakdown.saimokuNetExpensesByMonth.loading
+
+// 税額計算用のセレクター
+export const selectTaxCalculationData = (state: { report: ReportState }) =>
+  state.report.taxCalculation.data
+
+export const selectTaxCalculationLoading = (state: { report: ReportState }) =>
+  state.report.taxCalculation.loading
+
+export const selectTaxCalculationError = (state: { report: ReportState }) =>
+  state.report.taxCalculation.error

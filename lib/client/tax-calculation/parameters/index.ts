@@ -13,10 +13,7 @@ export type TaxParameters = Record<string, any>
 /**
  * 年度別のパラメータビルダー関数の型定義
  */
-export type ParameterBuilder = (
-  state: RootState,
-  fiscalYear: string,
-) => TaxParameters
+export type ParameterBuilder = (state: RootState) => TaxParameters
 
 /**
  * 年度別のパラメータビルダーマッピングを構築する
@@ -48,5 +45,5 @@ export function buildTaxParameters(
     )
   }
 
-  return builder(state, fiscalYear)
+  return builder(state)
 }
