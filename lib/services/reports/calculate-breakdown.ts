@@ -45,8 +45,8 @@ export interface AnnualBreakdown {
 }
 
 export interface BreakdownResponse {
-  monthly: { request: BreakdownRequest; response: MonthlyBreakdown }[]
-  annual: { request: BreakdownRequest; response: AnnualBreakdown }[]
+  monthly: { request: BreakdownRequest; response: MonthlyBreakdown[] }[]
+  annual: { request: BreakdownRequest; response: AnnualBreakdown[] }[]
 }
 
 export interface BreakdownResult {
@@ -65,6 +65,16 @@ export async function calculateBreakdown(
     monthly: [],
     annual: [],
   }
+
+  // リクエストごとの結果を一時的に保存するMap
+  const monthlyResults = new Map<
+    string,
+    { request: BreakdownRequest; response: MonthlyBreakdown[] }
+  >()
+  const annualResults = new Map<
+    string,
+    { request: BreakdownRequest; response: AnnualBreakdown[] }
+  >()
 
   for (const request of requests) {
     const kamokuBunrui = await conn.kamoku_bunrui_masters.findFirst({
@@ -193,7 +203,11 @@ export async function calculateBreakdown(
         }
       }
 
+      // リクエストのキーを生成
+      const requestKey = JSON.stringify(request)
+
       // 各コードのデータをMonthlyBreakdown形式に変換
+      const monthlyItems: MonthlyBreakdown[] = []
       for (const [_, data] of codeMap) {
         // custom_fieldsを取得
         let custom_fields_str: string | undefined
@@ -235,11 +249,14 @@ export async function calculateBreakdown(
           custom_fields,
         }
 
-        response.monthly.push({
-          request,
-          response: monthlyItem,
-        })
+        monthlyItems.push(monthlyItem)
       }
+
+      // 結果をMapに保存
+      monthlyResults.set(requestKey, {
+        request,
+        response: monthlyItems,
+      })
     } else if (request.timeUnit === 'annual') {
       // 年間データの処理
       const codeMap = new Map<
@@ -310,7 +327,11 @@ export async function calculateBreakdown(
         }
       }
 
+      // リクエストのキーを生成
+      const requestKey = JSON.stringify(request)
+
       // 各コードのデータをAnnualBreakdown形式に変換
+      const annualItems: AnnualBreakdown[] = []
       for (const [_, data] of codeMap) {
         // custom_fieldsを取得
         let custom_fields_str: string | undefined
@@ -347,13 +368,20 @@ export async function calculateBreakdown(
           custom_fields,
         }
 
-        response.annual.push({
-          request,
-          response: annualItem,
-        })
+        annualItems.push(annualItem)
       }
+
+      // 結果をMapに保存
+      annualResults.set(requestKey, {
+        request,
+        response: annualItems,
+      })
     }
   }
+
+  // Mapの値を配列に変換
+  response.monthly = Array.from(monthlyResults.values())
+  response.annual = Array.from(annualResults.values())
 
   return response
 }
