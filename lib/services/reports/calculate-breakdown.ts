@@ -34,12 +34,14 @@ export interface MonthlyBreakdown {
   code: string
   name: string
   values: { month: string; value: number }[]
+  custom_fields?: string
 }
 
 export interface AnnualBreakdown {
   code: string
   name: string
   value: number
+  custom_fields?: string
 }
 
 export interface BreakdownResponse {
@@ -193,6 +195,21 @@ export async function calculateBreakdown(
 
       // 各コードのデータをMonthlyBreakdown形式に変換
       for (const [_, data] of codeMap) {
+        // custom_fieldsを取得
+        let custom_fields: string | undefined
+        if (request.breakdownType === 'karikata' && karikata) {
+          const item = karikata.find((item) => item.code === data.code)
+          custom_fields = item?.custom_fields
+        } else if (request.breakdownType === 'kasikata' && kasikata) {
+          const item = kasikata.find((item) => item.code === data.code)
+          custom_fields = item?.custom_fields
+        } else if (request.breakdownType === 'net') {
+          // netの場合は借方か貸方のどちらかから取得
+          const kariItem = karikata?.find((item) => item.code === data.code)
+          const kasiItem = kasikata?.find((item) => item.code === data.code)
+          custom_fields = kariItem?.custom_fields || kasiItem?.custom_fields
+        }
+
         const monthlyItem: MonthlyBreakdown = {
           code: data.code,
           name: data.name,
@@ -202,6 +219,7 @@ export async function calculateBreakdown(
               value,
             }))
             .sort((a, b) => a.month.localeCompare(b.month)),
+          custom_fields,
         }
 
         response.monthly.push({
@@ -281,10 +299,26 @@ export async function calculateBreakdown(
 
       // 各コードのデータをAnnualBreakdown形式に変換
       for (const [_, data] of codeMap) {
+        // custom_fieldsを取得
+        let custom_fields: string | undefined
+        if (request.breakdownType === 'karikata' && karikata) {
+          const item = karikata.find((item) => item.code === data.code)
+          custom_fields = item?.custom_fields
+        } else if (request.breakdownType === 'kasikata' && kasikata) {
+          const item = kasikata.find((item) => item.code === data.code)
+          custom_fields = item?.custom_fields
+        } else if (request.breakdownType === 'net') {
+          // netの場合は借方か貸方のどちらかから取得
+          const kariItem = karikata?.find((item) => item.code === data.code)
+          const kasiItem = kasikata?.find((item) => item.code === data.code)
+          custom_fields = kariItem?.custom_fields || kasiItem?.custom_fields
+        }
+
         const annualItem: AnnualBreakdown = {
           code: data.code,
           name: data.name,
           value: data.value,
+          custom_fields,
         }
 
         response.annual.push({
