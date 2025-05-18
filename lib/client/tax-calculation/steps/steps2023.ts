@@ -1,25 +1,22 @@
-import { TaxCalculationStep } from '.'
+import { CalculationStep } from '../types'
 
 /**
  * 2023年度の税額計算ステップを定義
  */
-export const steps2023: TaxCalculationStep[] = [
+export const steps2023: CalculationStep[] = [
   {
     id: 'income',
     name: '課税所得',
-    description: '課税所得を計算します',
     formulaText: (context) => {
       return '収入 - 費用 - 前年度事業税'
     },
-    calculate: (context) => {
-      const { parameters } = context
-
+    formula: (context) => {
       // 収入 - 費用 - 前年度事業税
       const income =
-        parameters.sales +
-        parameters.interest_revenue -
-        parameters.expenses -
-        parameters.previous_business_tax
+        context.sales +
+        (context.interest_revenue || 0) -
+        context.expenses -
+        context.previous_business_tax
 
       // 負の値にならないようにする
       return Math.max(0, income)
@@ -29,13 +26,11 @@ export const steps2023: TaxCalculationStep[] = [
   {
     id: 'business_tax',
     name: '事業税',
-    description: '事業税を計算します',
     formulaText: (context) => {
       return '課税所得 × 7%'
     },
-    calculate: (context) => {
-      const { results } = context
-      const income = results.income
+    formula: (context) => {
+      const income = context.income
 
       // 事業税率（例: 7%）
       const businessTaxRate = 0.07
@@ -47,13 +42,11 @@ export const steps2023: TaxCalculationStep[] = [
   {
     id: 'corporate_tax',
     name: '法人税',
-    description: '法人税を計算します',
     formulaText: (context) => {
       return '課税所得 × 15% - 源泉徴収税額（国税）'
     },
-    calculate: (context) => {
-      const { parameters, results } = context
-      const income = results.income
+    formula: (context) => {
+      const income = context.income
 
       // 法人税率（例: 15%）
       const corporateTaxRate = 0.15
@@ -62,7 +55,7 @@ export const steps2023: TaxCalculationStep[] = [
       const corporateTax = income * corporateTaxRate
 
       // 源泉徴収税額（国税）を控除
-      const deduction = parameters.national_withheld_tax || 0
+      const deduction = context.national_withheld_tax || 0
 
       // 控除後の法人税額（負の値にならないようにする）
       return Math.max(0, corporateTax - deduction)
@@ -72,13 +65,11 @@ export const steps2023: TaxCalculationStep[] = [
   {
     id: 'local_corporate_tax',
     name: '地方法人税',
-    description: '地方法人税を計算します',
     formulaText: (context) => {
       return '法人税 × 10.3%'
     },
-    calculate: (context) => {
-      const { results } = context
-      const corporateTax = results.corporate_tax
+    formula: (context) => {
+      const corporateTax = context.corporate_tax
 
       // 地方法人税率（例: 10.3%）
       const localCorporateTaxRate = 0.103
@@ -90,13 +81,11 @@ export const steps2023: TaxCalculationStep[] = [
   {
     id: 'inhabitant_tax',
     name: '住民税',
-    description: '住民税を計算します',
     formulaText: (context) => {
       return '法人税 × 16.3% - 源泉徴収税額（地方税）'
     },
-    calculate: (context) => {
-      const { parameters, results } = context
-      const corporateTax = results.corporate_tax
+    formula: (context) => {
+      const corporateTax = context.corporate_tax
 
       // 住民税率（例: 16.3%）
       const inhabitantTaxRate = 0.163
@@ -105,7 +94,7 @@ export const steps2023: TaxCalculationStep[] = [
       const inhabitantTax = corporateTax * inhabitantTaxRate
 
       // 源泉徴収税額（地方税）を控除
-      const deduction = parameters.local_withheld_tax || 0
+      const deduction = context.local_withheld_tax || 0
 
       // 控除後の住民税額（負の値にならないようにする）
       return Math.max(0, inhabitantTax - deduction)
@@ -115,19 +104,16 @@ export const steps2023: TaxCalculationStep[] = [
   {
     id: 'total_tax',
     name: '税額合計',
-    description: '税額の合計を計算します',
     formulaText: (context) => {
       return '事業税 + 法人税 + 地方法人税 + 住民税'
     },
-    calculate: (context) => {
-      const { results } = context
-
+    formula: (context) => {
       // 事業税 + 法人税 + 地方法人税 + 住民税
       return (
-        results.business_tax +
-        results.corporate_tax +
-        results.local_corporate_tax +
-        results.inhabitant_tax
+        context.business_tax +
+        context.corporate_tax +
+        context.local_corporate_tax +
+        context.inhabitant_tax
       )
     },
     category: '合計',

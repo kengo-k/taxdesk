@@ -1,13 +1,16 @@
 import { RootState } from '@/lib/redux/store'
 
+import { TaxParameters } from './index'
+
 /**
  * 2024年度の税額計算パラメータを構築する
- *
- * 注: このファイルはReportSliceの構造改良後に更新する必要があります
  */
-export const parameters2024Builder = (state: RootState, fiscalYear: string) => {
+export const parameters2024Builder = (
+  state: RootState,
+  fiscalYear: string,
+): TaxParameters => {
   // 現時点では仮のデータを返す
-  // 実際の実装はReportSliceの構造改良後に行う
+  // 実際の実装はReportSliceの構造改良後に更新する
   return {
     sales: 0,
     interest_revenue: 0,
