@@ -320,8 +320,31 @@ async function restoreBackup(argv) {
         await downloadFromS3(bucket, key, localPath)
       }
 
-      // Import all tables
-      for (const table of tables) {
+      // 指定された順序でテーブルをインポート
+      const tableOrder = [
+        'nendo_masters',
+        'kamoku_bunrui_masters',
+        'kamoku_masters',
+        'saimoku_masters',
+        'journals',
+        'backups',
+      ]
+
+      // テーブルを指定された順序でソート
+      const sortedTables = [...tables].sort((a, b) => {
+        const indexA = tableOrder.indexOf(a)
+        const indexB = tableOrder.indexOf(b)
+
+        // テーブル順序リストにないテーブルは最後に配置
+        if (indexA === -1 && indexB === -1) return 0
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+
+        return indexA - indexB
+      })
+
+      // Import all tables in the specified order
+      for (const table of sortedTables) {
         const csvPath = path.join(restoreDir, `${table}.csv`)
         importTableFromCsv(table, csvPath)
       }
@@ -352,6 +375,16 @@ async function restoreFromLocal(directory) {
     process.exit(1)
   }
 
+  // 指定された順序でテーブルをインポート
+  const tableOrder = [
+    'nendo_masters',
+    'kamoku_bunrui_masters',
+    'kamoku_masters',
+    'saimoku_masters',
+    'journals',
+    'backups',
+  ]
+
   // Get all CSV files in the directory
   const files = fs
     .readdirSync(csvDir)
@@ -369,8 +402,21 @@ async function restoreFromLocal(directory) {
 
   console.log(`Found ${files.length} CSV files to restore`)
 
-  // Import each CSV file
-  for (const file of files) {
+  // ファイルを指定された順序でソート
+  const sortedFiles = [...files].sort((a, b) => {
+    const indexA = tableOrder.indexOf(a.tableName)
+    const indexB = tableOrder.indexOf(b.tableName)
+
+    // テーブル順序リストにないテーブルは最後に配置
+    if (indexA === -1 && indexB === -1) return 0
+    if (indexA === -1) return 1
+    if (indexB === -1) return -1
+
+    return indexA - indexB
+  })
+
+  // Import each CSV file in the specified order
+  for (const file of sortedFiles) {
     try {
       console.log(`Restoring table ${file.tableName} from ${file.name}`)
       importTableFromCsv(file.tableName, file.path)
