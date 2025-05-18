@@ -34,14 +34,14 @@ export interface MonthlyBreakdown {
   code: string
   name: string
   values: { month: string; value: number }[]
-  custom_fields?: string
+  custom_fields?: Record<string, any>
 }
 
 export interface AnnualBreakdown {
   code: string
   name: string
   value: number
-  custom_fields?: string
+  custom_fields?: Record<string, any>
 }
 
 export interface BreakdownResponse {
@@ -196,18 +196,31 @@ export async function calculateBreakdown(
       // 各コードのデータをMonthlyBreakdown形式に変換
       for (const [_, data] of codeMap) {
         // custom_fieldsを取得
-        let custom_fields: string | undefined
+        let custom_fields_str: string | undefined
         if (request.breakdownType === 'karikata' && karikata) {
           const item = karikata.find((item) => item.code === data.code)
-          custom_fields = item?.custom_fields
+          custom_fields_str = item?.custom_fields
         } else if (request.breakdownType === 'kasikata' && kasikata) {
           const item = kasikata.find((item) => item.code === data.code)
-          custom_fields = item?.custom_fields
+          custom_fields_str = item?.custom_fields
         } else if (request.breakdownType === 'net') {
           // netの場合は借方か貸方のどちらかから取得
           const kariItem = karikata?.find((item) => item.code === data.code)
           const kasiItem = kasikata?.find((item) => item.code === data.code)
-          custom_fields = kariItem?.custom_fields || kasiItem?.custom_fields
+          custom_fields_str = kariItem?.custom_fields || kasiItem?.custom_fields
+        }
+
+        // 文字列からJSONオブジェクトに変換
+        let custom_fields: Record<string, any> | undefined
+        if (custom_fields_str) {
+          try {
+            custom_fields = JSON.parse(custom_fields_str)
+          } catch (e) {
+            console.error(
+              `Failed to parse custom_fields: ${custom_fields_str}`,
+              e,
+            )
+          }
         }
 
         const monthlyItem: MonthlyBreakdown = {
@@ -300,18 +313,31 @@ export async function calculateBreakdown(
       // 各コードのデータをAnnualBreakdown形式に変換
       for (const [_, data] of codeMap) {
         // custom_fieldsを取得
-        let custom_fields: string | undefined
+        let custom_fields_str: string | undefined
         if (request.breakdownType === 'karikata' && karikata) {
           const item = karikata.find((item) => item.code === data.code)
-          custom_fields = item?.custom_fields
+          custom_fields_str = item?.custom_fields
         } else if (request.breakdownType === 'kasikata' && kasikata) {
           const item = kasikata.find((item) => item.code === data.code)
-          custom_fields = item?.custom_fields
+          custom_fields_str = item?.custom_fields
         } else if (request.breakdownType === 'net') {
           // netの場合は借方か貸方のどちらかから取得
           const kariItem = karikata?.find((item) => item.code === data.code)
           const kasiItem = kasikata?.find((item) => item.code === data.code)
-          custom_fields = kariItem?.custom_fields || kasiItem?.custom_fields
+          custom_fields_str = kariItem?.custom_fields || kasiItem?.custom_fields
+        }
+
+        // 文字列からJSONオブジェクトに変換
+        let custom_fields: Record<string, any> | undefined
+        if (custom_fields_str) {
+          try {
+            custom_fields = JSON.parse(custom_fields_str)
+          } catch (e) {
+            console.error(
+              `Failed to parse custom_fields: ${custom_fields_str}`,
+              e,
+            )
+          }
         }
 
         const annualItem: AnnualBreakdown = {
