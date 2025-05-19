@@ -2,7 +2,7 @@ import { parse } from 'csv-parse/sync'
 import fs from 'fs'
 import path from 'path'
 
-import { prisma } from '@/lib/prisma/client'
+import { prisma } from '@/lib/db/prisma'
 import { Connection } from '@/lib/types'
 
 /**

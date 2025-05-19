@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma/client'
+import { prisma } from '@/lib/db/prisma'
 
 import { importCsvToPrisma } from './test-helpers'
 
