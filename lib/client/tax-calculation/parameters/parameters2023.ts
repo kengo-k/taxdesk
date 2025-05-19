@@ -7,13 +7,13 @@ import { TaxParameters } from './index'
  */
 export const parameters2023Builder = (state: RootState): TaxParameters => {
   return {
-    sales: 0,
-    interest_revenue: 0,
-    expenses: 0,
-    previous_business_tax: 0,
-    national_withheld_tax: 0,
+    sales: 7362000,
+    interest_revenue: 12,
+    expenses: 7202571,
+    previous_business_tax: 4500,
+    national_withheld_tax: 1,
     local_withheld_tax: 0,
-    corporate_tax_deduction: 0,
+    corporate_tax_deduction: 1,
     is_consumption_tax_exempt: true,
   }
 }

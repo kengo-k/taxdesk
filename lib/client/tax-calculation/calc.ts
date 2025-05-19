@@ -10,29 +10,19 @@ export function calculateTax(
   steps: CalculationStep[],
   parameters: Record<string, any>,
 ): TaxCalculationResult {
-  // 計算結果を格納するオブジェクト
-  const results: TaxCalculationResult = {}
-
-  // 計算コンテキスト（パラメータと結果を含む）
-  const context = { ...parameters, ...results }
+  const context = { ...parameters }
 
   // 各ステップを順番に実行
   for (const step of steps) {
     try {
-      // ステップの計算を実行
-      const result = step.formula(context)
-
-      // 結果を格納
-      results[step.id] = result
-      context[step.id] = result // コンテキストにも結果を追加（次のステップで参照できるように）
+      context[step.id] = step.formula(context)
     } catch (error) {
       console.error(`Error calculating step ${step.id}:`, error)
-      results[step.id] = 0 // エラー時はデフォルト値を設定
       context[step.id] = 0
     }
   }
 
-  return results
+  return context
 }
 
 /**

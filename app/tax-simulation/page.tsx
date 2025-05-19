@@ -120,7 +120,7 @@ export default function TaxSimulationPage() {
                     法人税
                   </h3>
                   <p className="text-lg font-bold text-blue-900">
-                    {formatCurrency(context.corporate_tax || 0)}
+                    {formatCurrency(context.corporate_tax_final || 0)}
                   </p>
                 </div>
 
@@ -130,7 +130,7 @@ export default function TaxSimulationPage() {
                     地方法人税
                   </h3>
                   <p className="text-lg font-bold text-green-900">
-                    {formatCurrency(context.local_corporate_tax || 0)}
+                    {formatCurrency(context.local_corporate_tax_final || 0)}
                   </p>
                 </div>
 
@@ -140,7 +140,7 @@ export default function TaxSimulationPage() {
                     住民税
                   </h3>
                   <p className="text-lg font-bold text-purple-900">
-                    {formatCurrency(context.inhabitant_tax || 0)}
+                    {formatCurrency(context.tokyo_tax_total || 0)}
                   </p>
                 </div>
 
@@ -150,7 +150,7 @@ export default function TaxSimulationPage() {
                     事業税
                   </h3>
                   <p className="text-lg font-bold text-amber-900">
-                    {formatCurrency(context.business_tax || 0)}
+                    {formatCurrency(context.business_tax_final || 0)}
                   </p>
                 </div>
 
