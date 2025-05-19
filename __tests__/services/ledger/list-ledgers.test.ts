@@ -1,8 +1,8 @@
 import { withTransactionForTest } from '../../framework/test-helpers'
 
-import { countLedgers } from '@/lib/services/ledger/count-ledgers'
-import { createLedger } from '@/lib/services/ledger/create-ledger'
-import { listLedgers } from '@/lib/services/ledger/list-ledgers'
+import { countLedgers } from '@/lib/backend/services/ledger/count-ledgers'
+import { createLedger } from '@/lib/backend/services/ledger/create-ledger'
+import { listLedgers } from '@/lib/backend/services/ledger/list-ledgers'
 
 describe('listLedgers', () => {
   it(

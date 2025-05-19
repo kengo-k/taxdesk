@@ -1,6 +1,6 @@
 import { withTransactionForTest } from '../../framework/test-helpers'
 
-import { getFiscalYears } from '@/lib/services/masters/get-fiscal-years'
+import { getFiscalYears } from '@/lib/backend/services/masters/get-fiscal-years'
 
 describe('getFiscalYears', () => {
   /**

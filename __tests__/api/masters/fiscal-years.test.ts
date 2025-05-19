@@ -3,7 +3,7 @@ import { testApiHandler } from 'next-test-api-route-handler'
 
 import { withTransactionForTest } from '@/__tests__/framework/test-helpers'
 import * as handler from '@/app/api/master/fiscal-years/route'
-import { createApiRoute } from '@/lib/api-transaction'
+import { createApiRoute } from '@/lib/backend/api-transaction'
 
 describe('GET /api/master/fiscal-years', () => {
   it(

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db/prisma'
+import { prisma } from '@/lib/backend/db/prisma'
 
 import { importCsvToPrisma } from './test-helpers'
 
@@ -24,6 +24,7 @@ export class TestEnvironment {
   private async setupBaseMasterData(): Promise<void> {
     try {
       await prisma.$transaction(async (tx) => {
+        await tx.journals.deleteMany()
         await tx.saimoku_masters.deleteMany()
         await tx.kamoku_masters.deleteMany()
         await tx.kamoku_bunrui_masters.deleteMany()

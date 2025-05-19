@@ -3,8 +3,8 @@ import {
   RouteContext,
   createApiRoute,
   withTransaction,
-} from '@/lib/api-transaction'
-import { listAccounts } from '@/lib/services/masters/list-accounts'
+} from '@/lib/backend/api-transaction'
+import { listAccounts } from '@/lib/backend/services/masters/list-accounts'
 
 export function listAccountsHandler(
   conn: Connection,

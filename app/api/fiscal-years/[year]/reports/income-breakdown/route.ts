@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getIncomeBreakdown } from '@/lib/services/reports/get-income-breakdown'
+import { getIncomeBreakdown } from '@/lib/backend/services/reports/get-income-breakdown'
 
 // モック実装を使用する場合は以下のようにインポートを変更する
 // import { getIncomeBreakdownMock as getIncomeBreakdown } from '@/lib/services/reports/get-income-breakdown'

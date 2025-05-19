@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { ApiError, ApiErrorType, toDetails } from '@/lib/api-error'
+import { ApiError, ApiErrorType, toDetails } from '@/lib/backend/api-error'
 import { Connection } from '@/lib/types'
 
 const updateJournalCheckedRequestSchema = z.object({

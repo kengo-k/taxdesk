@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server'
 
 import { Prisma, PrismaClient } from '@prisma/client'
 
-import { toApiResponse } from '@/lib/api-error'
-import { prisma } from '@/lib/db/prisma'
+import { toApiResponse } from '@/lib/backend/api-error'
+import { prisma } from '@/lib/backend/db/prisma'
 
 export type Connection = PrismaClient | Prisma.TransactionClient
 

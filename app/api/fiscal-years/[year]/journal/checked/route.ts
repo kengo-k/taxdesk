@@ -5,8 +5,8 @@ import {
   RouteContext,
   createApiRoute,
   withTransaction,
-} from '@/lib/api-transaction'
-import { updateJournalChecked } from '@/lib/services/journal/update-journal-checked'
+} from '@/lib/backend/api-transaction'
+import { updateJournalChecked } from '@/lib/backend/services/journal/update-journal-checked'
 
 export function updateJournalCheckedHandler(
   conn: Connection,

@@ -1,5 +1,5 @@
 import { withTransactionForTest } from '@/__tests__/framework/test-helpers'
-import { listAccounts } from '@/lib/services/masters/list-accounts'
+import { listAccounts } from '@/lib/backend/services/masters/list-accounts'
 
 describe('listAccounts', () => {
   it(

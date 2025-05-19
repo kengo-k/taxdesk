@@ -1,8 +1,8 @@
 import { withTransactionForTest } from '../../framework/test-helpers'
 
-import { ApiError } from '@/lib/api-error'
-import { countLedgers } from '@/lib/services/ledger/count-ledgers'
-import { createLedger } from '@/lib/services/ledger/create-ledger'
+import { ApiError } from '@/lib/backend/api-error'
+import { countLedgers } from '@/lib/backend/services/ledger/count-ledgers'
+import { createLedger } from '@/lib/backend/services/ledger/create-ledger'
 
 describe('createLedger', () => {
   it(

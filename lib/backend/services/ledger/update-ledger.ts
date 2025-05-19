@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-import { ApiError, ApiErrorType, toDetails } from '@/lib/api-error'
+import { ApiError, ApiErrorType, toDetails } from '@/lib/backend/api-error'
+import { getSaimokuDetail } from '@/lib/backend/services/masters/get-saimoku-detail'
 import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
-import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 import { Connection } from '@/lib/types'
 
 const updateLedgerRequestSchema = z

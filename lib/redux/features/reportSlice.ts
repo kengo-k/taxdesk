@@ -1,10 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
-import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
 import {
   AnnualBreakdown,
   MonthlyBreakdown,
-} from '@/lib/services/reports/calculate-breakdown'
+} from '@/lib/backend/services/reports/calculate-breakdown'
+import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
 
 export interface ReportState {
   // 内訳データ用の状態

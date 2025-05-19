@@ -5,8 +5,8 @@ import {
   RouteContext,
   createApiRoute,
   withTransaction,
-} from '@/lib/api-transaction'
-import { deleteJournals } from '@/lib/services/journal/delete-journals'
+} from '@/lib/backend/api-transaction'
+import { deleteJournals } from '@/lib/backend/services/journal/delete-journals'
 
 export function deleteLedgersHandler(
   conn: Connection,

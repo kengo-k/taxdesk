@@ -1,7 +1,7 @@
 import { withTransactionForTest } from '../../framework/test-helpers'
 
+import { getSaimokuDetail } from '@/lib/backend/services/masters/get-saimoku-detail'
 import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
-import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 
 describe('getSaimokuDetail', () => {
   it(

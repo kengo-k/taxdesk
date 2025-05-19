@@ -4,8 +4,8 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
+import { ListAccountItem } from '@/lib/backend/services/masters/list-accounts'
 import type { RootState } from '@/lib/redux/store'
-import { ListAccountItem } from '@/lib/services/masters/list-accounts'
 
 // 状態の型定義
 interface AccountState {

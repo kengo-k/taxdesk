@@ -2,7 +2,7 @@ import { withTransactionForTest } from '@/__tests__/framework/test-helpers'
 import {
   BreakdownRequest,
   calculateBreakdown,
-} from '@/lib/services/reports/calculate-breakdown'
+} from '@/lib/backend/services/reports/calculate-breakdown'
 
 describe('calculateBreakdown', () => {
   // 月別データのテスト

@@ -1,9 +1,9 @@
+import { getSaimokuDetail } from '@/lib/backend/services/masters/get-saimoku-detail'
 import {
   PaginationRequest,
   calculateOffset,
 } from '@/lib/client/utils/pagination'
 import { KAMOKU_BUNRUI_TYPE } from '@/lib/constants/kamoku-bunrui'
-import { getSaimokuDetail } from '@/lib/services/masters/get-saimoku-detail'
 import { Connection } from '@/lib/types'
 
 export interface LedgerListRequest {

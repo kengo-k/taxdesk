@@ -4,13 +4,13 @@ import {
   createSlice,
 } from '@reduxjs/toolkit'
 
+import { DeleteJournalsRequest } from '@/lib/backend/services/journal/delete-journals'
+import { UpdateJournalCheckedRequest } from '@/lib/backend/services/journal/update-journal-checked'
+import { CountByAccountItem } from '@/lib/backend/services/ledger/count-by-account'
+import { CreateLedgerRequest } from '@/lib/backend/services/ledger/create-ledger'
+import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
+import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
 import type { RootState } from '@/lib/redux/store'
-import { DeleteJournalsRequest } from '@/lib/services/journal/delete-journals'
-import { UpdateJournalCheckedRequest } from '@/lib/services/journal/update-journal-checked'
-import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'
-import { CreateLedgerRequest } from '@/lib/services/ledger/create-ledger'
-import { LedgerListItem } from '@/lib/services/ledger/list-ledgers'
-import { UpdateLedgerRequest } from '@/lib/services/ledger/update-ledger'
 
 // 取引データの型定義
 export interface Transaction {
