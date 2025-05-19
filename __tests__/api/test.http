@@ -122,14 +122,20 @@ Content-Type: application/json
 {
     "requests": [
         {
-            "kamokuBunruiCd": "D",
-            "breakdownLevel": "kamoku_bunrui",
+            "kamokuBunruiCd": "A",
+            "breakdownLevel": "saimoku",
             "breakdownType": "net",
             "timeUnit": "annual"
         },
         {
-            "kamokuBunruiCd": "E",
-            "breakdownLevel": "kamoku_bunrui",
+            "kamokuBunruiCd": "B",
+            "breakdownLevel": "kamoku",
+            "breakdownType": "net",
+            "timeUnit": "annual"
+        },
+        {
+            "kamokuBunruiCd": "D",
+            "breakdownLevel": "saimoku",
             "breakdownType": "net",
             "timeUnit": "annual"
         }
