@@ -1,4 +1,3 @@
-import { CalculationStep } from '../calculation/calc'
 import { Calculator } from 'lucide-react'
 
 import {
@@ -7,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { CalculationStep } from '@/lib/client/tax-calculation'
 
 interface TaxCalculationDetailsProps {
   steps: CalculationStep[]
