@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -24,6 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
+import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
+import { getSteps } from '@/lib/client/tax-calculation/steps'
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
@@ -53,6 +56,7 @@ import { getChartColors } from '@/lib/utils/chart-colors'
 
 export default function Home() {
   const dispatch = useAppDispatch()
+  const state = useAppSelector((state) => state)
 
   // Reduxから年度データを取得
   const fiscalYears = useAppSelector(selectAllFiscalYears)
@@ -121,19 +125,23 @@ export default function Home() {
     genericExpenseByMonthLoading,
   ])
 
-  // 金額のフォーマット
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('ja-JP', {
-      style: 'currency',
-      currency: 'JPY',
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
   // 年度選択ハンドラー
   const handleYearChange = (value: string) => {
     dispatch(selectFiscalYear(value))
   }
+
+  // 税額計算
+  const taxCalculation = useMemo(() => {
+    if (!selectedYearId) return null
+    try {
+      const parameters = buildTaxParameters(state, selectedYearId)
+      const steps = getSteps(selectedYearId)
+      return calculateTax(steps, parameters)
+    } catch (error) {
+      console.error('Tax calculation failed:', error)
+      return null
+    }
+  }, [selectedYearId, state])
 
   // データ読み込み中の表示
   if (loading) {
@@ -287,7 +295,11 @@ export default function Home() {
                 <h3 className="font-medium text-lg">
                   {selectedYearId === '2024' ? '税額見込み' : '確定税額'}
                 </h3>
-                <span className="font-bold text-lg">{'Loading...'}</span>
+                <span className="font-bold text-lg">
+                  {taxCalculation
+                    ? formatCurrency(taxCalculation.total_tax)
+                    : '計算中...'}
+                </span>
               </div>
               <p className="text-sm text-gray-500 mb-4 md:mb-0">
                 {selectedYearId === '2024'
@@ -302,25 +314,41 @@ export default function Home() {
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '法人税' : '法人税（確定）'}
                   </div>
-                  <div className="font-medium">{'Loading...'}</div>
+                  <div className="font-medium">
+                    {taxCalculation
+                      ? formatCurrency(taxCalculation.corporate_tax)
+                      : '計算中...'}
+                  </div>
                 </div>
                 <div className="p-3 bg-green-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '住民税' : '住民税（確定）'}
                   </div>
-                  <div className="font-medium">{'Loading...'}</div>
+                  <div className="font-medium">
+                    {taxCalculation
+                      ? formatCurrency(taxCalculation.inhabitant_tax)
+                      : '計算中...'}
+                  </div>
                 </div>
                 <div className="p-3 bg-amber-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '事業税' : '事業税（確定）'}
                   </div>
-                  <div className="font-medium">{'Loading...'}</div>
+                  <div className="font-medium">
+                    {taxCalculation
+                      ? formatCurrency(taxCalculation.business_tax)
+                      : '計算中...'}
+                  </div>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-md">
                   <div className="text-sm text-gray-600">
                     {selectedYearId === '2024' ? '消費税' : '消費税（確定）'}
                   </div>
-                  <div className="font-medium">{'Loading...'}</div>
+                  <div className="font-medium">
+                    {taxCalculation
+                      ? formatCurrency(taxCalculation.consumption_tax || 0)
+                      : '計算中...'}
+                  </div>
                 </div>
               </div>
               <div className="mt-4 flex justify-end">
