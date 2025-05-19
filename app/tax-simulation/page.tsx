@@ -23,24 +23,25 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
+import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
+import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
+import { getSteps } from '@/lib/client/tax-calculation/steps'
+import { useAppSelector } from '@/lib/redux/hooks'
 
-import { calc, stepMappings } from './calculation/calc'
 import { TaxCalculationDetails } from './components/tax-calculation-details'
 
 export default function TaxSimulationPage() {
   const searchParams = useSearchParams()
   const yearParam = searchParams.get('year') || '2024'
+  const state = useAppSelector((state) => state)
 
   // 状態管理
   const [selectedYear, setSelectedYear] = useState(yearParam)
-  const steps = stepMappings[selectedYear]
-  const context = calc(steps, {
-    sales: 7362012,
-    expenses: 7202571,
-    previousBusinessTax: 4500,
-    corporate_tax_deduction: 1, // 法人税控除額（例：研究開発税制による控除など）
-    is_consumption_tax_exempt: true, // 消費税課税区分（true: 免税事業者、false: 課税事業者）
-  })
+
+  // 税額計算
+  const parameters = buildTaxParameters(state, selectedYear)
+  const steps = getSteps(selectedYear)
+  const context = calculateTax(steps, parameters)
 
   // PDFダウンロード処理
   const handleDownloadPDF = useCallback(() => {
@@ -119,11 +120,7 @@ export default function TaxSimulationPage() {
                     法人税
                   </h3>
                   <p className="text-lg font-bold text-blue-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(context.corporate_tax_final || 0)}
+                    {formatCurrency(context.corporate_tax || 0)}
                   </p>
                 </div>
 
@@ -133,25 +130,17 @@ export default function TaxSimulationPage() {
                     地方法人税
                   </h3>
                   <p className="text-lg font-bold text-green-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(context.local_corporate_tax_final || 0)}
+                    {formatCurrency(context.local_corporate_tax || 0)}
                   </p>
                 </div>
 
-                {/* 都民税 */}
+                {/* 住民税 */}
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 shadow-sm">
                   <h3 className="text-sm font-medium text-purple-800 mb-1">
-                    都民税
+                    住民税
                   </h3>
                   <p className="text-lg font-bold text-purple-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(context.tokyo_tax_total || 0)}
+                    {formatCurrency(context.inhabitant_tax || 0)}
                   </p>
                 </div>
 
@@ -161,25 +150,7 @@ export default function TaxSimulationPage() {
                     事業税
                   </h3>
                   <p className="text-lg font-bold text-amber-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(context.business_tax_final || 0)}
-                  </p>
-                </div>
-
-                {/* 特別法人事業税 */}
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-orange-800 mb-1">
-                    特別法人事業税
-                  </h3>
-                  <p className="text-lg font-bold text-orange-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(context.special_local_corporate_tax_final || 0)}
+                    {formatCurrency(context.business_tax || 0)}
                   </p>
                 </div>
 
@@ -189,14 +160,7 @@ export default function TaxSimulationPage() {
                     消費税
                   </h3>
                   <p className="text-lg font-bold text-teal-900">
-                    {new Intl.NumberFormat('ja-JP', {
-                      style: 'currency',
-                      currency: 'JPY',
-                      maximumFractionDigits: 0,
-                    }).format(
-                      (context.consumption_tax_base || 0) +
-                        (context.local_consumption_tax || 0),
-                    )}
+                    {formatCurrency(context.consumption_tax || 0)}
                   </p>
                 </div>
               </div>
@@ -207,19 +171,7 @@ export default function TaxSimulationPage() {
                   合計税額
                 </h3>
                 <p className="text-xl font-bold text-gray-900">
-                  {new Intl.NumberFormat('ja-JP', {
-                    style: 'currency',
-                    currency: 'JPY',
-                    maximumFractionDigits: 0,
-                  }).format(
-                    (context.corporate_tax_final || 0) +
-                      (context.local_corporate_tax_final || 0) +
-                      (context.tokyo_tax_total || 0) +
-                      (context.business_tax_final || 0) +
-                      (context.special_local_corporate_tax_final || 0) +
-                      (context.consumption_tax_base || 0) +
-                      (context.local_consumption_tax || 0),
-                  )}
+                  {formatCurrency(context.total_tax || 0)}
                 </p>
               </div>
 
