@@ -5,24 +5,14 @@
  */
 
 // 型定義のエクスポート
-export type {
-  CalculationStep,
-  TaxCalculationResult,
-  TaxInputData,
-} from './types'
+export type { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 // 計算ロジックのエクスポート
-export {
-  calculateTax,
-  formatCurrency,
-  getStepResult,
-  getTotalTax,
-  groupByCategory,
-} from './calc'
+export { calculateTax, formatCurrency } from './calc'
 
 // パラメータビルダーのエクスポート
 export { buildParameterMappings, buildTaxParameters } from './parameters'
-export type { ParameterBuilder, TaxParameters } from './parameters'
+export type { ParameterBuilder } from './parameters'
 export { parameters2023Builder } from './parameters/parameters2023'
 export { parameters2024Builder } from './parameters/parameters2024'
 

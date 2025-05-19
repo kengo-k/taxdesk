@@ -6,7 +6,7 @@ import { CalculationStep } from '@/lib/client/tax-calculation/types'
  * 年度別の計算ステップマッピングを構築する
  * @returns 年度別の計算ステップマッピング
  */
-export function buildStepMappings(): Record<string, CalculationStep[]> {
+export function buildStepMappings(): Record<string, CalculationStep<any>[]> {
   return {
     '2023': steps2023,
     '2024': steps2024,
@@ -18,7 +18,7 @@ export function buildStepMappings(): Record<string, CalculationStep[]> {
  * @param fiscalYear 年度
  * @returns 計算ステップの配列
  */
-export function getSteps(fiscalYear: string): CalculationStep[] {
+export function getSteps(fiscalYear: string): CalculationStep<any>[] {
   const mappings = buildStepMappings()
   const steps = mappings[fiscalYear]
 
@@ -29,4 +29,9 @@ export function getSteps(fiscalYear: string): CalculationStep[] {
   }
 
   return steps
+}
+
+export interface BaseContext {
+  // 法人税を取得する
+  getResult(): { taxName: string; taxAmount: number }[]
 }

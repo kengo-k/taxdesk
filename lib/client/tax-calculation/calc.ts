@@ -1,7 +1,4 @@
-import {
-  CalculationStep,
-  TaxCalculationResult,
-} from '@/lib/client/tax-calculation/types'
+import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 /**
  * 税額計算を実行する
@@ -10,63 +7,25 @@ import {
  * @returns 計算結果
  */
 export function calculateTax(
-  steps: CalculationStep[],
-  parameters: Record<string, any>,
-): TaxCalculationResult {
+  steps: CalculationStep<any>[],
+  parameters: any,
+): any {
   const context = { ...parameters }
 
   // 各ステップを順番に実行
   for (const step of steps) {
+    let currentSubStepId: any = ''
     try {
-      context[step.id] = step.formula(context)
+      for (const subStep of step.subSteps) {
+        currentSubStepId = subStep.id
+        context[subStep.id] = subStep.calculate(context)
+      }
     } catch (error) {
-      console.error(`Error calculating step ${step.id}:`, error)
-      context[step.id] = 0
+      console.error(`Error calculating step ${currentSubStepId}:`, error)
     }
   }
 
   return context
-}
-
-/**
- * 税額計算結果から特定のステップの結果を取得する
- * @param results 計算結果
- * @param stepId ステップID
- * @returns ステップの計算結果
- */
-export function getStepResult(
-  results: TaxCalculationResult,
-  stepId: string,
-): number {
-  return results[stepId] || 0
-}
-
-/**
- * 税額計算結果から合計税額を取得する
- * @param results 計算結果
- * @returns 合計税額
- */
-export function getTotalTax(results: TaxCalculationResult): number {
-  return results.total_tax || 0
-}
-
-/**
- * カテゴリごとにステップをグループ化
- * @param steps 計算ステップの配列
- * @returns カテゴリごとにグループ化されたステップ
- */
-export function groupByCategory(
-  steps: CalculationStep[],
-): Record<string, CalculationStep[]> {
-  return steps.reduce(
-    (acc, step) => {
-      const category = step.category || 'その他'
-      if (!acc[category]) acc[category] = []
-      acc[category].push(step)
-      return acc
-    },
-    {} as Record<string, CalculationStep[]>,
-  )
 }
 
 /**
@@ -80,4 +39,19 @@ export const formatCurrency = (amount: number): string => {
     currency: 'JPY',
     maximumFractionDigits: 0,
   }).format(amount)
+}
+
+// 1000円未満を切捨てる
+export const roundDown1000 = (amount: number): number => {
+  return Math.floor(amount / 1000) * 1000
+}
+
+// 100円未満を切捨てる
+export const roundDown100 = (amount: number): number => {
+  return Math.floor(amount / 100) * 100
+}
+
+// 小数点切り捨て
+export const floor = (amount: number): number => {
+  return Math.floor(amount)
 }

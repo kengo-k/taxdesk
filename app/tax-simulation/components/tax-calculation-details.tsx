@@ -8,26 +8,15 @@ import {
 } from '@/components/ui/accordion'
 import { CalculationStep } from '@/lib/client/tax-calculation'
 
-interface TaxCalculationDetailsProps {
-  steps: CalculationStep[]
-  context: Record<string, any>
+interface TaxCalculationDetailsProps<T> {
+  steps: CalculationStep<T>[]
+  context: T
 }
 
-export function TaxCalculationDetails({
+export function TaxCalculationDetails<T>({
   steps,
   context,
-}: TaxCalculationDetailsProps) {
-  // カテゴリごとにグループ化
-  const stepsByCategory = steps.reduce(
-    (acc, step) => {
-      const category = step.category || 'その他'
-      if (!acc[category]) acc[category] = []
-      acc[category].push(step)
-      return acc
-    },
-    {} as Record<string, CalculationStep[]>,
-  )
-
+}: TaxCalculationDetailsProps<T>) {
   return (
     <div className="mt-6">
       <Accordion type="single" collapsible defaultValue="calculation">
@@ -40,23 +29,19 @@ export function TaxCalculationDetails({
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-6 p-4 bg-gray-50 rounded-lg">
-              {/* カテゴリごとに表示 */}
-              {Object.entries(stepsByCategory).map(([category, steps]) => (
-                <div key={category} className="pt-4 border-t">
-                  <h4 className="font-medium mb-2">{category}計算</h4>
-
-                  {/* 各ステップの表示 */}
-                  {steps.map((step) => (
-                    <div
-                      key={step.id}
-                      className="bg-white p-3 rounded border mb-2"
-                    >
-                      <p className="text-sm font-medium">{step.name}</p>
-                      <p className="text-sm mt-1">
-                        {step.formulaText(context)}
-                      </p>
-                    </div>
-                  ))}
+              {steps.map((step, index) => (
+                <div key={index} className="pt-4">
+                  <h4 className="font-medium mb-2">{step.category}</h4>
+                  <div className="bg-white p-3 rounded border mb-2 space-y-4">
+                    {step.subSteps.map((subStep, subIndex) => (
+                      <div key={subIndex}>
+                        <p className="text-sm font-bold">{subStep.name}</p>
+                        <p className="text-sm mt-1 ml-8">
+                          {subStep.statement(context)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

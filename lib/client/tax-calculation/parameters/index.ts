@@ -3,16 +3,9 @@ import { parameters2024Builder } from '@/lib/client/tax-calculation/parameters/p
 import { RootState } from '@/lib/redux/store'
 
 /**
- * 税額計算パラメータの型定義
- * 年度によって必要なパラメータが異なる可能性があるため、
- * 柔軟な型定義としています。
- */
-export type TaxParameters = Record<string, any>
-
-/**
  * 年度別のパラメータビルダー関数の型定義
  */
-export type ParameterBuilder = (state: RootState) => TaxParameters
+export type ParameterBuilder = (state: RootState) => any
 
 /**
  * 年度別のパラメータビルダーマッピングを構築する
@@ -31,10 +24,7 @@ export function buildParameterMappings(): Record<string, ParameterBuilder> {
  * @param fiscalYear 年度
  * @returns 税額計算パラメータ
  */
-export function buildTaxParameters(
-  state: RootState,
-  fiscalYear: string,
-): TaxParameters {
+export function buildTaxParameters(state: RootState, fiscalYear: string): any {
   const mappings = buildParameterMappings()
   const builder = mappings[fiscalYear]
 

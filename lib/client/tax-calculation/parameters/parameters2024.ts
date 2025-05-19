@@ -1,18 +1,50 @@
-import { TaxParameters } from '@/lib/client/tax-calculation/parameters'
+import { Context2024 } from '../steps/steps2024'
+
 import { RootState } from '@/lib/redux/store'
 
 /**
  * 2024年度の税額計算パラメータを構築する
  */
-export const parameters2024Builder = (state: RootState): TaxParameters => {
+export const parameters2024Builder = (state: RootState): Context2024 => {
   return {
-    sales: 100000000, // 売上高 1億円
-    interest_revenue: 1000000, // 受取利息 100万円
-    expenses: 80000000, // 費用 8000万円
-    previous_business_tax: 500000, // 前年度事業税 50万円
-    national_withheld_tax: 200000, // 源泉徴収税額（国税）20万円
-    local_withheld_tax: 100000, // 源泉徴収税額（地方税）10万円
-    corporate_tax_deduction: 0, // 法人税控除額 0円
-    is_consumption_tax_exempt: false, // 消費税課税事業者
+    sales: 0,
+    expenses: 0,
+    previous_business_tax: 0,
+    corporate_tax_after_deduction: 0,
+    taxable_income: 0,
+
+    // 法人税関連
+    rounded_taxable_income: 0,
+    corporate_tax_rate: 0,
+    corporate_tax_base: 0,
+    corporate_tax_deduction: 0,
+    corporate_tax_final: 0,
+
+    // 地方法人税関連
+    local_corporate_tax_base: 0,
+    local_corporate_tax_calc: 0,
+    local_corporate_tax_final: 0,
+
+    // 都民税関連
+    tokyo_tax_base: 0,
+    tokyo_tax_calc: 0,
+    tokyo_tax_final: 0,
+    tokyo_tax_equal_tax: 0,
+
+    // 事業税関連
+    business_tax_base: 0,
+    business_tax: 0,
+    business_tax_final: 0,
+
+    // 特別法人事業税関連
+    special_local_corporate_tax_calc: 0,
+    special_local_corporate_tax_final: 0,
+
+    // 消費税関連
+    consumption_tax_status: 0,
+
+    getResult: function () {
+      return [{ taxName: '法人税', taxAmount: this.corporate_tax_final }]
+    },
   }
 }

@@ -41,6 +41,7 @@ export default function TaxSimulationPage() {
   const parameters = buildTaxParameters(state, selectedYear)
   const steps = getSteps(selectedYear)
   const context = calculateTax(steps, parameters)
+  const result = context.getResult() as { taxName: string; taxAmount: number }[]
 
   // PDFダウンロード処理
   const handleDownloadPDF = useCallback(() => {
@@ -113,65 +114,66 @@ export default function TaxSimulationPage() {
             <CardContent>
               {/* 各種税額とその合計額をカード形式で表示 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                {/* 法人税 */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-blue-800 mb-1">
-                    法人税
-                  </h3>
-                  <p className="text-lg font-bold text-blue-900">
-                    {formatCurrency(context.corporate_tax_final || 0)}
-                  </p>
-                </div>
+                {result.map((tax) => {
+                  // 税種ごとの色を定義
+                  const colorMap: Record<
+                    string,
+                    { bg: string; border: string; text: string; value: string }
+                  > = {
+                    法人税: {
+                      bg: 'bg-blue-50',
+                      border: 'border-blue-200',
+                      text: 'text-blue-800',
+                      value: 'text-blue-900',
+                    },
+                    地方法人税: {
+                      bg: 'bg-green-50',
+                      border: 'border-green-200',
+                      text: 'text-green-800',
+                      value: 'text-green-900',
+                    },
+                    住民税: {
+                      bg: 'bg-purple-50',
+                      border: 'border-purple-200',
+                      text: 'text-purple-800',
+                      value: 'text-purple-900',
+                    },
+                    事業税: {
+                      bg: 'bg-amber-50',
+                      border: 'border-amber-200',
+                      text: 'text-amber-800',
+                      value: 'text-amber-900',
+                    },
+                    消費税: {
+                      bg: 'bg-teal-50',
+                      border: 'border-teal-200',
+                      text: 'text-teal-800',
+                      value: 'text-teal-900',
+                    },
+                  }
 
-                {/* 地方法人税 */}
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-green-800 mb-1">
-                    地方法人税
-                  </h3>
-                  <p className="text-lg font-bold text-green-900">
-                    {formatCurrency(context.local_corporate_tax_final || 0)}
-                  </p>
-                </div>
+                  // デフォルトの色（合計税額用）
+                  const colors = colorMap[tax.taxName] || {
+                    bg: 'bg-gray-50',
+                    border: 'border-gray-200',
+                    text: 'text-gray-800',
+                    value: 'text-gray-900',
+                  }
 
-                {/* 住民税 */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-purple-800 mb-1">
-                    住民税
-                  </h3>
-                  <p className="text-lg font-bold text-purple-900">
-                    {formatCurrency(context.tokyo_tax_total || 0)}
-                  </p>
-                </div>
-
-                {/* 事業税 */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-amber-800 mb-1">
-                    事業税
-                  </h3>
-                  <p className="text-lg font-bold text-amber-900">
-                    {formatCurrency(context.business_tax_final || 0)}
-                  </p>
-                </div>
-
-                {/* 消費税 */}
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-teal-800 mb-1">
-                    消費税
-                  </h3>
-                  <p className="text-lg font-bold text-teal-900">
-                    {formatCurrency(context.consumption_tax || 0)}
-                  </p>
-                </div>
-              </div>
-
-              {/* 合計税額 */}
-              <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 shadow-sm mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-1">
-                  合計税額
-                </h3>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(context.total_tax || 0)}
-                </p>
+                  return (
+                    <div
+                      key={tax.taxName}
+                      className={`${colors.bg} border ${colors.border} rounded-lg p-4 shadow-sm`}
+                    >
+                      <h3 className={`text-sm font-medium ${colors.text} mb-1`}>
+                        {tax.taxName}
+                      </h3>
+                      <p className={`text-lg font-bold ${colors.value}`}>
+                        {formatCurrency(tax.taxAmount)}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
 
               <TaxCalculationDetails steps={steps} context={context} />
