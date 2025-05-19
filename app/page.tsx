@@ -49,6 +49,7 @@ import {
   selectSaimokuNetRevenuesByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { MonthlyBreakdown } from '@/lib/services/reports/calculate-breakdown'
 import { getChartColors } from '@/lib/utils/chart-colors'
 
 export default function Home() {
@@ -61,8 +62,7 @@ export default function Home() {
 
   // 内訳データ
   // 費用データ
-  const genericExpenseByMonth =
-    useAppSelector(selectSaimokuNetExpensesByMonth) || []
+  const genericExpenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
   const genericExpenseByMonthLoading = useAppSelector(
     selectSaimokuNetExpensesByMonthLoading,
   )
@@ -78,8 +78,7 @@ export default function Home() {
   )
 
   // 収入データ
-  const genericRevenueByMonth =
-    useAppSelector(selectSaimokuNetRevenuesByMonth) || []
+  const genericRevenueByMonth = useAppSelector(selectSaimokuNetRevenuesByMonth)
   const genericRevenueByMonthLoading = useAppSelector(
     selectSaimokuNetRevenuesByMonthLoading,
   )
@@ -333,38 +332,25 @@ export default function Home() {
               value={
                 genericAssetByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(
-                      genericAssetByYear?.reduce(
-                        (sum, item) => sum + item.value,
-                        0,
-                      ) || 0,
-                    )
+                  : formatCurrency(genericAssetByYear?.value || 0)
               }
               data={
                 genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericAssetByYear?.value || 0]
               }
               labels={
                 genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.saimoku_ryaku_name)
+                  : [genericAssetByYear?.name || '']
               }
               colors={
-                genericAssetByYearLoading
-                  ? []
-                  : getChartColors('asset', genericAssetByYear?.length || 0)
+                genericAssetByYearLoading ? [] : getChartColors('asset', 1)
               }
               amounts={
                 genericAssetByYearLoading
                   ? []
-                  : [...(genericAssetByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericAssetByYear?.value || 0]
               }
             />
           </div>
@@ -375,38 +361,25 @@ export default function Home() {
               value={
                 genericRevenueByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(
-                      genericRevenueByYear?.reduce(
-                        (sum, item) => sum + item.value,
-                        0,
-                      ) || 0,
-                    )
+                  : formatCurrency(genericRevenueByYear?.value || 0)
               }
               data={
                 genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericRevenueByYear?.value || 0]
               }
               labels={
                 genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.saimoku_ryaku_name)
+                  : [genericRevenueByYear?.name || '']
               }
               colors={
-                genericRevenueByYearLoading
-                  ? []
-                  : getChartColors('income', genericRevenueByYear?.length || 0)
+                genericRevenueByYearLoading ? [] : getChartColors('income', 1)
               }
               amounts={
                 genericRevenueByYearLoading
                   ? []
-                  : [...(genericRevenueByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericRevenueByYear?.value || 0]
               }
             />
           </div>
@@ -417,38 +390,25 @@ export default function Home() {
               value={
                 genericExpenseByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(
-                      genericExpenseByYear?.reduce(
-                        (sum, item) => sum + item.value,
-                        0,
-                      ) || 0,
-                    )
+                  : formatCurrency(genericExpenseByYear?.value || 0)
               }
               data={
                 genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericExpenseByYear?.value || 0]
               }
               labels={
                 genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.saimoku_ryaku_name)
+                  : [genericExpenseByYear?.name || '']
               }
               colors={
-                genericExpenseByYearLoading
-                  ? []
-                  : getChartColors('expense', genericExpenseByYear?.length || 0)
+                genericExpenseByYearLoading ? [] : getChartColors('expense', 1)
               }
               amounts={
                 genericExpenseByYearLoading
                   ? []
-                  : [...(genericExpenseByYear || [])]
-                      .sort((a, b) => b.value - a.value)
-                      .map((item) => item.value)
+                  : [genericExpenseByYear?.value || 0]
               }
             />
           </div>
@@ -476,40 +436,39 @@ export default function Home() {
                       '2月',
                       '3月',
                     ],
-                    datasets: Object.values(
-                      genericRevenueByMonth.reduce(
-                        (acc, item) => {
-                          if (!acc[item.saimoku_cd]) {
-                            acc[item.saimoku_cd] = {
-                              label: item.saimoku_full_name,
+                    datasets: (() => {
+                      const monthlyData = (genericRevenueByMonth?.values ||
+                        []) as { month: string; value: number }[]
+                      const monthlyName =
+                        (genericRevenueByMonth as MonthlyBreakdown)?.name || ''
+                      const groupedData = monthlyData.reduce(
+                        (
+                          acc: Record<
+                            string,
+                            { label: string; data: number[] }
+                          >,
+                          item,
+                        ) => {
+                          if (!acc[item.month]) {
+                            acc[item.month] = {
+                              label: monthlyName,
                               data: new Array(12).fill(0),
                             }
                           }
                           const monthIndex = (parseInt(item.month) + 8) % 12
-                          acc[item.saimoku_cd].data[monthIndex] = item.value
+                          acc[item.month].data[monthIndex] = item.value
                           return acc
                         },
-                        {} as Record<
-                          string,
-                          {
-                            label: string
-                            data: number[]
-                          }
-                        >,
-                      ),
-                    )
-                      .sort((a, b) => {
-                        const sumA = a.data.reduce((sum, val) => sum + val, 0)
-                        const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                        return sumB - sumA // 大きい順に並び替え（上から大きい順）
-                      })
-                      .map(
-                        (
-                          dataset: { label: string; data: number[] },
-                          index: number,
-                          sortedDatasets: { label: string; data: number[] }[],
-                        ) => {
-                          const colors: string[] = getChartColors(
+                        {},
+                      )
+                      return Object.values(groupedData)
+                        .sort((a, b) => {
+                          const sumA = a.data.reduce((sum, val) => sum + val, 0)
+                          const sumB = b.data.reduce((sum, val) => sum + val, 0)
+                          return sumB - sumA // 大きい順に並び替え（上から大きい順）
+                        })
+                        .map((dataset, index, sortedDatasets) => {
+                          const colors = getChartColors(
                             'income',
                             sortedDatasets.length,
                           )
@@ -518,8 +477,8 @@ export default function Home() {
                             data: dataset.data,
                             backgroundColor: colors[index] || colors[0],
                           }
-                        },
-                      ),
+                        })
+                    })(),
                   }
             }
           />
@@ -547,40 +506,39 @@ export default function Home() {
                       '2月',
                       '3月',
                     ],
-                    datasets: Object.values(
-                      genericExpenseByMonth.reduce(
-                        (acc, item) => {
-                          if (!acc[item.saimoku_cd]) {
-                            acc[item.saimoku_cd] = {
-                              label: item.saimoku_full_name,
+                    datasets: (() => {
+                      const monthlyData = (genericExpenseByMonth?.values ||
+                        []) as { month: string; value: number }[]
+                      const monthlyName =
+                        (genericExpenseByMonth as MonthlyBreakdown)?.name || ''
+                      const groupedData = monthlyData.reduce(
+                        (
+                          acc: Record<
+                            string,
+                            { label: string; data: number[] }
+                          >,
+                          item,
+                        ) => {
+                          if (!acc[item.month]) {
+                            acc[item.month] = {
+                              label: monthlyName,
                               data: new Array(12).fill(0),
                             }
                           }
                           const monthIndex = (parseInt(item.month) + 8) % 12
-                          acc[item.saimoku_cd].data[monthIndex] = item.value
+                          acc[item.month].data[monthIndex] = item.value
                           return acc
                         },
-                        {} as Record<
-                          string,
-                          {
-                            label: string
-                            data: number[]
-                          }
-                        >,
-                      ),
-                    )
-                      .sort((a, b) => {
-                        const sumA = a.data.reduce((sum, val) => sum + val, 0)
-                        const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                        return sumB - sumA // 大きい順に並び替え（上から大きい順）
-                      })
-                      .map(
-                        (
-                          dataset: { label: string; data: number[] },
-                          index: number,
-                          sortedDatasets: { label: string; data: number[] }[],
-                        ) => {
-                          const colors: string[] = getChartColors(
+                        {},
+                      )
+                      return Object.values(groupedData)
+                        .sort((a, b) => {
+                          const sumA = a.data.reduce((sum, val) => sum + val, 0)
+                          const sumB = b.data.reduce((sum, val) => sum + val, 0)
+                          return sumB - sumA // 大きい順に並び替え（上から大きい順）
+                        })
+                        .map((dataset, index, sortedDatasets) => {
+                          const colors = getChartColors(
                             'expense',
                             sortedDatasets.length,
                           )
@@ -589,8 +547,8 @@ export default function Home() {
                             data: dataset.data,
                             backgroundColor: colors[index] || colors[0],
                           }
-                        },
-                      ),
+                        })
+                    })(),
                   }
             }
           />
