@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
-import { useEffect, useRef } from "react"
-import { Chart, type ChartConfiguration, registerables } from "chart.js"
+import { useEffect, useRef } from 'react'
+
+import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 
 Chart.register(...registerables)
 
@@ -23,9 +24,9 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
 
   // 金額をフォーマットする関数
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat("ja-JP", {
-      style: "currency",
-      currency: "JPY",
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
   }
@@ -37,10 +38,10 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
         chartInstance.current.destroy()
       }
 
-      const ctx = chartRef.current.getContext("2d")
+      const ctx = chartRef.current.getContext('2d')
       if (ctx) {
         const config: ChartConfiguration = {
-          type: "bar",
+          type: 'bar',
           data: data,
           options: {
             responsive: true,
@@ -61,7 +62,7 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
             },
             plugins: {
               legend: {
-                position: "top",
+                position: 'top',
                 labels: {
                   boxWidth: 10,
                   padding: 10,
@@ -73,9 +74,9 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
               tooltip: {
                 callbacks: {
                   label: (context) => {
-                    let label = context.dataset.label || ""
+                    let label = context.dataset.label || ''
                     if (label) {
-                      label += ": "
+                      label += ': '
                     }
                     if (context.parsed.y !== null) {
                       label += formatCurrency(context.parsed.y)
@@ -87,7 +88,7 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
                     tooltipItems.forEach((tooltipItem) => {
                       sum += tooltipItem.parsed.y
                     })
-                    return "合計: " + formatCurrency(sum)
+                    return '合計: ' + formatCurrency(sum)
                   },
                 },
               },

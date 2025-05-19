@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
-import Link from "next/link"
-import { LogOut } from "lucide-react"
+import Link from 'next/link'
+
+import { LogOut } from 'lucide-react'
 
 export function Header() {
   return (
@@ -9,7 +10,9 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">会計管理システム</h1>
-          <p className="text-sm text-gray-500">経理業務を効率化するための総合ソリューション</p>
+          <p className="text-sm text-gray-500">
+            経理業務を効率化するための総合ソリューション
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -18,7 +21,10 @@ export function Header() {
               A
             </span>
           </div>
-          <Link href="/login" className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900">
+          <Link
+            href="/login"
+            className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
             <LogOut className="h-4 w-4" />
             <span>ログアウト</span>
           </Link>

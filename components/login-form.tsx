@@ -1,18 +1,24 @@
-"use client"
+'use client'
 
-import type React from "react"
+import type React from 'react'
+import { useState } from 'react'
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export function LoginForm() {
   const [showMFA, setShowMFA] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [mfaCode, setMfaCode] = useState("")
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +29,7 @@ export function LoginForm() {
     } else {
       // MFAコード入力後のログインボタン押下時は認証処理を行い、ダッシュボードに遷移
       // 通常は認証APIを呼び出しますが、ここではダッシュボードページに遷移するだけにします
-      window.location.href = "/"
+      window.location.href = '/'
     }
   }
 
@@ -31,7 +37,9 @@ export function LoginForm() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">会計管理システム</CardTitle>
-        <CardDescription className="text-center">経理業務を効率化するための総合ソリューション</CardDescription>
+        <CardDescription className="text-center">
+          経理業務を効率化するための総合ソリューション
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,12 +77,14 @@ export function LoginForm() {
                 required
                 maxLength={6}
               />
-              <p className="text-xs text-gray-500">認証アプリに表示されている6桁のコードを入力してください</p>
+              <p className="text-xs text-gray-500">
+                認証アプリに表示されている6桁のコードを入力してください
+              </p>
             </div>
           )}
 
           <Button type="submit" className="w-full">
-            {showMFA ? "認証して続行" : "ログイン"}
+            {showMFA ? '認証して続行' : 'ログイン'}
           </Button>
         </form>
       </CardContent>
