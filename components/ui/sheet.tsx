@@ -7,7 +7,7 @@ import { X } from 'lucide-react'
 
 import * as SheetPrimitive from '@radix-ui/react-dialog'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/client/utils'
 
 const Sheet = SheetPrimitive.Root
 

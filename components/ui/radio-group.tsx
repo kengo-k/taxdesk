@@ -6,7 +6,7 @@ import { Circle } from 'lucide-react'
 
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/client/utils'
 
 const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Root>,
