@@ -27,6 +27,7 @@ import {
 import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
+import { getChartColors } from '@/lib/client/utils/chart-colors'
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
@@ -52,7 +53,6 @@ import {
   selectSaimokuNetRevenuesByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { getChartColors } from '@/lib/utils/chart-colors'
 
 export default function Home() {
   const dispatch = useAppDispatch()
