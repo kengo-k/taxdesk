@@ -29,13 +29,13 @@ describe('calculateBreakdown', () => {
 
         // 細目E01（役員報酬）の月次データを確認
         const e01Monthly = karikataResult.monthly.find(
-          (item) => item.response.code === 'E01',
+          (item) => item.response[0]?.code === 'E01',
         )
         expect(e01Monthly).toBeDefined()
-        expect(e01Monthly?.response.name).toBe('役員報酬')
+        expect(e01Monthly?.response[0].name).toBe('役員報酬')
 
         // 月別データの値を確認
-        const e01Values = e01Monthly?.response.values || []
+        const e01Values = e01Monthly?.response[0].values || []
         const e01ByMonth = new Map(e01Values.map((v) => [v.month, v.value]))
 
         expect(Number(e01ByMonth.get('04'))).toBe(50000) // 4月
@@ -68,13 +68,13 @@ describe('calculateBreakdown', () => {
 
         // 細目D11（売上）の月次データを確認
         const d11Monthly = kasikataResult.monthly.find(
-          (item) => item.response.code === 'D11',
+          (item) => item.response[0]?.code === 'D11',
         )
         expect(d11Monthly).toBeDefined()
-        expect(d11Monthly?.response.name).toBe('売上')
+        expect(d11Monthly?.response[0].name).toBe('売上')
 
         // 月別データの値を確認
-        const d11Values = d11Monthly?.response.values || []
+        const d11Values = d11Monthly?.response[0].values || []
         const d11ByMonth = new Map(d11Values.map((v) => [v.month, v.value]))
 
         // 月別データの値を確認（貸方のみ）
@@ -108,13 +108,13 @@ describe('calculateBreakdown', () => {
 
         // 細目A11（現金）の月次データを確認
         const a11Monthly = netLResult.monthly.find(
-          (item) => item.response.code === 'A11',
+          (item) => item.response[0]?.code === 'A11',
         )
         expect(a11Monthly).toBeDefined()
-        expect(a11Monthly?.response.name).toBe('現金')
+        expect(a11Monthly?.response[0].name).toBe('現金')
 
         // 月別データの値を確認（L型なので借方 - 貸方）
-        const a11Values = a11Monthly?.response.values || []
+        const a11Values = a11Monthly?.response[0].values || []
         const a11ByMonth = new Map(a11Values.map((v) => [v.month, v.value]))
 
         // 月別データの値を確認（L型なので借方 - 貸方）
@@ -160,12 +160,12 @@ describe('calculateBreakdown', () => {
 
         // 細目D11（売上）の月次データを確認
         const d11NetMonthly = netRResult.monthly.find(
-          (item) => item.response.code === 'D11',
+          (item) => item.response[0]?.code === 'D11',
         )
         expect(d11NetMonthly).toBeDefined()
 
         // 月別データの値を確認（R型なので貸方 - 借方）
-        const d11NetValues = d11NetMonthly?.response.values || []
+        const d11NetValues = d11NetMonthly?.response[0].values || []
         const d11NetByMonth = new Map(
           d11NetValues.map((v) => [v.month, v.value]),
         )
@@ -202,12 +202,12 @@ describe('calculateBreakdown', () => {
 
         // 科目E1（販管費）の月次データを確認
         const e1Monthly = result.monthly.find(
-          (item) => item.response.code === 'E1',
+          (item) => item.response[0]?.code === 'E1',
         )
         expect(e1Monthly).toBeDefined()
 
         // 月別データの値を確認（E01とE02の合計）
-        const e1Values = e1Monthly?.response.values || []
+        const e1Values = e1Monthly?.response[0].values || []
         const e1ByMonth = new Map(e1Values.map((v) => [v.month, v.value]))
 
         expect(Number(e1ByMonth.get('04'))).toBe(80000) // 4月: 50000 + 30000
@@ -241,12 +241,12 @@ describe('calculateBreakdown', () => {
 
         // 科目分類E（費用）の月次データを確認
         const eMonthly = result.monthly.find(
-          (item) => item.response.code === 'E',
+          (item) => item.response[0]?.code === 'E',
         )
         expect(eMonthly).toBeDefined()
 
         // 月別データの値を確認（全ての費用科目の合計）
-        const eValues = eMonthly?.response.values || []
+        const eValues = eMonthly?.response[0].values || []
         const eByMonth = new Map(eValues.map((v) => [v.month, v.value]))
 
         expect(Number(eByMonth.get('04'))).toBe(80000) // 4月
@@ -285,27 +285,23 @@ describe('calculateBreakdown', () => {
 
         // 細目E01（役員報酬）の年間データを確認
         const e01Annual = karikataResult.annual.find(
-          (item) => item.response.code === 'E01',
+          (item) => item.response[0]?.code === 'E01',
         )
         expect(e01Annual).toBeDefined()
-        expect(e01Annual?.response.name).toBe('役員報酬')
+        expect(e01Annual?.response[0].name).toBe('役員報酬')
 
         // 年間合計を確認（全ての月の合計）
-        expect(Number(e01Annual?.response.value)).toBe(
+        expect(Number(e01Annual?.response[0].value)).toBe(
           50000 + 60000 + 55000 + 52000 + 58000 + 65000 + 70000 + 75000,
         )
 
-        // 細目E02（地代家賃）の年間データを確認
-        const e02Annual = karikataResult.annual.find(
-          (item) => item.response.code === 'E02',
-        )
+        // 細目E02（給与）の年間データを確認
+        const e02Annual = karikataResult.annual
+          .flatMap((item) => item.response)
+          .find((res) => res.code === 'E02')
         expect(e02Annual).toBeDefined()
-        expect(e02Annual?.response.name).toBe('地代家賃')
-
-        // 年間合計を確認
-        expect(Number(e02Annual?.response.value)).toBe(
-          30000 + 40000 + 35000 + 33000 + 38000 + 45000 + 50000 + 55000,
-        )
+        expect(e02Annual?.name).toBe('地代家賃')
+        expect(e02Annual?.value).toBe(326000) // 年間合計
 
         // 貸方のみのテスト
         const kasikataResult = await calculateBreakdown(tx, [
@@ -323,16 +319,12 @@ describe('calculateBreakdown', () => {
         expect(kasikataResult.annual.length).toBeGreaterThan(0)
 
         // 細目D11（売上）の年間データを確認
-        const d11Annual = kasikataResult.annual.find(
-          (item) => item.response.code === 'D11',
-        )
+        const d11Annual = kasikataResult.annual
+          .flatMap((item) => item.response)
+          .find((res) => res.code === 'D11')
         expect(d11Annual).toBeDefined()
-        expect(d11Annual?.response.name).toBe('売上')
-
-        // 年間合計を確認
-        expect(Number(d11Annual?.response.value)).toBe(
-          200000 + 250000 + 200000 + 220000 + 235000 + 270000 + 290000 + 310000,
-        )
+        expect(d11Annual?.name).toBe('売上')
+        expect(d11Annual?.value).toBe(1975000) // 年間合計
 
         // 残高のテスト（L型：借方 - 貸方）
         const netLResult = await calculateBreakdown(tx, [
@@ -351,10 +343,10 @@ describe('calculateBreakdown', () => {
 
         // 細目A11（現金）の年間データを確認
         const a11Annual = netLResult.annual.find(
-          (item) => item.response.code === 'A11',
+          (item) => item.response[0]?.code === 'A11',
         )
         expect(a11Annual).toBeDefined()
-        expect(a11Annual?.response.name).toBe('現金')
+        expect(a11Annual?.response[0].name).toBe('現金')
 
         // 年間合計を確認（L型なので借方 - 貸方）
         // 借方合計: 100000 + 150000 + 120000 + 130000 + 140000 + 160000 + 170000 + 180000 = 1150000
@@ -394,7 +386,7 @@ describe('calculateBreakdown', () => {
         // 年間合計を確認（L型なので借方 - 貸方）
         // 借方合計: 200000 + 250000 + 200000 + 220000 + 235000 + 270000 + 290000 + 310000 = 1975000
         // 貸方合計: 全ての支出と資産間移動の合計 = 1830000
-        expect(Number(a11Annual?.response.value)).toBe(144000)
+        expect(Number(a11Annual?.response[0].value)).toBe(144000)
 
         // 残高のテスト（R型：貸方 - 借方）
         const netRResult = await calculateBreakdown(tx, [
@@ -413,12 +405,12 @@ describe('calculateBreakdown', () => {
 
         // 細目D11（売上）の年間データを確認
         const d11NetAnnual = netRResult.annual.find(
-          (item) => item.response.code === 'D11',
+          (item) => item.response[0]?.code === 'D11',
         )
         expect(d11NetAnnual).toBeDefined()
 
         // 年間合計を確認（R型なので貸方 - 借方、借方がないので貸方の合計がそのまま）
-        expect(Number(d11NetAnnual?.response.value)).toBe(1150000)
+        expect(Number(d11NetAnnual?.response[0].value)).toBe(1150000)
       }),
     )
 
@@ -442,7 +434,7 @@ describe('calculateBreakdown', () => {
 
         // 科目E1（販管費）の年間データを確認
         const e1Annual = result.annual.find(
-          (item) => item.response.code === 'E1',
+          (item) => item.response[0]?.code === 'E1',
         )
         expect(e1Annual).toBeDefined()
 
@@ -451,7 +443,7 @@ describe('calculateBreakdown', () => {
           50000 + 60000 + 55000 + 52000 + 58000 + 65000 + 70000 + 75000
         const e02Total =
           30000 + 40000 + 35000 + 33000 + 38000 + 45000 + 50000 + 55000
-        expect(Number(e1Annual?.response.value)).toBe(e01Total + e02Total)
+        expect(Number(e1Annual?.response[0].value)).toBe(e01Total + e02Total)
       }),
     )
 
@@ -474,7 +466,9 @@ describe('calculateBreakdown', () => {
         expect(result.annual.length).toBeGreaterThan(0)
 
         // 科目分類E（費用）の年間データを確認
-        const eAnnual = result.annual.find((item) => item.response.code === 'E')
+        const eAnnual = result.annual.find(
+          (item) => item.response[0]?.code === 'E',
+        )
         expect(eAnnual).toBeDefined()
 
         // 年間合計を確認（全ての費用科目の合計）
@@ -482,7 +476,7 @@ describe('calculateBreakdown', () => {
           50000 + 60000 + 55000 + 52000 + 58000 + 65000 + 70000 + 75000
         const e02Total =
           30000 + 40000 + 35000 + 33000 + 38000 + 45000 + 50000 + 55000
-        expect(Number(eAnnual?.response.value)).toBe(e01Total + e02Total)
+        expect(Number(eAnnual?.response[0].value)).toBe(e01Total + e02Total)
       }),
     )
   })
