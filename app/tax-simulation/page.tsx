@@ -113,62 +113,30 @@ export default function TaxSimulationPage() {
             </CardHeader>
             <CardContent>
               {/* 各種税額とその合計額をカード形式で表示 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                {result.map((tax) => {
-                  // 税種ごとの色を定義
-                  const colorMap: Record<
-                    string,
-                    { bg: string; border: string; text: string; value: string }
-                  > = {
-                    法人税: {
-                      bg: 'bg-blue-50',
-                      border: 'border-blue-200',
-                      text: 'text-blue-800',
-                      value: 'text-blue-900',
-                    },
-                    地方法人税: {
-                      bg: 'bg-green-50',
-                      border: 'border-green-200',
-                      text: 'text-green-800',
-                      value: 'text-green-900',
-                    },
-                    住民税: {
-                      bg: 'bg-purple-50',
-                      border: 'border-purple-200',
-                      text: 'text-purple-800',
-                      value: 'text-purple-900',
-                    },
-                    事業税: {
-                      bg: 'bg-amber-50',
-                      border: 'border-amber-200',
-                      text: 'text-amber-800',
-                      value: 'text-amber-900',
-                    },
-                    消費税: {
-                      bg: 'bg-teal-50',
-                      border: 'border-teal-200',
-                      text: 'text-teal-800',
-                      value: 'text-teal-900',
-                    },
-                  }
-
-                  // デフォルトの色（合計税額用）
-                  const colors = colorMap[tax.taxName] || {
-                    bg: 'bg-gray-50',
-                    border: 'border-gray-200',
-                    text: 'text-gray-800',
-                    value: 'text-gray-900',
-                  }
-
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                {result.map((tax, index) => {
+                  const isLast = index === result.length - 1
                   return (
                     <div
                       key={tax.taxName}
-                      className={`${colors.bg} border ${colors.border} rounded-lg p-4 shadow-sm`}
+                      className={`border rounded-lg p-4 shadow-sm ${
+                        isLast
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
                     >
-                      <h3 className={`text-sm font-medium ${colors.text} mb-1`}>
+                      <h3
+                        className={`text-sm font-medium mb-1 ${
+                          isLast ? 'text-blue-800' : 'text-gray-800'
+                        }`}
+                      >
                         {tax.taxName}
                       </h3>
-                      <p className={`text-lg font-bold ${colors.value}`}>
+                      <p
+                        className={`text-lg font-bold ${
+                          isLast ? 'text-blue-900' : 'text-gray-900'
+                        }`}
+                      >
                         {formatCurrency(tax.taxAmount)}
                       </p>
                     </div>
