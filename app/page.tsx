@@ -49,7 +49,6 @@ import {
   selectSaimokuNetRevenuesByYearLoading,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { MonthlyBreakdown } from '@/lib/services/reports/calculate-breakdown'
 import { getChartColors } from '@/lib/utils/chart-colors'
 
 export default function Home() {
@@ -104,6 +103,23 @@ export default function Home() {
       dispatch(fetchGenericAssetByYear(selectedYearId))
     }
   }, [dispatch, selectedYearId])
+
+  // デバッグ用のログ出力
+  useEffect(() => {
+    console.log('Monthly Revenue Data:', {
+      data: genericRevenueByMonth,
+      loading: genericRevenueByMonthLoading,
+    })
+    console.log('Monthly Expense Data:', {
+      data: genericExpenseByMonth,
+      loading: genericExpenseByMonthLoading,
+    })
+  }, [
+    genericRevenueByMonth,
+    genericRevenueByMonthLoading,
+    genericExpenseByMonth,
+    genericExpenseByMonthLoading,
+  ])
 
   // 金額のフォーマット
   const formatCurrency = (amount: number): string => {
@@ -437,10 +453,9 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: (() => {
-                      const monthlyData = (genericRevenueByMonth?.values ||
-                        []) as { month: string; value: number }[]
-                      const monthlyName =
-                        (genericRevenueByMonth as MonthlyBreakdown)?.name || ''
+                      if (!genericRevenueByMonth) return []
+                      const monthlyData = genericRevenueByMonth.values || []
+                      const monthlyName = genericRevenueByMonth.name || ''
                       const groupedData = monthlyData.reduce(
                         (
                           acc: Record<
@@ -507,10 +522,9 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: (() => {
-                      const monthlyData = (genericExpenseByMonth?.values ||
-                        []) as { month: string; value: number }[]
-                      const monthlyName =
-                        (genericExpenseByMonth as MonthlyBreakdown)?.name || ''
+                      if (!genericExpenseByMonth) return []
+                      const monthlyData = genericExpenseByMonth.values || []
+                      const monthlyName = genericExpenseByMonth.name || ''
                       const groupedData = monthlyData.reduce(
                         (
                           acc: Record<

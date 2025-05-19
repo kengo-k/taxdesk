@@ -274,8 +274,7 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchGenericAssetByYear.fulfilled, (state, action) => {
         state.breakdown.saimokuNetAssetsByYear.loading = false
-        state.breakdown.saimokuNetAssetsByYear.data =
-          action.payload.data.annual[0]
+        state.breakdown.saimokuNetAssetsByYear.data = action.payload.annual[0]
       })
       .addCase(fetchGenericAssetByYear.rejected, (state, action) => {
         state.breakdown.saimokuNetAssetsByYear.loading = false
@@ -291,8 +290,7 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchGenericRevenueByYear.fulfilled, (state, action) => {
         state.breakdown.saimokuNetRevenuesByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByYear.data =
-          action.payload.data.annual[0]
+        state.breakdown.saimokuNetRevenuesByYear.data = action.payload.annual[0]
       })
       .addCase(fetchGenericRevenueByYear.rejected, (state, action) => {
         state.breakdown.saimokuNetRevenuesByYear.loading = false
@@ -308,8 +306,7 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchGenericExpenseByYear.fulfilled, (state, action) => {
         state.breakdown.saimokuNetExpensesByYear.loading = false
-        state.breakdown.saimokuNetExpensesByYear.data =
-          action.payload.data.annual[0]
+        state.breakdown.saimokuNetExpensesByYear.data = action.payload.annual[0]
       })
       .addCase(fetchGenericExpenseByYear.rejected, (state, action) => {
         state.breakdown.saimokuNetExpensesByYear.loading = false
@@ -326,7 +323,7 @@ export const reportSlice = createSlice({
       .addCase(fetchGenericRevenueByMonth.fulfilled, (state, action) => {
         state.breakdown.saimokuNetRevenuesByMonth.loading = false
         state.breakdown.saimokuNetRevenuesByMonth.data =
-          action.payload.data.monthly[0]
+          action.payload.monthly[0]
       })
       .addCase(fetchGenericRevenueByMonth.rejected, (state, action) => {
         state.breakdown.saimokuNetRevenuesByMonth.loading = false
@@ -343,7 +340,7 @@ export const reportSlice = createSlice({
       .addCase(fetchGenericExpenseByMonth.fulfilled, (state, action) => {
         state.breakdown.saimokuNetExpensesByMonth.loading = false
         state.breakdown.saimokuNetExpensesByMonth.data =
-          action.payload.data.monthly[0]
+          action.payload.monthly[0]
       })
       .addCase(fetchGenericExpenseByMonth.rejected, (state, action) => {
         state.breakdown.saimokuNetExpensesByMonth.loading = false
