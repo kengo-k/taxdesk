@@ -1,5 +1,10 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit"
-import type { RootState } from "../store"
+import {
+  type PayloadAction,
+  createAsyncThunk,
+  createSlice,
+} from '@reduxjs/toolkit'
+
+import type { RootState } from '@/lib/redux/store'
 
 // 税金データの型定義
 interface TaxData {
@@ -28,22 +33,27 @@ const initialState: TaxState = {
 }
 
 // 非同期アクション - 税金データの取得
-export const fetchTaxData = createAsyncThunk("tax/fetchTaxData", async (year: string, { rejectWithValue }) => {
-  try {
-    const response = await fetch(`/api/tax-simulation/${year}`)
-    if (!response.ok) {
-      throw new Error("サーバーエラーが発生しました")
+export const fetchTaxData = createAsyncThunk(
+  'tax/fetchTaxData',
+  async (year: string, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/tax-simulation/${year}`)
+      if (!response.ok) {
+        throw new Error('サーバーエラーが発生しました')
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : '不明なエラーが発生しました',
+      )
     }
-    const data = await response.json()
-    return data
-  } catch (error) {
-    return rejectWithValue(error instanceof Error ? error.message : "不明なエラーが発生しました")
-  }
-})
+  },
+)
 
 // スライスの作成
 export const taxSlice = createSlice({
-  name: "tax",
+  name: 'tax',
   initialState,
   reducers: {
     // 年度の選択

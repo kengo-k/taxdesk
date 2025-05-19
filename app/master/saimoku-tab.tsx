@@ -1,18 +1,34 @@
-"use client"
+'use client'
 
-import { Edit, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { Saimoku, Kamoku } from "./types"
+import { Edit, Trash2 } from 'lucide-react'
+
+import type { Kamoku, Saimoku } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 interface SaimokuTabProps {
   saimokuList: Saimoku[]
   kamokuList: Kamoku[]
   onOpenSaimokuDialog: (parentKamoku: Kamoku, saimoku?: Saimoku) => void
-  confirmDelete: (item: any, type: "kamoku" | "saimoku" | "tax-category" | "mapping") => void
+  confirmDelete: (
+    item: any,
+    type: 'kamoku' | 'saimoku' | 'tax-category' | 'mapping',
+  ) => void
 }
 
-export function SaimokuTab({ saimokuList, kamokuList, onOpenSaimokuDialog, confirmDelete }: SaimokuTabProps) {
+export function SaimokuTab({
+  saimokuList,
+  kamokuList,
+  onOpenSaimokuDialog,
+  confirmDelete,
+}: SaimokuTabProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -35,24 +51,32 @@ export function SaimokuTab({ saimokuList, kamokuList, onOpenSaimokuDialog, confi
             </TableRow>
           ) : (
             saimokuList.map((saimoku) => {
-              const parentKamoku = kamokuList.find((k) => k.kamoku_cd === saimoku.kamoku_cd)
+              const parentKamoku = kamokuList.find(
+                (k) => k.kamoku_cd === saimoku.kamoku_cd,
+              )
               return (
                 <TableRow key={saimoku.id}>
-                  <TableCell className="font-medium">{saimoku.saimoku_cd}</TableCell>
+                  <TableCell className="font-medium">
+                    {saimoku.saimoku_cd}
+                  </TableCell>
                   <TableCell>
                     <div
                       className="cursor-help"
-                      title={`略称: ${saimoku.saimoku_ryaku_name || "未設定"}\nカナ名: ${saimoku.saimoku_kana_name || "未設定"}`}
+                      title={`略称: ${saimoku.saimoku_ryaku_name || '未設定'}\nカナ名: ${saimoku.saimoku_kana_name || '未設定'}`}
                     >
                       {saimoku.saimoku_full_name}
                     </div>
                   </TableCell>
-                  <TableCell>{parentKamoku ? parentKamoku.kamoku_ryaku_name : ""}</TableCell>
+                  <TableCell>
+                    {parentKamoku ? parentKamoku.kamoku_ryaku_name : ''}
+                  </TableCell>
                   <TableCell>
                     {saimoku.valid_from}
-                    {saimoku.valid_to ? ` 〜 ${saimoku.valid_to}` : " 〜"}
+                    {saimoku.valid_to ? ` 〜 ${saimoku.valid_to}` : ' 〜'}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate">{saimoku.description}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {saimoku.description}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {parentKamoku && (
@@ -60,7 +84,9 @@ export function SaimokuTab({ saimokuList, kamokuList, onOpenSaimokuDialog, confi
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => onOpenSaimokuDialog(parentKamoku, saimoku)}
+                            onClick={() =>
+                              onOpenSaimokuDialog(parentKamoku, saimoku)
+                            }
                             title="編集"
                           >
                             <Edit className="h-4 w-4" />
@@ -68,7 +94,7 @@ export function SaimokuTab({ saimokuList, kamokuList, onOpenSaimokuDialog, confi
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => confirmDelete(saimoku, "saimoku")}
+                            onClick={() => confirmDelete(saimoku, 'saimoku')}
                             title="削除"
                           >
                             <Trash2 className="h-4 w-4" />

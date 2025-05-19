@@ -2,6 +2,7 @@
 
 import { Download, Trash2, X } from 'lucide-react'
 
+import type { MergedAccount } from '@/app/ledger/components/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,8 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-import type { MergedAccount } from './types'
 
 interface LedgerSearchFormProps {
   fiscalYear: string | null

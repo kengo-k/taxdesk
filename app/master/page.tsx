@@ -4,26 +4,26 @@ import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 
-import { DeleteDialog } from './delete-dialog'
-import { KamokuDialog } from './kamoku-dialog'
-import { KamokuTab } from './kamoku-tab'
-import { getMockData } from './mock-data'
-import { SaimokuDialog } from './saimoku-dialog'
-import { SaimokuTab } from './saimoku-tab'
-import { TaxCategoryDialog } from './tax-category-dialog'
-import { TaxCategoryTab } from './tax-category-tab'
-import { TaxMappingDialog } from './tax-mapping-dialog'
-import { TaxMappingTab } from './tax-mapping-tab'
-import { TaxSettingsTab } from './tax-settings-tab'
+import { ArrowLeft, Plus } from 'lucide-react'
+
+import { DeleteDialog } from '@/app/master/delete-dialog'
+import { KamokuDialog } from '@/app/master/kamoku-dialog'
+import { KamokuTab } from '@/app/master/kamoku-tab'
+import { getMockData } from '@/app/master/mock-data'
+import { SaimokuDialog } from '@/app/master/saimoku-dialog'
+import { SaimokuTab } from '@/app/master/saimoku-tab'
+import { TaxCategoryDialog } from '@/app/master/tax-category-dialog'
+import { TaxCategoryTab } from '@/app/master/tax-category-tab'
+import { TaxMappingDialog } from '@/app/master/tax-mapping-dialog'
+import { TaxMappingTab } from '@/app/master/tax-mapping-tab'
+import { TaxSettingsTab } from '@/app/master/tax-settings-tab'
 import type {
   DeleteType,
   Kamoku,
   KamokuTaxMapping,
   Saimoku,
   TaxCategory,
-} from './types'
-import { ArrowLeft, Plus } from 'lucide-react'
-
+} from '@/app/master/types'
 import { Button } from '@/components/ui/button'
 import {
   Card,

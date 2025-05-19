@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation'
 
 import { ArrowLeft, Download } from 'lucide-react'
 
+import { TaxCalculationDetails } from '@/app/tax-simulation/components/tax-calculation-details'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -27,8 +28,6 @@ import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
 import { useAppSelector } from '@/lib/redux/hooks'
-
-import { TaxCalculationDetails } from './components/tax-calculation-details'
 
 export default function TaxSimulationPage() {
   const searchParams = useSearchParams()

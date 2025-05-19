@@ -1,6 +1,8 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import type { TaxCategory } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -8,12 +10,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import type { TaxCategory } from "./types"
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface TaxCategoryDialogProps {
   open: boolean
@@ -36,16 +36,23 @@ export function TaxCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "消費税区分を編集" : "消費税区分を追加"}</DialogTitle>
-          <DialogDescription>消費税区分の情報を入力してください。</DialogDescription>
+          <DialogTitle>
+            {isEditing ? '消費税区分を編集' : '消費税区分を追加'}
+          </DialogTitle>
+          <DialogDescription>
+            消費税区分の情報を入力してください。
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* コードは内部的に保持するが画面上には表示しない */}
           <input
             type="hidden"
             id="tax-code"
-            value={currentTaxCategory?.code || `TAX_${Date.now().toString().substring(8)}`}
-            onChange={(e) => onChange("code", e.target.value)}
+            value={
+              currentTaxCategory?.code ||
+              `TAX_${Date.now().toString().substring(8)}`
+            }
+            onChange={(e) => onChange('code', e.target.value)}
           />
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="tax-name" className="text-right">
@@ -53,8 +60,8 @@ export function TaxCategoryDialog({
             </Label>
             <Input
               id="tax-name"
-              value={currentTaxCategory?.name || ""}
-              onChange={(e) => onChange("name", e.target.value)}
+              value={currentTaxCategory?.name || ''}
+              onChange={(e) => onChange('name', e.target.value)}
               className="col-span-3"
               placeholder="例: 課税（標準税率10%）"
               required
@@ -71,7 +78,9 @@ export function TaxCategoryDialog({
               max="100"
               step="0.1"
               value={currentTaxCategory?.tax_rate || 0}
-              onChange={(e) => onChange("tax_rate", Number.parseFloat(e.target.value) || 0)}
+              onChange={(e) =>
+                onChange('tax_rate', Number.parseFloat(e.target.value) || 0)
+              }
               className="col-span-3"
               placeholder="例: 10"
             />
@@ -83,8 +92,8 @@ export function TaxCategoryDialog({
             <Input
               id="valid-from-tax"
               type="date"
-              value={currentTaxCategory?.valid_from || ""}
-              onChange={(e) => onChange("valid_from", e.target.value)}
+              value={currentTaxCategory?.valid_from || ''}
+              onChange={(e) => onChange('valid_from', e.target.value)}
               className="col-span-3"
               required
             />
@@ -96,8 +105,8 @@ export function TaxCategoryDialog({
             <Input
               id="valid-to-tax"
               type="date"
-              value={currentTaxCategory?.valid_to || ""}
-              onChange={(e) => onChange("valid_to", e.target.value)}
+              value={currentTaxCategory?.valid_to || ''}
+              onChange={(e) => onChange('valid_to', e.target.value)}
               className="col-span-3"
               placeholder="終了日が未定の場合は空欄"
             />
@@ -111,7 +120,9 @@ export function TaxCategoryDialog({
                 <Checkbox
                   id="is-taxable"
                   checked={currentTaxCategory?.is_taxable || false}
-                  onCheckedChange={(checked) => onChange("is_taxable", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    onChange('is_taxable', checked as boolean)
+                  }
                 />
                 <Label htmlFor="is-taxable">課税対象</Label>
               </div>
@@ -119,7 +130,9 @@ export function TaxCategoryDialog({
                 <Checkbox
                   id="is-reduced-tax"
                   checked={currentTaxCategory?.is_reduced_tax || false}
-                  onCheckedChange={(checked) => onChange("is_reduced_tax", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    onChange('is_reduced_tax', checked as boolean)
+                  }
                 />
                 <Label htmlFor="is-reduced-tax">軽減税率</Label>
               </div>
@@ -127,7 +140,9 @@ export function TaxCategoryDialog({
                 <Checkbox
                   id="is-deductible"
                   checked={currentTaxCategory?.is_deductible || false}
-                  onCheckedChange={(checked) => onChange("is_deductible", checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    onChange('is_deductible', checked as boolean)
+                  }
                 />
                 <Label htmlFor="is-deductible">仕入税額控除対象</Label>
               </div>
@@ -139,8 +154,8 @@ export function TaxCategoryDialog({
             </Label>
             <Textarea
               id="tax-desc"
-              value={currentTaxCategory?.description || ""}
-              onChange={(e) => onChange("description", e.target.value)}
+              value={currentTaxCategory?.description || ''}
+              onChange={(e) => onChange('description', e.target.value)}
               className="col-span-3"
               placeholder="消費税区分の説明を入力"
               rows={3}
@@ -151,7 +166,7 @@ export function TaxCategoryDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             キャンセル
           </Button>
-          <Button onClick={onSave}>{isEditing ? "更新" : "追加"}</Button>
+          <Button onClick={onSave}>{isEditing ? '更新' : '追加'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

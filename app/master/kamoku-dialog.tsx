@@ -1,6 +1,7 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import type { Kamoku } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -8,11 +9,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import type { Kamoku } from "./types"
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface KamokuDialogProps {
   open: boolean
@@ -23,13 +23,24 @@ interface KamokuDialogProps {
   onChange: (field: keyof Kamoku, value: string) => void
 }
 
-export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onSave, onChange }: KamokuDialogProps) {
+export function KamokuDialog({
+  open,
+  onOpenChange,
+  currentKamoku,
+  isEditing,
+  onSave,
+  onChange,
+}: KamokuDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "勘定科目を編集" : "勘定科目を追加"}</DialogTitle>
-          <DialogDescription>勘定科目の情報を入力してください。</DialogDescription>
+          <DialogTitle>
+            {isEditing ? '勘定科目を編集' : '勘定科目を追加'}
+          </DialogTitle>
+          <DialogDescription>
+            勘定科目の情報を入力してください。
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -37,7 +48,7 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
               科目コード
             </Label>
             <div className="col-span-3 py-2 px-3 border rounded-md bg-gray-50 text-gray-700">
-              {currentKamoku?.kamoku_cd || ""}
+              {currentKamoku?.kamoku_cd || ''}
             </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -46,8 +57,8 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
             </Label>
             <Input
               id="kamoku-name"
-              value={currentKamoku?.kamoku_full_name || ""}
-              onChange={(e) => onChange("kamoku_full_name", e.target.value)}
+              value={currentKamoku?.kamoku_full_name || ''}
+              onChange={(e) => onChange('kamoku_full_name', e.target.value)}
               className="col-span-3"
               placeholder="例: 現金"
               required
@@ -59,8 +70,8 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
             </Label>
             <Input
               id="kamoku-short"
-              value={currentKamoku?.kamoku_ryaku_name || ""}
-              onChange={(e) => onChange("kamoku_ryaku_name", e.target.value)}
+              value={currentKamoku?.kamoku_ryaku_name || ''}
+              onChange={(e) => onChange('kamoku_ryaku_name', e.target.value)}
               className="col-span-3"
               placeholder="例: 現金"
             />
@@ -71,8 +82,8 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
             </Label>
             <Input
               id="kamoku-kana"
-              value={currentKamoku?.kamoku_kana_name || ""}
-              onChange={(e) => onChange("kamoku_kana_name", e.target.value)}
+              value={currentKamoku?.kamoku_kana_name || ''}
+              onChange={(e) => onChange('kamoku_kana_name', e.target.value)}
               className="col-span-3"
               placeholder="例: ゲンキン"
             />
@@ -84,7 +95,7 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
             <div className="col-span-3 py-2 px-3 border rounded-md bg-gray-50 text-gray-700">
               {currentKamoku?.bunrui
                 ? `${currentKamoku.bunrui.kamoku_bunrui_name} (${currentKamoku.bunrui.kamoku_bunrui_type})`
-                : ""}
+                : ''}
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
@@ -93,8 +104,8 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
             </Label>
             <Textarea
               id="kamoku-desc"
-              value={currentKamoku?.description || ""}
-              onChange={(e) => onChange("description", e.target.value)}
+              value={currentKamoku?.description || ''}
+              onChange={(e) => onChange('description', e.target.value)}
               className="col-span-3"
               placeholder="科目の説明を入力"
               rows={3}
@@ -105,7 +116,7 @@ export function KamokuDialog({ open, onOpenChange, currentKamoku, isEditing, onS
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             キャンセル
           </Button>
-          <Button onClick={onSave}>{isEditing ? "更新" : "追加"}</Button>
+          <Button onClick={onSave}>{isEditing ? '更新' : '追加'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

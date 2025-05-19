@@ -1,9 +1,19 @@
-"use client"
-import { Plus, Edit } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { type Kamoku, bunruiTypeMap, getAccountNature } from "./types"
+'use client'
+
+import { Edit, Plus } from 'lucide-react'
+
+import type { Kamoku } from '@/app/master/types'
+import { bunruiTypeMap, getAccountNature } from '@/app/master/types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 interface KamokuTabProps {
   kamokuList: Kamoku[]
@@ -11,7 +21,11 @@ interface KamokuTabProps {
   onOpenSaimokuDialog: (parentKamoku: Kamoku) => void
 }
 
-export function KamokuTab({ kamokuList, onOpenKamokuDialog, onOpenSaimokuDialog }: KamokuTabProps) {
+export function KamokuTab({
+  kamokuList,
+  onOpenKamokuDialog,
+  onOpenSaimokuDialog,
+}: KamokuTabProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -36,7 +50,9 @@ export function KamokuTab({ kamokuList, onOpenKamokuDialog, onOpenSaimokuDialog 
           ) : (
             kamokuList.map((kamoku) => (
               <TableRow key={kamoku.id}>
-                <TableCell className="font-medium">{kamoku.kamoku_cd}</TableCell>
+                <TableCell className="font-medium">
+                  {kamoku.kamoku_cd}
+                </TableCell>
                 <TableCell>
                   {kamoku.kamoku_full_name}
                   {(kamoku.saimokuList?.length || 0) > 0 && (
@@ -48,19 +64,39 @@ export function KamokuTab({ kamokuList, onOpenKamokuDialog, onOpenSaimokuDialog 
                 <TableCell>{kamoku.kamoku_ryaku_name}</TableCell>
                 <TableCell>
                   {kamoku.bunrui && (
-                    <Badge className={bunruiTypeMap[kamoku.bunrui.kamoku_bunrui_type]?.color || "bg-gray-100"}>
+                    <Badge
+                      className={
+                        bunruiTypeMap[kamoku.bunrui.kamoku_bunrui_type]
+                          ?.color || 'bg-gray-100'
+                      }
+                    >
                       {kamoku.bunrui.kamoku_bunrui_name}
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>{kamoku.bunrui && getAccountNature(kamoku.bunrui.kamoku_bunrui_type).name}</TableCell>
-                <TableCell className="max-w-xs truncate">{kamoku.description}</TableCell>
+                <TableCell>
+                  {kamoku.bunrui &&
+                    getAccountNature(kamoku.bunrui.kamoku_bunrui_type).name}
+                </TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {kamoku.description}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => onOpenSaimokuDialog(kamoku)} title="細目を追加">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onOpenSaimokuDialog(kamoku)}
+                      title="細目を追加"
+                    >
                       <Plus className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onOpenKamokuDialog(kamoku)} title="編集">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onOpenKamokuDialog(kamoku)}
+                      title="編集"
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                   </div>

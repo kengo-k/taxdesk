@@ -1,4 +1,4 @@
-import { CalculationStep } from '../types'
+import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 /**
  * 2024年度の税額計算ステップを定義

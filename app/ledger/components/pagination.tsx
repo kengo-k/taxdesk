@@ -7,6 +7,7 @@ import {
   ChevronsRight,
 } from 'lucide-react'
 
+import { getPageNumbers } from '@/app/ledger/components/utils'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -15,8 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
-import { getPageNumbers } from './utils'
 
 interface PaginationProps {
   totalItems: number

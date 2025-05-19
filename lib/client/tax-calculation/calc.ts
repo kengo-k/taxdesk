@@ -1,4 +1,7 @@
-import { CalculationStep, TaxCalculationResult } from './types'
+import {
+  CalculationStep,
+  TaxCalculationResult,
+} from '@/lib/client/tax-calculation/types'
 
 /**
  * 税額計算を実行する

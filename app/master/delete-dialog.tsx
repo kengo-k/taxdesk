@@ -1,6 +1,7 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import type { DeleteType } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -8,8 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import type { DeleteType } from "./types"
+} from '@/components/ui/dialog'
 
 interface DeleteDialogProps {
   open: boolean
@@ -18,19 +18,24 @@ interface DeleteDialogProps {
   onDelete: () => void
 }
 
-export function DeleteDialog({ open, onOpenChange, deleteType, onDelete }: DeleteDialogProps) {
+export function DeleteDialog({
+  open,
+  onOpenChange,
+  deleteType,
+  onDelete,
+}: DeleteDialogProps) {
   const getDeleteTypeName = () => {
     switch (deleteType) {
-      case "kamoku":
-        return "勘定科目"
-      case "saimoku":
-        return "細目"
-      case "tax-category":
-        return "消費税区分"
-      case "mapping":
-        return "関連付け"
+      case 'kamoku':
+        return '勘定科目'
+      case 'saimoku':
+        return '細目'
+      case 'tax-category':
+        return '消費税区分'
+      case 'mapping':
+        return '関連付け'
       default:
-        return "項目"
+        return '項目'
     }
   }
 
@@ -39,7 +44,9 @@ export function DeleteDialog({ open, onOpenChange, deleteType, onDelete }: Delet
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>削除確認</DialogTitle>
-          <DialogDescription>本当にこの{getDeleteTypeName()}を削除しますか？</DialogDescription>
+          <DialogDescription>
+            本当にこの{getDeleteTypeName()}を削除しますか？
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

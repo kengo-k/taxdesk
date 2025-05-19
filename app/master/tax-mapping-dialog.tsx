@@ -1,6 +1,8 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import type { Kamoku, KamokuTaxMapping, TaxCategory } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -8,12 +10,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { KamokuTaxMapping, Kamoku, TaxCategory } from "./types"
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface TaxMappingDialogProps {
   open: boolean
@@ -40,10 +46,14 @@ export function TaxMappingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "関連付けを編集" : "関連付けを追加"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? '関連付けを編集' : '関連付けを追加'}
+          </DialogTitle>
           <DialogDescription>
             勘定科目と消費税区分の関連付け情報を入力してください。
-            <span className="block mt-1 text-amber-600">※現在は勘定科目レベルでの関連付けとなっています。</span>
+            <span className="block mt-1 text-amber-600">
+              ※現在は勘定科目レベルでの関連付けとなっています。
+            </span>
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -51,7 +61,10 @@ export function TaxMappingDialog({
             <Label htmlFor="kamoku-cd" className="text-right">
               勘定科目 <span className="text-red-500">*</span>
             </Label>
-            <Select value={currentMapping?.kamoku_cd || ""} onValueChange={(value) => onChange("kamoku_cd", value)}>
+            <Select
+              value={currentMapping?.kamoku_cd || ''}
+              onValueChange={(value) => onChange('kamoku_cd', value)}
+            >
               <SelectTrigger id="kamoku-cd" className="col-span-3">
                 <SelectValue placeholder="勘定科目を選択" />
               </SelectTrigger>
@@ -69,8 +82,8 @@ export function TaxMappingDialog({
               消費税区分 <span className="text-red-500">*</span>
             </Label>
             <Select
-              value={currentMapping?.tax_category_id || ""}
-              onValueChange={(value) => onChange("tax_category_id", value)}
+              value={currentMapping?.tax_category_id || ''}
+              onValueChange={(value) => onChange('tax_category_id', value)}
             >
               <SelectTrigger id="tax-category-id" className="col-span-3">
                 <SelectValue placeholder="消費税区分を選択" />
@@ -92,7 +105,9 @@ export function TaxMappingDialog({
               <Checkbox
                 id="is-default"
                 checked={currentMapping?.is_default || false}
-                onCheckedChange={(checked) => onChange("is_default", checked as boolean)}
+                onCheckedChange={(checked) =>
+                  onChange('is_default', checked as boolean)
+                }
               />
               <Label htmlFor="is-default" className="ml-2">
                 デフォルトとして設定
@@ -106,8 +121,8 @@ export function TaxMappingDialog({
             <Input
               id="valid-from-mapping"
               type="date"
-              value={currentMapping?.valid_from || ""}
-              onChange={(e) => onChange("valid_from", e.target.value)}
+              value={currentMapping?.valid_from || ''}
+              onChange={(e) => onChange('valid_from', e.target.value)}
               className="col-span-3"
               required
             />
@@ -119,8 +134,8 @@ export function TaxMappingDialog({
             <Input
               id="valid-to-mapping"
               type="date"
-              value={currentMapping?.valid_to || ""}
-              onChange={(e) => onChange("valid_to", e.target.value)}
+              value={currentMapping?.valid_to || ''}
+              onChange={(e) => onChange('valid_to', e.target.value)}
               className="col-span-3"
               placeholder="終了日が未定の場合は空欄"
             />
@@ -130,7 +145,7 @@ export function TaxMappingDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             キャンセル
           </Button>
-          <Button onClick={onSave}>{isEditing ? "更新" : "追加"}</Button>
+          <Button onClick={onSave}>{isEditing ? '更新' : '追加'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

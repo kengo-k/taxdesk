@@ -1,10 +1,10 @@
-import type { RootState } from '../store'
-
 import {
   type PayloadAction,
   createAsyncThunk,
   createSlice,
 } from '@reduxjs/toolkit'
+
+import type { RootState } from '@/lib/redux/store'
 
 // 年度の型定義
 export interface FiscalYear {

@@ -1,11 +1,10 @@
-import type { RootState } from '../store'
-
 import {
   type PayloadAction,
   createAsyncThunk,
   createSlice,
 } from '@reduxjs/toolkit'
 
+import type { RootState } from '@/lib/redux/store'
 import { DeleteJournalsRequest } from '@/lib/services/journal/delete-journals'
 import { UpdateJournalCheckedRequest } from '@/lib/services/journal/update-journal-checked'
 import { CountByAccountItem } from '@/lib/services/ledger/count-by-account'

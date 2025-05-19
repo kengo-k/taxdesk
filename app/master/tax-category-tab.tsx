@@ -1,18 +1,33 @@
-"use client"
+'use client'
 
-import { Edit, Trash2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { TaxCategory } from "./types"
+import { Edit, Trash2 } from 'lucide-react'
+
+import type { TaxCategory } from '@/app/master/types'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 interface TaxCategoryTabProps {
   taxCategories: TaxCategory[]
   onOpenTaxCategoryDialog: (category?: TaxCategory) => void
-  onConfirmDelete: (item: any, type: "kamoku" | "saimoku" | "tax-category" | "mapping") => void
+  onConfirmDelete: (
+    item: any,
+    type: 'kamoku' | 'saimoku' | 'tax-category' | 'mapping',
+  ) => void
 }
 
-export function TaxCategoryTab({ taxCategories, onOpenTaxCategoryDialog, onConfirmDelete }: TaxCategoryTabProps) {
+export function TaxCategoryTab({
+  taxCategories,
+  onOpenTaxCategoryDialog,
+  onConfirmDelete,
+}: TaxCategoryTabProps) {
   return (
     <div className="rounded-md border">
       <Table>
@@ -38,37 +53,52 @@ export function TaxCategoryTab({ taxCategories, onOpenTaxCategoryDialog, onConfi
             taxCategories.map((category) => (
               <TableRow key={category.id}>
                 <TableCell>{category.name}</TableCell>
-                <TableCell className="max-w-xs truncate">{category.description}</TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {category.description}
+                </TableCell>
                 <TableCell>{category.tax_rate}%</TableCell>
                 <TableCell>
                   <Badge
-                    variant={category.is_reduced_tax ? "default" : "outline"}
-                    className={category.is_reduced_tax ? "bg-amber-100 text-amber-800 hover:bg-amber-100" : ""}
+                    variant={category.is_reduced_tax ? 'default' : 'outline'}
+                    className={
+                      category.is_reduced_tax
+                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-100'
+                        : ''
+                    }
                   >
-                    {category.is_reduced_tax ? "軽減税率" : "標準税率"}
+                    {category.is_reduced_tax ? '軽減税率' : '標準税率'}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant={category.is_taxable ? "default" : "outline"}
-                    className={category.is_taxable ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                    variant={category.is_taxable ? 'default' : 'outline'}
+                    className={
+                      category.is_taxable
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100'
+                        : ''
+                    }
                   >
-                    {category.is_taxable ? "課税" : "非課税"}
+                    {category.is_taxable ? '課税' : '非課税'}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   {category.valid_from}
-                  {category.valid_to ? ` 〜 ${category.valid_to}` : " 〜"}
+                  {category.valid_to ? ` 〜 ${category.valid_to}` : ' 〜'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => onOpenTaxCategoryDialog(category)} title="編集">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onOpenTaxCategoryDialog(category)}
+                      title="編集"
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onConfirmDelete(category, "tax-category")}
+                      onClick={() => onConfirmDelete(category, 'tax-category')}
                       title="削除"
                     >
                       <Trash2 className="h-4 w-4" />

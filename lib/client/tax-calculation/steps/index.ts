@@ -1,7 +1,6 @@
-import { CalculationStep } from '../types'
-
-import { steps2023 } from './steps2023'
-import { steps2024 } from './steps2024'
+import { steps2023 } from '@/lib/client/tax-calculation/steps/steps2023'
+import { steps2024 } from '@/lib/client/tax-calculation/steps/steps2024'
+import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 /**
  * 年度別の計算ステップマッピングを構築する

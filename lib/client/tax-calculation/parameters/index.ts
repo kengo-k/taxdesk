@@ -1,7 +1,6 @@
+import { parameters2023Builder } from '@/lib/client/tax-calculation/parameters/parameters2023'
+import { parameters2024Builder } from '@/lib/client/tax-calculation/parameters/parameters2024'
 import { RootState } from '@/lib/redux/store'
-
-import { parameters2023Builder } from './parameters2023'
-import { parameters2024Builder } from './parameters2024'
 
 /**
  * 税額計算パラメータの型定義

@@ -1,5 +1,5 @@
-import { formatCurrency } from '../calc'
-import { CalculationStep } from '../types'
+import { formatCurrency } from '@/lib/client/tax-calculation/calc'
+import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 const f = formatCurrency
 

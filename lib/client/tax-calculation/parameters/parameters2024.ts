@@ -1,6 +1,5 @@
+import { TaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { RootState } from '@/lib/redux/store'
-
-import { TaxParameters } from './index'
 
 /**
  * 2024年度の税額計算パラメータを構築する

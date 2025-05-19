@@ -1,6 +1,7 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import type { Kamoku, Saimoku } from '@/app/master/types'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -8,12 +9,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Saimoku, Kamoku } from "./types"
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 
 interface SaimokuDialogProps {
   open: boolean
@@ -42,9 +48,10 @@ export function SaimokuDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "細目を編集" : "細目を追加"}</DialogTitle>
+          <DialogTitle>{isEditing ? '細目を編集' : '細目を追加'}</DialogTitle>
           <DialogDescription>
-            {parentKamokuForSaimoku?.kamoku_full_name}（{parentKamokuForSaimoku?.kamoku_cd}
+            {parentKamokuForSaimoku?.kamoku_full_name}（
+            {parentKamokuForSaimoku?.kamoku_cd}
             ）の細目情報を入力してください。
           </DialogDescription>
         </DialogHeader>
@@ -53,7 +60,10 @@ export function SaimokuDialog({
             <Label htmlFor="kamoku-select" className="text-right">
               勘定科目 <span className="text-red-500">*</span>
             </Label>
-            <Select value={currentSaimoku?.kamoku_cd || ""} onValueChange={onKamokuChange}>
+            <Select
+              value={currentSaimoku?.kamoku_cd || ''}
+              onValueChange={onKamokuChange}
+            >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="勘定科目を選択" />
               </SelectTrigger>
@@ -72,8 +82,8 @@ export function SaimokuDialog({
             </Label>
             <Input
               id="saimoku-code"
-              value={currentSaimoku?.saimoku_cd || ""}
-              onChange={(e) => onChange("saimoku_cd", e.target.value)}
+              value={currentSaimoku?.saimoku_cd || ''}
+              onChange={(e) => onChange('saimoku_cd', e.target.value)}
               className="col-span-3"
               placeholder="例: 001"
               required
@@ -85,8 +95,8 @@ export function SaimokuDialog({
             </Label>
             <Input
               id="saimoku-name"
-              value={currentSaimoku?.saimoku_full_name || ""}
-              onChange={(e) => onChange("saimoku_full_name", e.target.value)}
+              value={currentSaimoku?.saimoku_full_name || ''}
+              onChange={(e) => onChange('saimoku_full_name', e.target.value)}
               className="col-span-3"
               placeholder="例: 三菱UFJ銀行"
               required
@@ -98,8 +108,8 @@ export function SaimokuDialog({
             </Label>
             <Input
               id="saimoku-short"
-              value={currentSaimoku?.saimoku_ryaku_name || ""}
-              onChange={(e) => onChange("saimoku_ryaku_name", e.target.value)}
+              value={currentSaimoku?.saimoku_ryaku_name || ''}
+              onChange={(e) => onChange('saimoku_ryaku_name', e.target.value)}
               className="col-span-3"
               placeholder="例: 三菱UFJ"
             />
@@ -110,8 +120,8 @@ export function SaimokuDialog({
             </Label>
             <Input
               id="saimoku-kana"
-              value={currentSaimoku?.saimoku_kana_name || ""}
-              onChange={(e) => onChange("saimoku_kana_name", e.target.value)}
+              value={currentSaimoku?.saimoku_kana_name || ''}
+              onChange={(e) => onChange('saimoku_kana_name', e.target.value)}
               className="col-span-3"
               placeholder="例: ミツビシ"
             />
@@ -123,8 +133,8 @@ export function SaimokuDialog({
             <Input
               id="valid-from"
               type="date"
-              value={currentSaimoku?.valid_from || ""}
-              onChange={(e) => onChange("valid_from", e.target.value)}
+              value={currentSaimoku?.valid_from || ''}
+              onChange={(e) => onChange('valid_from', e.target.value)}
               className="col-span-3"
               required
             />
@@ -136,8 +146,8 @@ export function SaimokuDialog({
             <Input
               id="valid-to"
               type="date"
-              value={currentSaimoku?.valid_to || ""}
-              onChange={(e) => onChange("valid_to", e.target.value)}
+              value={currentSaimoku?.valid_to || ''}
+              onChange={(e) => onChange('valid_to', e.target.value)}
               className="col-span-3"
               placeholder="終了日が未定の場合は空欄"
             />
@@ -148,8 +158,8 @@ export function SaimokuDialog({
             </Label>
             <Textarea
               id="saimoku-desc"
-              value={currentSaimoku?.description || ""}
-              onChange={(e) => onChange("description", e.target.value)}
+              value={currentSaimoku?.description || ''}
+              onChange={(e) => onChange('description', e.target.value)}
               className="col-span-3"
               placeholder="細目の説明を入力"
               rows={3}
@@ -160,7 +170,7 @@ export function SaimokuDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             キャンセル
           </Button>
-          <Button onClick={onSave}>{isEditing ? "更新" : "追加"}</Button>
+          <Button onClick={onSave}>{isEditing ? '更新' : '追加'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
