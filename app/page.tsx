@@ -348,25 +348,32 @@ export default function Home() {
               value={
                 genericAssetByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(genericAssetByYear?.value || 0)
+                  : formatCurrency(
+                      genericAssetByYear?.reduce(
+                        (sum, item) => sum + (item.value || 0),
+                        0,
+                      ) || 0,
+                    )
               }
               data={
                 genericAssetByYearLoading
                   ? []
-                  : [genericAssetByYear?.value || 0]
+                  : genericAssetByYear?.map((item) => item.value || 0) || []
               }
               labels={
                 genericAssetByYearLoading
                   ? []
-                  : [genericAssetByYear?.name || '']
+                  : genericAssetByYear?.map((item) => item.name || '') || []
               }
               colors={
-                genericAssetByYearLoading ? [] : getChartColors('asset', 1)
+                genericAssetByYearLoading
+                  ? []
+                  : getChartColors('asset', genericAssetByYear?.length || 0)
               }
               amounts={
                 genericAssetByYearLoading
                   ? []
-                  : [genericAssetByYear?.value || 0]
+                  : genericAssetByYear?.map((item) => item.value || 0) || []
               }
             />
           </div>
@@ -377,25 +384,32 @@ export default function Home() {
               value={
                 genericRevenueByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(genericRevenueByYear?.value || 0)
+                  : formatCurrency(
+                      genericRevenueByYear?.reduce(
+                        (sum, item) => sum + (item.value || 0),
+                        0,
+                      ) || 0,
+                    )
               }
               data={
                 genericRevenueByYearLoading
                   ? []
-                  : [genericRevenueByYear?.value || 0]
+                  : genericRevenueByYear?.map((item) => item.value || 0) || []
               }
               labels={
                 genericRevenueByYearLoading
                   ? []
-                  : [genericRevenueByYear?.name || '']
+                  : genericRevenueByYear?.map((item) => item.name || '') || []
               }
               colors={
-                genericRevenueByYearLoading ? [] : getChartColors('income', 1)
+                genericRevenueByYearLoading
+                  ? []
+                  : getChartColors('income', genericRevenueByYear?.length || 0)
               }
               amounts={
                 genericRevenueByYearLoading
                   ? []
-                  : [genericRevenueByYear?.value || 0]
+                  : genericRevenueByYear?.map((item) => item.value || 0) || []
               }
             />
           </div>
@@ -406,25 +420,32 @@ export default function Home() {
               value={
                 genericExpenseByYearLoading
                   ? 'Loading...'
-                  : formatCurrency(genericExpenseByYear?.value || 0)
+                  : formatCurrency(
+                      genericExpenseByYear?.reduce(
+                        (sum, item) => sum + (item.value || 0),
+                        0,
+                      ) || 0,
+                    )
               }
               data={
                 genericExpenseByYearLoading
                   ? []
-                  : [genericExpenseByYear?.value || 0]
+                  : genericExpenseByYear?.map((item) => item.value || 0) || []
               }
               labels={
                 genericExpenseByYearLoading
                   ? []
-                  : [genericExpenseByYear?.name || '']
+                  : genericExpenseByYear?.map((item) => item.name || '') || []
               }
               colors={
-                genericExpenseByYearLoading ? [] : getChartColors('expense', 1)
+                genericExpenseByYearLoading
+                  ? []
+                  : getChartColors('expense', genericExpenseByYear?.length || 0)
               }
               amounts={
                 genericExpenseByYearLoading
                   ? []
-                  : [genericExpenseByYear?.value || 0]
+                  : genericExpenseByYear?.map((item) => item.value || 0) || []
               }
             />
           </div>
@@ -453,46 +474,40 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: (() => {
-                      if (!genericRevenueByMonth) return []
-                      const monthlyData = genericRevenueByMonth.values || []
-                      const monthlyName = genericRevenueByMonth.name || ''
-                      const groupedData = monthlyData.reduce(
-                        (
-                          acc: Record<
-                            string,
-                            { label: string; data: number[] }
-                          >,
-                          item,
-                        ) => {
-                          if (!acc[item.month]) {
-                            acc[item.month] = {
-                              label: monthlyName,
-                              data: new Array(12).fill(0),
-                            }
-                          }
-                          const monthIndex = (parseInt(item.month) + 8) % 12
-                          acc[item.month].data[monthIndex] = item.value
-                          return acc
-                        },
-                        {},
+                      if (!genericRevenueByMonth?.length) {
+                        console.log('No monthly revenue data available')
+                        return []
+                      }
+                      console.log(
+                        'Monthly Revenue Raw Data:',
+                        genericRevenueByMonth,
                       )
-                      return Object.values(groupedData)
-                        .sort((a, b) => {
-                          const sumA = a.data.reduce((sum, val) => sum + val, 0)
-                          const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                          return sumB - sumA // 大きい順に並び替え（上から大きい順）
-                        })
-                        .map((dataset, index, sortedDatasets) => {
-                          const colors = getChartColors(
+
+                      // 各科目のデータを処理
+                      return genericRevenueByMonth.map((item, index) => {
+                        const monthlyData = item.values
+                        const monthlyName = item.name || ''
+
+                        // 月ごとのデータを配列に変換
+                        const data = new Array(12).fill(0)
+                        monthlyData.forEach(
+                          (monthItem: { month: string; value: number }) => {
+                            const monthIndex =
+                              (parseInt(monthItem.month) + 8) % 12
+                            data[monthIndex] = monthItem.value
+                          },
+                        )
+
+                        return {
+                          label: monthlyName,
+                          name: monthlyName,
+                          data: data,
+                          backgroundColor: getChartColors(
                             'income',
-                            sortedDatasets.length,
-                          )
-                          return {
-                            label: dataset.label,
-                            data: dataset.data,
-                            backgroundColor: colors[index] || colors[0],
-                          }
-                        })
+                            genericRevenueByMonth.length,
+                          )[index],
+                        }
+                      })
                     })(),
                   }
             }
@@ -522,46 +537,40 @@ export default function Home() {
                       '3月',
                     ],
                     datasets: (() => {
-                      if (!genericExpenseByMonth) return []
-                      const monthlyData = genericExpenseByMonth.values || []
-                      const monthlyName = genericExpenseByMonth.name || ''
-                      const groupedData = monthlyData.reduce(
-                        (
-                          acc: Record<
-                            string,
-                            { label: string; data: number[] }
-                          >,
-                          item,
-                        ) => {
-                          if (!acc[item.month]) {
-                            acc[item.month] = {
-                              label: monthlyName,
-                              data: new Array(12).fill(0),
-                            }
-                          }
-                          const monthIndex = (parseInt(item.month) + 8) % 12
-                          acc[item.month].data[monthIndex] = item.value
-                          return acc
-                        },
-                        {},
+                      if (!genericExpenseByMonth?.length) {
+                        console.log('No monthly expense data available')
+                        return []
+                      }
+                      console.log(
+                        'Monthly Expense Raw Data:',
+                        genericExpenseByMonth,
                       )
-                      return Object.values(groupedData)
-                        .sort((a, b) => {
-                          const sumA = a.data.reduce((sum, val) => sum + val, 0)
-                          const sumB = b.data.reduce((sum, val) => sum + val, 0)
-                          return sumB - sumA // 大きい順に並び替え（上から大きい順）
-                        })
-                        .map((dataset, index, sortedDatasets) => {
-                          const colors = getChartColors(
+
+                      // 各科目のデータを処理
+                      return genericExpenseByMonth.map((item, index) => {
+                        const monthlyData = item.values
+                        const monthlyName = item.name || ''
+
+                        // 月ごとのデータを配列に変換
+                        const data = new Array(12).fill(0)
+                        monthlyData.forEach(
+                          (monthItem: { month: string; value: number }) => {
+                            const monthIndex =
+                              (parseInt(monthItem.month) + 8) % 12
+                            data[monthIndex] = monthItem.value
+                          },
+                        )
+
+                        return {
+                          label: monthlyName,
+                          name: monthlyName,
+                          data: data,
+                          backgroundColor: getChartColors(
                             'expense',
-                            sortedDatasets.length,
-                          )
-                          return {
-                            label: dataset.label,
-                            data: dataset.data,
-                            backgroundColor: colors[index] || colors[0],
-                          }
-                        })
+                            genericExpenseByMonth.length,
+                          )[index],
+                        }
+                      })
                     })(),
                   }
             }
