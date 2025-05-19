@@ -6,11 +6,6 @@ import {
   MonthlyBreakdown,
 } from '@/lib/services/reports/calculate-breakdown'
 
-// 税額計算に必要なデータの型定義
-// 年度ごとに必要なパラメータが変わる可能性があるため、
-// 柔軟な型定義としています
-export type TaxCalculationData = Record<string, any>
-
 export interface ReportState {
   // 内訳データ用の状態
   breakdown: {
@@ -39,13 +34,6 @@ export interface ReportState {
       loading: boolean
       error: string | null
     }
-  }
-
-  // 税額計算用の状態
-  taxCalculation: {
-    data: TaxCalculationData | null
-    loading: boolean
-    error: string | null
   }
 }
 
@@ -77,13 +65,6 @@ const initialState: ReportState = {
       loading: false,
       error: null,
     },
-  },
-
-  // 税額計算用の初期状態
-  taxCalculation: {
-    data: null,
-    loading: false,
-    error: null,
   },
 }
 
@@ -403,13 +384,3 @@ export const selectSaimokuNetExpensesByMonth = (state: {
 export const selectSaimokuNetExpensesByMonthLoading = (state: {
   report: ReportState
 }) => state.report.breakdown.saimokuNetExpensesByMonth.loading
-
-// 税額計算用のセレクター
-export const selectTaxCalculationData = (state: { report: ReportState }) =>
-  state.report.taxCalculation.data
-
-export const selectTaxCalculationLoading = (state: { report: ReportState }) =>
-  state.report.taxCalculation.loading
-
-export const selectTaxCalculationError = (state: { report: ReportState }) =>
-  state.report.taxCalculation.error
