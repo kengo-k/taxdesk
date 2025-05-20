@@ -108,23 +108,6 @@ export default function Home() {
     }
   }, [dispatch, selectedYearId])
 
-  // デバッグ用のログ出力
-  useEffect(() => {
-    console.log('Monthly Revenue Data:', {
-      data: genericRevenueByMonth,
-      loading: genericRevenueByMonthLoading,
-    })
-    console.log('Monthly Expense Data:', {
-      data: genericExpenseByMonth,
-      loading: genericExpenseByMonthLoading,
-    })
-  }, [
-    genericRevenueByMonth,
-    genericRevenueByMonthLoading,
-    genericExpenseByMonth,
-    genericExpenseByMonthLoading,
-  ])
-
   // 年度選択ハンドラー
   const handleYearChange = (value: string) => {
     dispatch(selectFiscalYear(value))
@@ -289,83 +272,63 @@ export default function Home() {
 
         {/* 税額見込みカード - 財務サマリーの一番上に移動 */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/3 mb-4 md:mb-0">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-medium text-lg">
-                  {selectedYearId === '2024' ? '税額見込み' : '確定税額'}
-                </h3>
-                <span className="font-bold text-lg">
-                  {taxCalculation
-                    ? formatCurrency(taxCalculation.total_tax)
-                    : '計算中...'}
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 mb-4 md:mb-0">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-lg">
+              {selectedYearId === '2024'
+                ? '現在の収支に基づく年間税額見込み'
+                : `${selectedYearId}年度の確定税額`}
+            </h3>
+            <Link href={`/tax-simulation?year=${selectedYearId}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <Calculator className="h-4 w-4" />
                 {selectedYearId === '2024'
-                  ? '現在の収支に基づく年間税額見込み'
-                  : `${selectedYearId}年度の確定税額`}
-              </p>
-            </div>
+                  ? '詳細シミュレーション'
+                  : '詳細表示'}
+              </Button>
+            </Link>
+          </div>
 
-            <div className="md:w-2/3 md:pl-6 md:border-l">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="p-3 bg-blue-50 rounded-md">
-                  <div className="text-sm text-gray-600">
-                    {selectedYearId === '2024' ? '法人税' : '法人税（確定）'}
-                  </div>
-                  <div className="font-medium">
-                    {taxCalculation
-                      ? formatCurrency(taxCalculation.corporate_tax)
-                      : '計算中...'}
-                  </div>
-                </div>
-                <div className="p-3 bg-green-50 rounded-md">
-                  <div className="text-sm text-gray-600">
-                    {selectedYearId === '2024' ? '住民税' : '住民税（確定）'}
-                  </div>
-                  <div className="font-medium">
-                    {taxCalculation
-                      ? formatCurrency(taxCalculation.inhabitant_tax)
-                      : '計算中...'}
-                  </div>
-                </div>
-                <div className="p-3 bg-amber-50 rounded-md">
-                  <div className="text-sm text-gray-600">
-                    {selectedYearId === '2024' ? '事業税' : '事業税（確定）'}
-                  </div>
-                  <div className="font-medium">
-                    {taxCalculation
-                      ? formatCurrency(taxCalculation.business_tax)
-                      : '計算中...'}
-                  </div>
-                </div>
-                <div className="p-3 bg-purple-50 rounded-md">
-                  <div className="text-sm text-gray-600">
-                    {selectedYearId === '2024' ? '消費税' : '消費税（確定）'}
-                  </div>
-                  <div className="font-medium">
-                    {taxCalculation
-                      ? formatCurrency(taxCalculation.consumption_tax || 0)
-                      : '計算中...'}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Link href={`/tax-simulation?year=${selectedYearId}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    <Calculator className="h-4 w-4" />
-                    {selectedYearId === '2024'
-                      ? '詳細シミュレーション'
-                      : '詳細表示'}
-                  </Button>
-                </Link>
-              </div>
-            </div>
+          {/* 各種税額とその合計額をカード形式で表示 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {taxCalculation
+              ?.getResult()
+              .map(
+                (
+                  tax: { taxName: string; taxAmount: number },
+                  index: number,
+                ) => {
+                  const isLast = index === taxCalculation.getResult().length - 1
+                  return (
+                    <div
+                      key={tax.taxName}
+                      className={`border rounded-lg p-4 shadow-sm ${
+                        isLast
+                          ? 'bg-blue-50 border-blue-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <h3
+                        className={`text-sm font-medium mb-1 ${
+                          isLast ? 'text-blue-800' : 'text-gray-800'
+                        }`}
+                      >
+                        {tax.taxName}
+                      </h3>
+                      <p
+                        className={`text-lg font-bold ${
+                          isLast ? 'text-blue-900' : 'text-gray-900'
+                        }`}
+                      >
+                        {formatCurrency(tax.taxAmount)}
+                      </p>
+                    </div>
+                  )
+                },
+              )}
           </div>
         </div>
 
@@ -503,14 +466,8 @@ export default function Home() {
                     ],
                     datasets: (() => {
                       if (!genericRevenueByMonth?.length) {
-                        console.log('No monthly revenue data available')
                         return []
                       }
-                      console.log(
-                        'Monthly Revenue Raw Data:',
-                        genericRevenueByMonth,
-                      )
-
                       // 各科目のデータを処理
                       return genericRevenueByMonth.map((item, index) => {
                         const monthlyData = item.values
@@ -566,13 +523,8 @@ export default function Home() {
                     ],
                     datasets: (() => {
                       if (!genericExpenseByMonth?.length) {
-                        console.log('No monthly expense data available')
                         return []
                       }
-                      console.log(
-                        'Monthly Expense Raw Data:',
-                        genericExpenseByMonth,
-                      )
 
                       // 各科目のデータを処理
                       return genericExpenseByMonth.map((item, index) => {

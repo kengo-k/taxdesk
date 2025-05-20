@@ -551,7 +551,6 @@ export default function LedgerPage() {
 
   // ページ変更ハンドラー
   const handlePageChange = (page: number) => {
-    console.log('handlePageChange', page)
     const newPage = Math.max(1, Math.min(page, Math.ceil(allCount / pageSize)))
     setCurrentPage(newPage)
     updateUrlParams()

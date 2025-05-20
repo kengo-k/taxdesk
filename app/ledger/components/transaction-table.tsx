@@ -493,7 +493,6 @@ export function TransactionTable({
 
   // 新規トランザクションの登録処理
   const handleSubmitNewTransaction = () => {
-    console.log('handleSubmitNewTransaction')
     // 全体のバリデーション
     const dataToValidate = {
       ...newTransaction,
@@ -501,7 +500,6 @@ export function TransactionTable({
     }
 
     const result = validateRow(dataToValidate)
-    console.log('result', result)
 
     if (!result.valid) {
       // エラーを設定

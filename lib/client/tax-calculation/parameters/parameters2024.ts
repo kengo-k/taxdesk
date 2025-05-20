@@ -44,7 +44,36 @@ export const parameters2024Builder = (state: RootState): Context2024 => {
     consumption_tax_status: 0,
 
     getResult: function () {
-      return [{ taxName: '法人税', taxAmount: this.corporate_tax_final }]
+      return [
+        {
+          taxName: '法人税(+地方法人税)',
+          taxAmount: this.corporate_tax_final + this.local_corporate_tax_final,
+        },
+        {
+          taxName: '都民税(法人税割+均等割)',
+          taxAmount: this.tokyo_tax_final + this.tokyo_tax_equal_tax,
+        },
+        {
+          taxName: '事業税(+特別法人事業税)',
+          taxAmount:
+            this.business_tax_final + this.special_local_corporate_tax_final,
+        },
+        {
+          taxName: '消費税',
+          taxAmount: this.consumption_tax_status,
+        },
+        {
+          taxName: '合計',
+          taxAmount:
+            this.corporate_tax_final +
+            this.local_corporate_tax_final +
+            this.tokyo_tax_final +
+            this.tokyo_tax_equal_tax +
+            this.business_tax_final +
+            this.special_local_corporate_tax_final +
+            this.consumption_tax_status,
+        },
+      ]
     },
   }
 }
