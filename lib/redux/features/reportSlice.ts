@@ -2,8 +2,10 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 
 import {
   AnnualBreakdown,
+  BreakdownRequest,
   MonthlyBreakdown,
 } from '@/lib/backend/services/reports/calculate-breakdown'
+import { selectTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
 
 export interface ReportState {
@@ -34,6 +36,14 @@ export interface ReportState {
       loading: boolean
       error: string | null
     }
+  }
+  taxCalculationParameters: {
+    data: {
+      request: BreakdownRequest
+      response: AnnualBreakdown[]
+    }[]
+    loading: boolean
+    error: string | null
   }
 }
 
@@ -66,7 +76,33 @@ const initialState: ReportState = {
       error: null,
     },
   },
+  taxCalculationParameters: {
+    data: [],
+    loading: false,
+    error: null,
+  },
 }
+
+export const fetchTaxCalculationParameters = createAsyncThunk(
+  'report/fetchTaxCalculationParameters',
+  async (fiscalYear: string) => {
+    const requests = selectTaxParameters(fiscalYear)
+    const response = await fetch(
+      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requests }),
+      },
+    )
+    if (!response.ok) {
+      throw new Error('Failed to fetch asset breakdown by year')
+    }
+
+    const result = await response.json()
+    return result.data
+  },
+)
 
 // 汎用API用のThunkアクション
 export const fetchGenericAssetByYear = createAsyncThunk(
@@ -323,12 +359,29 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchGenericExpenseByMonth.fulfilled, (state, action) => {
         state.breakdown.saimokuNetExpensesByMonth.loading = false
+        console.log('HELLO!!!2')
+        console.log(action.payload)
         state.breakdown.saimokuNetExpensesByMonth.data =
           action.payload.monthly[0].response
       })
       .addCase(fetchGenericExpenseByMonth.rejected, (state, action) => {
         state.breakdown.saimokuNetExpensesByMonth.loading = false
         state.breakdown.saimokuNetExpensesByMonth.error =
+          action.error.message || 'Unknown error'
+      })
+
+    builder
+      .addCase(fetchTaxCalculationParameters.pending, (state) => {
+        state.taxCalculationParameters.loading = true
+        state.taxCalculationParameters.error = null
+      })
+      .addCase(fetchTaxCalculationParameters.fulfilled, (state, action) => {
+        state.taxCalculationParameters.loading = false
+        state.taxCalculationParameters.data = action.payload.annual
+      })
+      .addCase(fetchTaxCalculationParameters.rejected, (state, action) => {
+        state.taxCalculationParameters.loading = false
+        state.taxCalculationParameters.error =
           action.error.message || 'Unknown error'
       })
   },
@@ -384,3 +437,7 @@ export const selectSaimokuNetExpensesByMonth = (state: {
 export const selectSaimokuNetExpensesByMonthLoading = (state: {
   report: ReportState
 }) => state.report.breakdown.saimokuNetExpensesByMonth.loading
+
+export const selectTaxCalculationParameters = (state: {
+  report: ReportState
+}) => state.report.taxCalculationParameters.data

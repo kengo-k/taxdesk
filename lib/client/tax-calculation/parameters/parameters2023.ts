@@ -1,13 +1,63 @@
+import { ParameterBuilder, ParameterSelector } from '.'
 import { Context2023 } from '../steps/steps2023'
 
-import { RootState } from '@/lib/redux/store'
+import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
+import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
+
+export const parameters2023Selector: ParameterSelector = () => {
+  return [
+    // 売上全体
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
+      breakdownLevel: 'kamoku_bunrui',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 資産: 法人税額から控除する金額
+    // - 受け取り利息から源泉徴収された金額
+    // - 国税と地方税の区別が必要なため細目単位で取得する
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.ASSET,
+      breakdownLevel: 'saimoku',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 費用全体
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+      breakdownLevel: 'kamoku_bunrui',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 費用: 経費から差し引く金額
+    // - 事業税は租税公課の扱いだが支払うのは翌年となるため除外する必要がある
+    // - 経費全体から事業税だけを抽出するため細目単位で取得する
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+      breakdownLevel: 'saimoku',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 負債: 前年度事業税
+    // - 前年度事業税は期首に未払事業税として負債に計上されている
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.LIABILITY,
+      breakdownLevel: 'kamoku',
+      breakdownType: 'kasikata',
+      timeUnit: 'annual',
+    },
+  ]
+}
 
 /**
  * 2023年度の税額計算パラメータを構築する
  */
-export const parameters2023Builder = (state: RootState): Context2023 => {
+export const parameters2023Builder: ParameterBuilder = (
+  state: ReturnType<typeof selectTaxCalculationParameters>,
+): Context2023 => {
+  console.log(state[0].response)
   return {
-    sales: 7362012,
+    sales: state[0].response[0].value,
     expenses: 7202571,
     previous_business_tax: 4500,
     corporate_tax_deduction: 1,

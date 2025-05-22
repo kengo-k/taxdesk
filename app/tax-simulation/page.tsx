@@ -27,18 +27,21 @@ import { toast } from '@/components/ui/use-toast'
 import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
+import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 import { useAppSelector } from '@/lib/redux/hooks'
 
 export default function TaxSimulationPage() {
   const searchParams = useSearchParams()
   const yearParam = searchParams.get('year') || '2024'
-  const state = useAppSelector((state) => state)
+  const taxCalculationParameters = useAppSelector(
+    selectTaxCalculationParameters,
+  )
 
   // 状態管理
   const [selectedYear, setSelectedYear] = useState(yearParam)
 
   // 税額計算
-  const parameters = buildTaxParameters(state, selectedYear)
+  const parameters = buildTaxParameters(taxCalculationParameters, selectedYear)
   const steps = getSteps(selectedYear)
   const context = calculateTax(steps, parameters)
   const result = context.getResult() as { taxName: string; taxAmount: number }[]

@@ -41,6 +41,7 @@ import {
   fetchGenericExpenseByYear,
   fetchGenericRevenueByMonth,
   fetchGenericRevenueByYear,
+  fetchTaxCalculationParameters,
   selectSaimokuNetAssetsByYear,
   selectSaimokuNetAssetsByYearLoading,
   selectSaimokuNetExpensesByMonth,
@@ -51,12 +52,15 @@ import {
   selectSaimokuNetRevenuesByMonthLoading,
   selectSaimokuNetRevenuesByYear,
   selectSaimokuNetRevenuesByYearLoading,
+  selectTaxCalculationParameters,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 export default function Home() {
   const dispatch = useAppDispatch()
-  const state = useAppSelector((state) => state)
+  const taxCalculationParameters = useAppSelector(
+    selectTaxCalculationParameters,
+  )
 
   // Reduxから年度データを取得
   const fiscalYears = useAppSelector(selectAllFiscalYears)
@@ -105,6 +109,7 @@ export default function Home() {
       dispatch(fetchGenericRevenueByMonth(selectedYearId))
       dispatch(fetchGenericRevenueByYear(selectedYearId))
       dispatch(fetchGenericAssetByYear(selectedYearId))
+      dispatch(fetchTaxCalculationParameters(selectedYearId))
     }
   }, [dispatch, selectedYearId])
 
@@ -117,14 +122,17 @@ export default function Home() {
   const taxCalculation = useMemo(() => {
     if (!selectedYearId) return null
     try {
-      const parameters = buildTaxParameters(state, selectedYearId)
+      const parameters = buildTaxParameters(
+        taxCalculationParameters,
+        selectedYearId,
+      )
       const steps = getSteps(selectedYearId)
       return calculateTax(steps, parameters)
     } catch (error) {
       console.error('Tax calculation failed:', error)
       return null
     }
-  }, [selectedYearId, state])
+  }, [selectedYearId, taxCalculationParameters])
 
   // データ読み込み中の表示
   if (loading) {

@@ -1,20 +1,35 @@
-import { parameters2023Builder } from '@/lib/client/tax-calculation/parameters/parameters2023'
-import { parameters2024Builder } from '@/lib/client/tax-calculation/parameters/parameters2024'
-import { RootState } from '@/lib/redux/store'
+import { BreakdownRequest } from '@/lib/backend/services/reports/calculate-breakdown'
+import {
+  parameters2023Builder,
+  parameters2023Selector,
+} from '@/lib/client/tax-calculation/parameters/parameters2023'
+import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 
 /**
  * 年度別のパラメータビルダー関数の型定義
  */
-export type ParameterBuilder = (state: RootState) => any
+export type ParameterBuilder = (
+  state: ReturnType<typeof selectTaxCalculationParameters>,
+) => any
+export type ParameterSelector = () => Omit<BreakdownRequest, 'fiscalYear'>[]
 
 /**
  * 年度別のパラメータビルダーマッピングを構築する
  * @returns 年度別のパラメータビルダーマッピング
  */
-export function buildParameterMappings(): Record<string, ParameterBuilder> {
+export function buildParameterMappings(): Record<
+  string,
+  { selector: ParameterSelector; builder: ParameterBuilder }
+> {
   return {
-    '2023': parameters2023Builder,
-    '2024': parameters2024Builder,
+    '2023': {
+      selector: parameters2023Selector,
+      builder: parameters2023Builder,
+    },
+    '2024': {
+      selector: parameters2023Selector,
+      builder: parameters2023Builder,
+    },
   }
 }
 
@@ -24,7 +39,10 @@ export function buildParameterMappings(): Record<string, ParameterBuilder> {
  * @param fiscalYear 年度
  * @returns 税額計算パラメータ
  */
-export function buildTaxParameters(state: RootState, fiscalYear: string): any {
+export function buildTaxParameters(
+  state: ReturnType<typeof selectTaxCalculationParameters>,
+  fiscalYear: string,
+): any {
   const mappings = buildParameterMappings()
   const builder = mappings[fiscalYear]
 
@@ -34,5 +52,18 @@ export function buildTaxParameters(state: RootState, fiscalYear: string): any {
     )
   }
 
-  return builder(state)
+  return builder.builder(state)
+}
+
+export function selectTaxParameters(fiscalYear: string): any {
+  const mappings = buildParameterMappings()
+  const selector = mappings[fiscalYear]
+
+  if (!selector) {
+    throw new Error(
+      `Tax parameter selector for fiscal year ${fiscalYear} not found`,
+    )
+  }
+
+  return selector.selector()
 }
