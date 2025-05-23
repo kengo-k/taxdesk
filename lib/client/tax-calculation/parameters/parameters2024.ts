@@ -1,23 +1,72 @@
+import { ParameterBuilder, ParameterSelector } from '.'
 import { Context2024 } from '../steps/steps2024'
 
-import { RootState } from '@/lib/redux/store'
+import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
+import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
+
+export const parameters2024Selector: ParameterSelector = () => {
+  return [
+    // 売上全体
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
+      breakdownLevel: 'kamoku_bunrui',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 資産: 法人税額から控除する金額
+    // - 受け取り利息から源泉徴収された金額
+    // - 国税と地方税の区別が必要なため細目単位で取得する
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.ASSET,
+      breakdownLevel: 'saimoku',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 費用全体
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+      breakdownLevel: 'kamoku_bunrui',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 費用: 経費から差し引く金額
+    // - 事業税は租税公課の扱いだが支払うのは翌年となるため除外する必要がある
+    // - 経費全体から事業税だけを抽出するため細目単位で取得する
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+      breakdownLevel: 'saimoku',
+      breakdownType: 'net',
+      timeUnit: 'annual',
+    },
+    // 負債: 前年度事業税
+    // - 前年度事業税は期首に未払事業税として負債に計上されている
+    {
+      kamokuBunruiCd: KAMOKU_BUNRUI.LIABILITY,
+      breakdownLevel: 'kamoku',
+      breakdownType: 'kasikata',
+      timeUnit: 'annual',
+    },
+  ]
+}
 
 /**
- * 2024年度の税額計算パラメータを構築する
+ * 2023年度の税額計算パラメータを構築する
  */
-export const parameters2024Builder = (state: RootState): Context2024 => {
+export const parameters2024Builder: ParameterBuilder = (
+  state: ReturnType<typeof selectTaxCalculationParameters>,
+): Context2024 => {
   return {
-    sales: 0,
-    expenses: 0,
+    sales: state[0].response[0].value,
+    expenses: state[2].response[0].value,
     previous_business_tax: 0,
-    corporate_tax_after_deduction: 0,
+    corporate_tax_deduction: 0,
     taxable_income: 0,
 
     // 法人税関連
     rounded_taxable_income: 0,
     corporate_tax_rate: 0,
     corporate_tax_base: 0,
-    corporate_tax_deduction: 0,
+    corporate_tax_after_deduction: 0,
     corporate_tax_final: 0,
 
     // 地方法人税関連

@@ -5,6 +5,8 @@ import {
 } from '@/lib/client/tax-calculation/parameters/parameters2023'
 import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 
+import { parameters2024Builder, parameters2024Selector } from './parameters2024'
+
 /**
  * 年度別のパラメータビルダー関数の型定義
  */
@@ -27,8 +29,8 @@ export function buildParameterMappings(): Record<
       builder: parameters2023Builder,
     },
     '2024': {
-      selector: parameters2023Selector,
-      builder: parameters2023Builder,
+      selector: parameters2024Selector,
+      builder: parameters2024Builder,
     },
   }
 }

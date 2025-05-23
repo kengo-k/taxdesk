@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -27,10 +27,15 @@ import { toast } from '@/components/ui/use-toast'
 import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
-import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
-import { useAppSelector } from '@/lib/redux/hooks'
+import {
+  fetchTaxCalculationParameters,
+  selectTaxCalculationParameters,
+} from '@/lib/redux/features/reportSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 export default function TaxSimulationPage() {
+  const dispatch = useAppDispatch()
+
   const searchParams = useSearchParams()
   const yearParam = searchParams.get('year') || '2024'
   const taxCalculationParameters = useAppSelector(
@@ -40,11 +45,28 @@ export default function TaxSimulationPage() {
   // 状態管理
   const [selectedYear, setSelectedYear] = useState(yearParam)
 
-  // 税額計算
-  const parameters = buildTaxParameters(taxCalculationParameters, selectedYear)
-  const steps = getSteps(selectedYear)
-  const context = calculateTax(steps, parameters)
-  const result = context.getResult() as { taxName: string; taxAmount: number }[]
+  useEffect(() => {
+    if (selectedYear) {
+      dispatch(fetchTaxCalculationParameters(selectedYear))
+    }
+  }, [dispatch, selectedYear])
+
+  const [result, steps, context] = useMemo(() => {
+    if (taxCalculationParameters.length === 0) {
+      return [[], [], null]
+    }
+    const parameters = buildTaxParameters(
+      taxCalculationParameters,
+      selectedYear,
+    )
+    const steps = getSteps(selectedYear)
+    const context = calculateTax(steps, parameters)
+    const result = context.getResult() as {
+      taxName: string
+      taxAmount: number
+    }[]
+    return [result, steps, context]
+  }, [taxCalculationParameters, selectedYear])
 
   // PDFダウンロード処理
   const handleDownloadPDF = useCallback(() => {
