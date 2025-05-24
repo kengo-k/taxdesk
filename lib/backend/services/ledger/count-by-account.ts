@@ -13,6 +13,7 @@ export interface CountByAccountItem {
   saimoku_ryaku_name: string
   saimoku_kana_name: string
   count: number
+  checked_count: number
 }
 
 export async function countByAccount(
@@ -28,13 +29,15 @@ export async function countByAccount(
       min(saimoku_full_name) as saimoku_full_name,
       min(saimoku_ryaku_name) as saimoku_ryaku_name,
       min(saimoku_kana_name) as saimoku_kana_name,
-      count(journal_id)::integer as count
+      count(journal_id)::integer as count,
+      count(case when checked = '1' then 1 end)::integer as checked_count
     from
       (
         select
           s.*,
           kb.kamoku_bunrui_type,
-          j.id as journal_id
+          j.id as journal_id,
+          j.checked
         from
           saimoku_masters s
             left join kamoku_masters k on

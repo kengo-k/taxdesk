@@ -201,17 +201,20 @@ export default function LedgerPage() {
   // 勘定科目一覧と勘定科目別レコード件数をマージ
   const mergedAccounts = useMemo(() => {
     const countMap = new Map<string, number>()
+    const checkedCountMap = new Map<string, number>()
     accountCounts.forEach((item) => {
       countMap.set(item.saimoku_cd, item.count)
+      checkedCountMap.set(item.saimoku_cd, item.checked_count)
     })
 
     return accountList.map((account) => {
       const count = countMap.get(account.code) || 0
+      const checked_count = checkedCountMap.get(account.code) || 0
       return {
         id: account.id,
         code: account.code,
         name: account.name,
-        label: `${account.code}: ${account.name} (${count})`,
+        label: `${account.code}: ${account.name} (${checked_count} / ${count})`,
       }
     })
   }, [accountList, accountCounts])
