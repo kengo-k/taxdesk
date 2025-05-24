@@ -71,6 +71,35 @@ const getDayOfWeekKanji = (dateStr: string): string => {
   }
 }
 
+// 日付が土日かどうかを判定する関数
+const isWeekend = (dateStr: string): boolean => {
+  // 日付が正しいフォーマットでない場合はfalseを返す
+  if (!dateStr || !/^\d{8}$/.test(dateStr)) return false
+
+  try {
+    const year = parseInt(dateStr.substring(0, 4))
+    const month = parseInt(dateStr.substring(4, 6)) - 1 // Dateオブジェクトでは月は0から始まる
+    const day = parseInt(dateStr.substring(6, 8))
+
+    const date = new Date(year, month, day)
+
+    // 日付が有効かチェック
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
+      return false
+    }
+
+    const dayOfWeek = date.getDay()
+    // 0: 日曜日, 6: 土曜日
+    return dayOfWeek === 0 || dayOfWeek === 6
+  } catch (error) {
+    return false
+  }
+}
+
 export function TransactionTable({
   ledger_cd,
   transactions,
@@ -707,7 +736,11 @@ export function TransactionTable({
                         value={getDayOfWeekKanji(newTransaction.date || '')}
                         readOnly
                         tabIndex={-1}
-                        className="h-8 text-sm text-center bg-gray-50"
+                        className={`h-8 text-sm text-center bg-gray-50 ${
+                          isWeekend(newTransaction.date || '')
+                            ? 'text-red-600'
+                            : ''
+                        }`}
                       />
                     </div>
                   </div>
@@ -991,7 +1024,11 @@ export function TransactionTable({
                             )}
                             readOnly
                             tabIndex={-1}
-                            className="h-8 text-sm text-center bg-gray-50"
+                            className={`h-8 text-sm text-center bg-gray-50 ${
+                              isWeekend(editedTransaction.date || '')
+                                ? 'text-red-600'
+                                : ''
+                            }`}
                           />
                         </div>
                       </div>
