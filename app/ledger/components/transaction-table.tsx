@@ -41,6 +41,36 @@ interface TransactionTableProps {
 // 編集中のトランザクションデータの型
 type EditableTransaction = Record<string, any>
 
+// 日付文字列（YYYYMMDD）から曜日の漢字を取得する関数
+const getDayOfWeekKanji = (dateStr: string): string => {
+  // 日付が正しいフォーマットでない場合は空文字を返す
+  if (!dateStr || !/^\d{8}$/.test(dateStr)) return ''
+
+  try {
+    const year = parseInt(dateStr.substring(0, 4))
+    const month = parseInt(dateStr.substring(4, 6)) - 1 // Dateオブジェクトでは月は0から始まる
+    const day = parseInt(dateStr.substring(6, 8))
+
+    const date = new Date(year, month, day)
+
+    // 日付が有効かチェック
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month ||
+      date.getDate() !== day
+    ) {
+      return ''
+    }
+
+    const dayOfWeek = date.getDay()
+    const kanjiDays = ['日', '月', '火', '水', '木', '金', '土']
+
+    return kanjiDays[dayOfWeek]
+  } catch (error) {
+    return ''
+  }
+}
+
 export function TransactionTable({
   ledger_cd,
   transactions,
@@ -586,7 +616,7 @@ export function TransactionTable({
         <table className="w-full border-collapse">
           <colgroup>
             {deleteMode && <col className="w-10" />}
-            <col className="w-32" />
+            <col className="w-44" />
             <col className="w-20" />
             <col className="w-24" />
             <col className="w-28" />
@@ -633,42 +663,53 @@ export function TransactionTable({
                 )}
                 <td className="py-2 px-1 relative">
                   <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
-                  <div className="relative">
-                    <Tooltip open={hasNewFieldError('date')}>
-                      <TooltipTrigger asChild>
-                        <div className="relative">
-                          {hasNewFieldError('date') && (
-                            <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                              <AlertCircle className="h-4 w-4" />
-                            </div>
-                          )}
-                          <Input
-                            type="text"
-                            value={newTransaction.date || ''}
-                            onChange={(e) =>
-                              handleNewFieldChange('date', e.target.value)
-                            }
-                            onBlur={() => handleNewFieldBlur('date')}
-                            ref={(el) => registerNewRowRef('date', el)}
-                            placeholder="YYYYMMDD"
-                            className={`h-8 text-sm ${
-                              hasNewFieldError('date')
-                                ? 'border-red-500 pl-8'
-                                : ''
-                            }`}
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="top"
-                        align="start"
-                        sideOffset={5}
-                        alignOffset={0}
-                        className="bg-red-50 text-red-800 border border-red-200 z-50"
-                      >
-                        {getNewFieldErrorMessage('date')}
-                      </TooltipContent>
-                    </Tooltip>
+                  <div className="flex gap-1">
+                    <div className="flex-1 relative">
+                      <Tooltip open={hasNewFieldError('date')}>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            {hasNewFieldError('date') && (
+                              <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                                <AlertCircle className="h-4 w-4" />
+                              </div>
+                            )}
+                            <Input
+                              type="text"
+                              value={newTransaction.date || ''}
+                              onChange={(e) =>
+                                handleNewFieldChange('date', e.target.value)
+                              }
+                              onBlur={() => handleNewFieldBlur('date')}
+                              ref={(el) => registerNewRowRef('date', el)}
+                              placeholder="YYYYMMDD"
+                              className={`h-8 text-sm ${
+                                hasNewFieldError('date')
+                                  ? 'border-red-500 pl-8'
+                                  : ''
+                              }`}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          align="start"
+                          sideOffset={5}
+                          alignOffset={0}
+                          className="bg-red-50 text-red-800 border border-red-200 z-50"
+                        >
+                          {getNewFieldErrorMessage('date')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="w-12">
+                      <Input
+                        type="text"
+                        value={getDayOfWeekKanji(newTransaction.date || '')}
+                        readOnly
+                        tabIndex={-1}
+                        className="h-8 text-sm text-center bg-gray-50"
+                      />
+                    </div>
                   </div>
                 </td>
                 <td className="py-2 px-1 relative">
@@ -897,46 +938,62 @@ export function TransactionTable({
                       </td>
                     )}
                     <td className="py-2 px-1 relative">
-                      {/* バーの表示を削除 */}
-                      <div className="relative">
-                        <Tooltip open={hasFieldError(id, 'date')}>
-                          <TooltipTrigger asChild>
-                            <div className="relative">
-                              {hasFieldError(id, 'date') && (
-                                <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
-                                  <AlertCircle className="h-4 w-4" />
-                                </div>
-                              )}
-                              <Input
-                                type="text"
-                                value={editedTransaction.date || ''}
-                                onChange={(e) =>
-                                  handleFieldChange(id, 'date', e.target.value)
-                                }
-                                onBlur={() => handleFieldBlur(id, 'date')}
-                                ref={(el) => registerInputRef(id, 'date', el)}
-                                className={`h-8 text-sm ${
-                                  hasFieldError(id, 'date')
-                                    ? 'border-red-500 pl-8'
-                                    : ''
-                                }`}
-                                disabled={
-                                  !isCurrentFiscalYear ||
-                                  editedTransaction.checked === '1'
-                                }
-                              />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            align="start"
-                            sideOffset={5}
-                            alignOffset={0}
-                            className="bg-red-50 text-red-800 border border-red-200 z-50"
-                          >
-                            {getFieldErrorMessage(id, 'date')}
-                          </TooltipContent>
-                        </Tooltip>
+                      <div className="flex gap-1">
+                        <div className="flex-1 relative">
+                          <Tooltip open={hasFieldError(id, 'date')}>
+                            <TooltipTrigger asChild>
+                              <div className="relative">
+                                {hasFieldError(id, 'date') && (
+                                  <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-red-500 z-10">
+                                    <AlertCircle className="h-4 w-4" />
+                                  </div>
+                                )}
+                                <Input
+                                  type="text"
+                                  value={editedTransaction.date || ''}
+                                  onChange={(e) =>
+                                    handleFieldChange(
+                                      id,
+                                      'date',
+                                      e.target.value,
+                                    )
+                                  }
+                                  onBlur={() => handleFieldBlur(id, 'date')}
+                                  ref={(el) => registerInputRef(id, 'date', el)}
+                                  className={`h-8 text-sm ${
+                                    hasFieldError(id, 'date')
+                                      ? 'border-red-500 pl-8'
+                                      : ''
+                                  }`}
+                                  disabled={
+                                    !isCurrentFiscalYear ||
+                                    editedTransaction.checked === '1'
+                                  }
+                                />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              align="start"
+                              sideOffset={5}
+                              alignOffset={0}
+                              className="bg-red-50 text-red-800 border border-red-200 z-50"
+                            >
+                              {getFieldErrorMessage(id, 'date')}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div className="w-12">
+                          <Input
+                            type="text"
+                            value={getDayOfWeekKanji(
+                              editedTransaction.date || '',
+                            )}
+                            readOnly
+                            tabIndex={-1}
+                            className="h-8 text-sm text-center bg-gray-50"
+                          />
+                        </div>
                       </div>
                     </td>
                     <td className="py-2 px-1 relative">
