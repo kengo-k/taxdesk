@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -22,10 +22,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  buildTaxParameters,
+  calculateTax,
+  getSteps,
+} from '@/lib/client/tax-calculation'
+import {
   fetchFiscalYears,
   selectAllFiscalYears,
   selectFiscalYearLoading,
 } from '@/lib/redux/features/fiscalYearSlice'
+import {
+  fetchTaxCalculationParameters,
+  selectTaxCalculationParameters,
+} from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 export default function IncomeStatementPage() {
@@ -33,6 +42,9 @@ export default function IncomeStatementPage() {
   const dispatch = useAppDispatch()
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
+  const taxCalculationParameters = useAppSelector(
+    selectTaxCalculationParameters,
+  )
 
   // 年度選択の状態
   const [fiscalYear, setFiscalYear] = useState('none')
@@ -74,6 +86,31 @@ export default function IncomeStatementPage() {
       setFiscalYear('none')
     }
   }, [fiscalYears])
+
+  // 税額計算パラメータの取得
+  useEffect(() => {
+    if (fiscalYear !== 'none') {
+      dispatch(fetchTaxCalculationParameters(fiscalYear))
+    }
+  }, [dispatch, fiscalYear])
+
+  // 税額計算
+  const taxCalculation = useMemo(() => {
+    if (fiscalYear === 'none') return null
+    try {
+      const parameters = buildTaxParameters(
+        taxCalculationParameters,
+        fiscalYear,
+      )
+      const steps = getSteps(fiscalYear)
+      return calculateTax(steps, parameters)
+    } catch (error) {
+      console.error('Tax calculation failed:', error)
+      return null
+    }
+  }, [fiscalYear, taxCalculationParameters])
+
+  console.log(taxCalculation)
 
   // 合計金額の計算
   const totalRevenue = incomeStatementData.revenue.reduce(
