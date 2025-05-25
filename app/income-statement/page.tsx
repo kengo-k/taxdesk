@@ -51,22 +51,11 @@ export default function IncomeStatementPage() {
   const [incomeStatementData, setIncomeStatementData] = useState({
     revenue: [
       { name: '売上高', amount: 10000000 },
+      { name: '営業外収益', amount: 0 },
       { name: '受取利息', amount: 50000 },
-      { name: '雑収入', amount: 100000 },
     ],
-    expenses: [
-      { name: '売上原価', amount: 6000000 },
-      { name: '販売費及び一般管理費', amount: 2500000 },
-      { name: '人件費', amount: 1500000 },
-      { name: '地代家賃', amount: 500000 },
-      { name: '水道光熱費', amount: 200000 },
-      { name: '通信費', amount: 100000 },
-      { name: '旅費交通費', amount: 150000 },
-    ],
-    taxes: [
-      { name: '法人税等', amount: 500000 },
-      { name: '住民税', amount: 100000 },
-    ],
+    expenses: [{ name: '販売費及び一般管理費', amount: 2500000 }],
+    taxes: [{ name: '法人税、住民税及び事業税', amount: 0 }],
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -109,6 +98,28 @@ export default function IncomeStatementPage() {
       return null
     }
   }, [fiscalYear, taxCalculationParameters])
+
+  // 税額計算結果を反映
+  useEffect(() => {
+    if (taxCalculation) {
+      const result = taxCalculation.getResult()
+      const totalTaxAmount = result.reduce(
+        (sum: number, tax: { taxName: string; taxAmount: number }) => {
+          // 消費税以外の税金を合計
+          if (tax.taxName !== '消費税') {
+            return sum + tax.taxAmount
+          }
+          return sum
+        },
+        0,
+      )
+
+      setIncomeStatementData((prev) => ({
+        ...prev,
+        taxes: [{ name: '法人税、住民税及び事業税', amount: totalTaxAmount }],
+      }))
+    }
+  }, [taxCalculation])
 
   console.log(taxCalculation)
 
@@ -323,94 +334,22 @@ export default function IncomeStatementPage() {
           </CardHeader>
           <CardContent>
             <div className="max-w-3xl mx-auto">
-              {/* 収益の部 */}
-              <div className="mb-6">
-                <h3 className="font-bold text-lg mb-2 border-b pb-1">
-                  収益の部
-                </h3>
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-sm">
-                      <th className="pb-2 font-medium">科目</th>
-                      <th className="pb-2 font-medium text-right">金額</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {incomeStatementData.revenue.map(
-                      (item: any, index: any) => (
-                        <tr key={index} className="border-b border-gray-100">
-                          <td className="py-2">{item.name}</td>
-                          <td className="py-2 text-right">
-                            {formatCurrency(item.amount)}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                    <tr className="font-bold">
-                      <td className="py-2">収益合計</td>
-                      <td className="py-2 text-right">
-                        {formatCurrency(totalRevenue)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <table className="w-full">
+                <tbody>
+                  {/* 売上高 */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">
+                      {incomeStatementData.revenue[0].name}
+                    </td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(incomeStatementData.revenue[0].amount)}
+                    </td>
+                  </tr>
 
-              {/* 費用の部 */}
-              <div className="mb-6">
-                <h3 className="font-bold text-lg mb-2 border-b pb-1">
-                  費用の部
-                </h3>
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-sm">
-                      <th className="pb-2 font-medium">科目</th>
-                      <th className="pb-2 font-medium text-right">金額</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {incomeStatementData.expenses.map(
-                      (item: any, index: any) => (
-                        <tr key={index} className="border-b border-gray-100">
-                          <td className="py-2">{item.name}</td>
-                          <td className="py-2 text-right">
-                            {formatCurrency(item.amount)}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                    <tr className="font-bold">
-                      <td className="py-2">費用合計</td>
-                      <td className="py-2 text-right">
-                        {formatCurrency(totalExpenses)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* 営業利益 */}
-              <div className="mb-6 p-3 bg-blue-50 rounded-md print:bg-white print:border print:border-blue-200">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold">営業利益</h3>
-                  <p className="font-bold text-lg">
-                    {formatCurrency(operatingIncome)}
-                  </p>
-                </div>
-              </div>
-
-              {/* 税金 */}
-              <div className="mb-6">
-                <h3 className="font-bold text-lg mb-2 border-b pb-1">税金</h3>
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-left text-sm">
-                      <th className="pb-2 font-medium">科目</th>
-                      <th className="pb-2 font-medium text-right">金額</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {incomeStatementData.taxes.map((item: any, index: any) => (
+                  {/* 販売費及び一般管理費 */}
+                  {incomeStatementData.expenses
+                    .filter((item: any) => item.name === '販売費及び一般管理費')
+                    .map((item: any, index: any) => (
                       <tr key={index} className="border-b border-gray-100">
                         <td className="py-2">{item.name}</td>
                         <td className="py-2 text-right">
@@ -418,25 +357,58 @@ export default function IncomeStatementPage() {
                         </td>
                       </tr>
                     ))}
-                    <tr className="font-bold">
-                      <td className="py-2">税金合計</td>
+
+                  {/* その他の収益 */}
+                  {incomeStatementData.revenue
+                    .slice(1)
+                    .map((item: any, index: any) => (
+                      <tr key={index} className="border-b border-gray-100">
+                        <td
+                          className={`py-2 ${item.name === '受取利息' ? 'pl-6' : ''}`}
+                        >
+                          {item.name}
+                        </td>
+                        <td className="py-2 text-right">
+                          {formatCurrency(item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+
+                  {/* 経常利益 */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">経常利益</td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(operatingIncome)}
+                    </td>
+                  </tr>
+
+                  {/* 税引き前当期純利益 */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">税引き前当期純利益</td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(operatingIncome)}
+                    </td>
+                  </tr>
+
+                  {/* 税金 */}
+                  {incomeStatementData.taxes.map((item: any, index: any) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="py-2">{item.name}</td>
                       <td className="py-2 text-right">
-                        {formatCurrency(totalTaxes)}
+                        {formatCurrency(item.amount)}
                       </td>
                     </tr>
-                  </tbody>
-                </table>
-              </div>
+                  ))}
 
-              {/* 当期純利益 */}
-              <div className="p-4 bg-green-50 rounded-md print:bg-white print:border print:border-green-200">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-bold">当期純利益</h3>
-                  <p className="font-bold text-xl">
-                    {formatCurrency(netIncome)}
-                  </p>
-                </div>
-              </div>
+                  {/* 当期純利益 */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">当期純利益</td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(netIncome)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               {/* 利益率 */}
               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -444,15 +416,13 @@ export default function IncomeStatementPage() {
                   <h4 className="text-sm font-medium text-gray-500 mb-1">
                     売上高
                   </h4>
-                  <p className="font-bold text-lg">
-                    {formatCurrency(totalRevenue)}
-                  </p>
+                  <p className="text-lg">{formatCurrency(totalRevenue)}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-md print:bg-white print:border">
                   <h4 className="text-sm font-medium text-gray-500 mb-1">
-                    営業利益率
+                    経常利益率
                   </h4>
-                  <p className="font-bold text-lg">
+                  <p className="text-lg">
                     {((operatingIncome / totalRevenue) * 100).toFixed(1)}%
                   </p>
                 </div>
@@ -460,7 +430,7 @@ export default function IncomeStatementPage() {
                   <h4 className="text-sm font-medium text-gray-500 mb-1">
                     純利益率
                   </h4>
-                  <p className="font-bold text-lg">
+                  <p className="text-lg">
                     {((netIncome / totalRevenue) * 100).toFixed(1)}%
                   </p>
                 </div>
