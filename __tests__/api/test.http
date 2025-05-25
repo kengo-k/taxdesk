@@ -141,3 +141,19 @@ Content-Type: application/json
         }
     ]
 }
+
+### 内訳取得: 経費内訳(細目別/月別)
+
+POST http://localhost:3000/api/fiscal-years/2024/reports/breakdown
+Content-Type: application/json
+
+{
+    "requests": [
+        {
+            "kamokuBunruiCd": "B",
+            "breakdownLevel": "saimoku",
+            "breakdownType": "kasikata",
+            "timeUnit": "month"
+        }
+    ]
+}
