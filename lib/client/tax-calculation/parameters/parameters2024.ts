@@ -18,7 +18,7 @@ export const parameters2024Selector: ParameterSelector = () => {
     // - 国税と地方税の区別が必要なため細目単位で取得する
     {
       kamokuBunruiCd: KAMOKU_BUNRUI.ASSET,
-      breakdownLevel: 'saimoku',
+      breakdownLevel: 'kamoku',
       breakdownType: 'net',
       timeUnit: 'annual',
     },
@@ -42,7 +42,7 @@ export const parameters2024Selector: ParameterSelector = () => {
     // - 前年度事業税は期首に未払事業税として負債に計上されている
     {
       kamokuBunruiCd: KAMOKU_BUNRUI.LIABILITY,
-      breakdownLevel: 'kamoku',
+      breakdownLevel: 'saimoku',
       breakdownType: 'kasikata',
       timeUnit: 'annual',
     },
@@ -55,11 +55,20 @@ export const parameters2024Selector: ParameterSelector = () => {
 export const parameters2024Builder: ParameterBuilder = (
   state: ReturnType<typeof selectTaxCalculationParameters>,
 ): Context2024 => {
-  return {
-    sales: state[0].response[0].value,
-    expenses: state[2].response[0].value,
-    previous_business_tax: 0,
-    corporate_tax_deduction: 0,
+  const params: Context2024 = {
+    //
+    // 法人税等の計算に使用する初期パラメータ
+    //
+    sales: 0, // 収益全体
+    expenses: 0, // 費用全体
+    previous_business_tax: 0, // 前年度事業税
+    corporate_tax_deduction: 0, // 法人税額から控除する金額
+
+    //
+    // 以降は計算ステップにより算出される数値
+    //
+
+    // 課税所得金額
     taxable_income: 0,
 
     // 法人税関連
@@ -125,4 +134,40 @@ export const parameters2024Builder: ParameterBuilder = (
       ]
     },
   }
+  if (state.length > 0) {
+    // 収益全体
+    // 事業の売上および営業外収益を全て加算する
+    // 利息は源泉徴収前の総額を使用する
+    params.sales = state[0].response[0].value
+
+    // 費用全体
+    // 事業の費用および営業外費用を全て加算する
+    // 租税公課のうち事業税は翌年度に損金参入するため当年度からは除外する
+    // (昨年度から引き継いだ)未払法人税のうち事業税は当年度に損金参入するため加算する
+    params.expenses =
+      state[2].response[0].value -
+      state[3].response.reduce((acc, item) => {
+        if (item.custom_fields?.category === 'exclude_expense') {
+          return acc + item.value
+        }
+        return acc
+      }, 0)
+
+    params.previous_business_tax = state[4].response.reduce((acc, item) => {
+      if (item.custom_fields?.category === 'include_expense') {
+        return acc + item.value
+      }
+      return acc
+    }, 0)
+
+    // 法人税額から控除する金額
+    // custom_fields に含まれるcategoryがdeductible_from_taxである金額の合計を算出する
+    params.corporate_tax_deduction = state[1].response.reduce((acc, item) => {
+      if (item.custom_fields?.category === 'deductible_from_tax') {
+        return acc + item.value
+      }
+      return acc
+    }, 0)
+  }
+  return params
 }

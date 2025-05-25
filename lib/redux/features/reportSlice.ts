@@ -359,8 +359,6 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchGenericExpenseByMonth.fulfilled, (state, action) => {
         state.breakdown.saimokuNetExpensesByMonth.loading = false
-        console.log('HELLO!!!2')
-        console.log(action.payload)
         state.breakdown.saimokuNetExpensesByMonth.data =
           action.payload.monthly[0].response
       })
