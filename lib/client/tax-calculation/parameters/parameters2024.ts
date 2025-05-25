@@ -9,7 +9,7 @@ export const parameters2024Selector: ParameterSelector = () => {
     // 売上全体
     {
       kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
-      breakdownLevel: 'kamoku_bunrui',
+      breakdownLevel: 'kamoku',
       breakdownType: 'net',
       timeUnit: 'annual',
     },
@@ -138,7 +138,9 @@ export const parameters2024Builder: ParameterBuilder = (
     // 収益全体
     // 事業の売上および営業外収益を全て加算する
     // 利息は源泉徴収前の総額を使用する
-    params.sales = state[0].response[0].value
+    params.sales = state[0].response.reduce((acc, item) => {
+      return acc + item.value
+    }, 0)
 
     // 費用全体
     // 事業の費用および営業外費用を全て加算する
