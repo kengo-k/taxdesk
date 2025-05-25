@@ -37,8 +37,27 @@ export default function IncomeStatementPage() {
 
   // 年度選択の状態
   const [fiscalYear, setFiscalYear] = useState('2024')
-  const [incomeStatementData, setIncomeStatementData] = useState(null as any)
-  const [loading, setLoading] = useState(true)
+  const [incomeStatementData, setIncomeStatementData] = useState({
+    revenue: [
+      { name: '売上高', amount: 10000000 },
+      { name: '受取利息', amount: 50000 },
+      { name: '雑収入', amount: 100000 },
+    ],
+    expenses: [
+      { name: '売上原価', amount: 6000000 },
+      { name: '販売費及び一般管理費', amount: 2500000 },
+      { name: '人件費', amount: 1500000 },
+      { name: '地代家賃', amount: 500000 },
+      { name: '水道光熱費', amount: 200000 },
+      { name: '通信費', amount: 100000 },
+      { name: '旅費交通費', amount: 150000 },
+    ],
+    taxes: [
+      { name: '法人税等', amount: 500000 },
+      { name: '住民税', amount: 100000 },
+    ],
+  })
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // 年度データの取得
@@ -63,44 +82,20 @@ export default function IncomeStatementPage() {
     }
   }, [fiscalYears])
 
-  // APIからデータを取得
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        // 期間は常に通期（full-year）を使用
-        const response = await fetch(
-          `/api/reports/income-statement?fiscalYear=${fiscalYear}&period=full-year`,
-        )
-        if (!response.ok) {
-          throw new Error('データの取得に失敗しました')
-        }
-        const data = await response.json()
-        setIncomeStatementData(data.incomeStatementData)
-        if (!data.incomeStatementData) {
-          setError('損益計算書データが見つかりませんでした')
-        }
-      } catch (error) {
-        console.error('エラーが発生しました:', error)
-        setError(
-          error instanceof Error ? error.message : 'データの取得に失敗しました',
-        )
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (fiscalYear) {
-      fetchData()
-    }
-  }, [fiscalYear])
-
   // 合計金額の計算
-  const totalRevenue = 0
-  const totalExpenses = 0
+  const totalRevenue = incomeStatementData.revenue.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
+  const totalExpenses = incomeStatementData.expenses.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
   const operatingIncome = totalRevenue - totalExpenses
-  const totalTaxes = 0
+  const totalTaxes = incomeStatementData.taxes.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
   const netIncome = operatingIncome - totalTaxes
 
   // 金額のフォーマット
