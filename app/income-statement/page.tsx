@@ -48,14 +48,15 @@ export default function IncomeStatementPage() {
 
   // 年度選択の状態
   const [fiscalYear, setFiscalYear] = useState('none')
+
   const [incomeStatementData, setIncomeStatementData] = useState({
-    revenue: [
-      { name: '売上高', amount: 10000000 },
-      { name: '営業外収益', amount: 0 },
-      { name: '受取利息', amount: 50000 },
-    ],
-    expenses: [{ name: '販売費及び一般管理費', amount: 2500000 }],
-    taxes: [{ name: '法人税、住民税及び事業税', amount: 0 }],
+    business_revenue: { name: '売上高', amount: 0 },
+    other_revenue: [] as {
+      name: string
+      amount: number
+    }[],
+    expenses: { name: '販売費及び一般管理費', amount: 0 },
+    taxes: { name: '法人税、住民税及び事業税', amount: 0 },
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,42 +102,48 @@ export default function IncomeStatementPage() {
 
   // 税額計算結果を反映
   useEffect(() => {
-    if (taxCalculation) {
-      const result = taxCalculation.getResult()
-      const totalTaxAmount = result.reduce(
-        (sum: number, tax: { taxName: string; taxAmount: number }) => {
-          // 消費税以外の税金を合計
-          if (tax.taxName !== '消費税') {
-            return sum + tax.taxAmount
-          }
-          return sum
-        },
-        0,
-      )
-
+    if (taxCalculation && taxCalculationParameters.length > 0) {
+      const taxes = taxCalculation.getResult()
+      const totalAmount = taxes[taxes.length - 1].taxAmount
+      const business_revenue = incomeStatementData.business_revenue
+      const expenses = incomeStatementData.expenses
       setIncomeStatementData((prev) => ({
         ...prev,
-        taxes: [{ name: '法人税、住民税及び事業税', amount: totalTaxAmount }],
+        business_revenue: {
+          ...business_revenue,
+          amount: taxCalculationParameters[0].response.reduce((acc, item) => {
+            if (item.custom_fields?.category === 'business_revenue') {
+              return acc + item.value
+            }
+            return acc
+          }, 0),
+        },
+        other_revenue: taxCalculationParameters[0].response.flatMap((item) => {
+          if (item.custom_fields?.category === 'other_revenue') {
+            return [{ name: item.name, amount: item.value }]
+          }
+          return []
+        }),
+        expenses: {
+          ...expenses,
+          amount: taxCalculationParameters[2].response[0].value,
+        },
+        taxes: { name: '法人税、住民税及び事業税', amount: totalAmount },
       }))
     }
-  }, [taxCalculation])
-
-  console.log(taxCalculation)
+  }, [taxCalculation, taxCalculationParameters])
 
   // 合計金額の計算
-  const totalRevenue = incomeStatementData.revenue.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  )
-  const totalExpenses = incomeStatementData.expenses.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  )
-  const operatingIncome = totalRevenue - totalExpenses
-  const totalTaxes = incomeStatementData.taxes.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  )
+  const totalRevenue = incomeStatementData.business_revenue.amount
+  const totalExpenses = incomeStatementData.expenses.amount
+  const operatingIncome =
+    totalRevenue -
+    totalExpenses +
+    incomeStatementData.other_revenue.reduce(
+      (acc, item) => acc + item.amount,
+      0,
+    )
+  const totalTaxes = incomeStatementData.taxes.amount
   const netIncome = operatingIncome - totalTaxes
 
   // 金額のフォーマット
@@ -339,40 +346,42 @@ export default function IncomeStatementPage() {
                   {/* 売上高 */}
                   <tr className="border-b border-gray-100">
                     <td className="py-2">
-                      {incomeStatementData.revenue[0].name}
+                      {incomeStatementData.business_revenue.name}
                     </td>
                     <td className="py-2 text-right">
-                      {formatCurrency(incomeStatementData.revenue[0].amount)}
+                      {formatCurrency(
+                        incomeStatementData.business_revenue.amount,
+                      )}
                     </td>
                   </tr>
 
                   {/* 販売費及び一般管理費 */}
-                  {incomeStatementData.expenses
-                    .filter((item: any) => item.name === '販売費及び一般管理費')
-                    .map((item: any, index: any) => (
-                      <tr key={index} className="border-b border-gray-100">
-                        <td className="py-2">{item.name}</td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(item.amount)}
-                        </td>
-                      </tr>
-                    ))}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">
+                      {incomeStatementData.expenses.name}
+                    </td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(incomeStatementData.expenses.amount)}
+                    </td>
+                  </tr>
 
-                  {/* その他の収益 */}
-                  {incomeStatementData.revenue
-                    .slice(1)
-                    .map((item: any, index: any) => (
-                      <tr key={index} className="border-b border-gray-100">
-                        <td
-                          className={`py-2 ${item.name === '受取利息' ? 'pl-6' : ''}`}
-                        >
-                          {item.name}
-                        </td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(item.amount)}
-                        </td>
-                      </tr>
-                    ))}
+                  {/* 営業外収益 */}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">営業外収益</td>
+                    <td className="py-2 text-right">
+                      <br />
+                    </td>
+                  </tr>
+
+                  {/* 受取利息 */}
+                  {incomeStatementData.other_revenue.map((item, index) => (
+                    <tr key={index} className="border-b border-gray-100">
+                      <td className="py-2 pl-6">{item.name}</td>
+                      <td className="py-2 text-right">
+                        {formatCurrency(item.amount)}
+                      </td>
+                    </tr>
+                  ))}
 
                   {/* 経常利益 */}
                   <tr className="border-b border-gray-100">
@@ -391,14 +400,12 @@ export default function IncomeStatementPage() {
                   </tr>
 
                   {/* 税金 */}
-                  {incomeStatementData.taxes.map((item: any, index: any) => (
-                    <tr key={index} className="border-b border-gray-100">
-                      <td className="py-2">{item.name}</td>
-                      <td className="py-2 text-right">
-                        {formatCurrency(item.amount)}
-                      </td>
-                    </tr>
-                  ))}
+                  <tr className="border-b border-gray-100">
+                    <td className="py-2">{incomeStatementData.taxes.name}</td>
+                    <td className="py-2 text-right">
+                      {formatCurrency(incomeStatementData.taxes.amount)}
+                    </td>
+                  </tr>
 
                   {/* 当期純利益 */}
                   <tr className="border-b border-gray-100">
