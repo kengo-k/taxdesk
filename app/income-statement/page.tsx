@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from '@/components/ui/use-toast'
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
@@ -99,18 +98,6 @@ export default function IncomeStatementPage() {
       currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
-  }
-
-  // PDFダウンロード処理
-  const handleDownloadPDF = () => {
-    // 選択された年度のラベルを取得
-    const selectedYearLabel =
-      fiscalYears.find((year) => year.id === fiscalYear)?.label || fiscalYear
-
-    toast({
-      title: 'PDFをダウンロードしました',
-      description: `${selectedYearLabel} 通期の損益計算書をダウンロードしました。`,
-    })
   }
 
   // データ読み込み中の表示
@@ -280,13 +267,6 @@ export default function IncomeStatementPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleDownloadPDF}>
-                  <Download className="h-4 w-4 mr-2" />
-                  PDFダウンロード
-                </Button>
               </div>
             </div>
           </CardContent>
