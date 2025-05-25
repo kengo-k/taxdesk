@@ -36,7 +36,7 @@ export default function IncomeStatementPage() {
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
   // 年度選択の状態
-  const [fiscalYear, setFiscalYear] = useState('2024')
+  const [fiscalYear, setFiscalYear] = useState('none')
   const [incomeStatementData, setIncomeStatementData] = useState({
     revenue: [
       { name: '売上高', amount: 10000000 },
@@ -71,14 +71,8 @@ export default function IncomeStatementPage() {
   // 年度が取得できたら、初期値を設定
   useEffect(() => {
     if (fiscalYears.length > 0) {
-      // 現在の年度を初期選択
-      const currentYear = fiscalYears.find((year) => year.isCurrent)
-      if (currentYear) {
-        setFiscalYear(currentYear.id)
-      } else {
-        // 現在の年度がない場合は最新の年度を選択
-        setFiscalYear(fiscalYears[0].id)
-      }
+      // 初期値は未選択状態のままにする
+      setFiscalYear('none')
     }
   }, [fiscalYears])
 
@@ -182,8 +176,8 @@ export default function IncomeStatementPage() {
     )
   }
 
-  // データがnullの場合
-  if (!incomeStatementData) {
+  // データがnullの場合、または年度が未選択の場合
+  if (!incomeStatementData || fiscalYear === 'none') {
     return (
       <div className="container mx-auto px-4 py-6">
         <main className="flex-1 container mx-auto px-4 py-6">
@@ -198,38 +192,52 @@ export default function IncomeStatementPage() {
             <h2 className="text-lg font-bold">損益計算書</h2>
           </div>
           <Card className="mb-6">
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <div className="text-amber-500 mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="mx-auto mb-2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-                <h3 className="text-lg font-bold">データが見つかりません</h3>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    会計年度
+                  </label>
+                  <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="会計年度を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      {fiscalYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <p className="text-gray-600 mb-4">
-                選択された年度のデータが存在しないか、取得できませんでした。
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                >
-                  再読み込み
-                </Button>
-                <Button onClick={() => window.history.back()}>戻る</Button>
-              </div>
+              {fiscalYear === 'none' && (
+                <div className="mt-6 text-center">
+                  <div className="text-amber-500 mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mx-auto mb-2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600">
+                    損益計算書を表示するには、会計年度を選択してください。
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </main>
@@ -261,9 +269,10 @@ export default function IncomeStatementPage() {
                 </label>
                 <Select value={fiscalYear} onValueChange={setFiscalYear}>
                   <SelectTrigger>
-                    <SelectValue placeholder="会計年度を選択" />
+                    <SelectValue placeholder="会計年度を選択してください" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">未設定</SelectItem>
                     {fiscalYears.map((year) => (
                       <SelectItem key={year.id} value={year.id}>
                         {year.label}
