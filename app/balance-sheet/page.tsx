@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import Link from 'next/link'
 
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from '@/components/ui/use-toast'
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
@@ -36,10 +35,27 @@ export default function BalanceSheetPage() {
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
   // 期間選択の状態
-  const [fiscalYear, setFiscalYear] = useState('2024')
-  const [balanceSheetData, setBalanceSheetData] = useState(null as any)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [fiscalYear, setFiscalYear] = useState('none')
+  const [balanceSheetData, setBalanceSheetData] = useState({
+    assets: [
+      { name: '現金及び預金', amount: 5000000 },
+      { name: '売掛金', amount: 2000000 },
+      { name: '棚卸資産', amount: 1000000 },
+      { name: '固定資産', amount: 3000000 },
+    ],
+    liabilities: [
+      { name: '買掛金', amount: 1500000 },
+      { name: '未払金', amount: 500000 },
+      { name: '借入金', amount: 2000000 },
+    ],
+    equity: [
+      { name: '資本金', amount: 1000000 },
+      { name: '資本剰余金', amount: 500000 },
+      { name: '利益剰余金', amount: 4500000 },
+    ],
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // 年度データの取得
   useEffect(() => {
@@ -52,21 +68,24 @@ export default function BalanceSheetPage() {
   // 年度が取得できたら、初期値を設定
   useEffect(() => {
     if (fiscalYears.length > 0) {
-      // 現在の年度を初期選択
-      const currentYear = fiscalYears.find((year) => year.isCurrent)
-      if (currentYear) {
-        setFiscalYear(currentYear.id)
-      } else {
-        // 現在の年度がない場合は最新の年度を選択
-        setFiscalYear(fiscalYears[0].id)
-      }
+      // 初期値は未選択状態のままにする
+      setFiscalYear('none')
     }
   }, [fiscalYears])
 
   // 合計金額の計算
-  const totalAssets = 0
-  const totalLiabilities = 0
-  const totalEquity = 0
+  const totalAssets = balanceSheetData.assets.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
+  const totalLiabilities = balanceSheetData.liabilities.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
+  const totalEquity = balanceSheetData.equity.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  )
   const totalLiabilitiesAndEquity = totalLiabilities + totalEquity
 
   // 金額のフォーマット
@@ -76,18 +95,6 @@ export default function BalanceSheetPage() {
       currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
-  }
-
-  // PDFダウンロード処理
-  const handleDownloadPDF = () => {
-    // 選択された年度のラベルを取得
-    const selectedYearLabel =
-      fiscalYears.find((year) => year.id === fiscalYear)?.label || fiscalYear
-
-    toast({
-      title: 'PDFをダウンロードしました',
-      description: `${selectedYearLabel} 3月末日の貸借対照表をダウンロードしました。`,
-    })
   }
 
   // データ読み込み中の表示
@@ -154,6 +161,75 @@ export default function BalanceSheetPage() {
     )
   }
 
+  // データがnullの場合、または年度が未選択の場合
+  if (!balanceSheetData || fiscalYear === 'none') {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <main className="flex-1 container mx-auto px-4 py-6">
+          <div className="mb-6 flex items-center print:hidden">
+            <Link
+              href="/"
+              className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              戻る
+            </Link>
+            <h2 className="text-lg font-bold">貸借対照表</h2>
+          </div>
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    会計年度
+                  </label>
+                  <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="会計年度を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      {fiscalYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {fiscalYear === 'none' && (
+                <div className="mt-6 text-center">
+                  <div className="text-amber-500 mb-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mx-auto mb-2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-600">
+                    貸借対照表を表示するには、会計年度を選択してください。
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <main className="flex-1 container mx-auto px-4 py-6">
@@ -172,15 +248,16 @@ export default function BalanceSheetPage() {
         <Card className="mb-6 print:hidden">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="w-full md:w-1/3">
+              <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   会計年度
                 </label>
                 <Select value={fiscalYear} onValueChange={setFiscalYear}>
                   <SelectTrigger>
-                    <SelectValue placeholder="会計年度を選択" />
+                    <SelectValue placeholder="会計年度を選択してください" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none">未設定</SelectItem>
                     {fiscalYears.map((year) => (
                       <SelectItem key={year.id} value={year.id}>
                         {year.label}
@@ -188,13 +265,6 @@ export default function BalanceSheetPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleDownloadPDF}>
-                  <Download className="h-4 w-4 mr-2" />
-                  PDFダウンロード
-                </Button>
               </div>
             </div>
           </CardContent>
@@ -223,12 +293,12 @@ export default function BalanceSheetPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm">
-                        <th className="pb-2 font-medium">科目</th>
-                        <th className="pb-2 font-medium text-right">金額</th>
+                        <th className="pb-2"></th>
+                        <th className="pb-2"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {balanceSheetData.assets.map((item: any, index: any) => (
+                      {balanceSheetData.assets.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100">
                           <td className="py-2">{item.name}</td>
                           <td className="py-2 text-right">
@@ -256,21 +326,19 @@ export default function BalanceSheetPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm">
-                        <th className="pb-2 font-medium">科目</th>
-                        <th className="pb-2 font-medium text-right">金額</th>
+                        <th className="pb-2"></th>
+                        <th className="pb-2"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {balanceSheetData.liabilities.map(
-                        (item: any, index: any) => (
-                          <tr key={index} className="border-b border-gray-100">
-                            <td className="py-2">{item.name}</td>
-                            <td className="py-2 text-right">
-                              {formatCurrency(item.amount)}
-                            </td>
-                          </tr>
-                        ),
-                      )}
+                      {balanceSheetData.liabilities.map((item, index) => (
+                        <tr key={index} className="border-b border-gray-100">
+                          <td className="py-2">{item.name}</td>
+                          <td className="py-2 text-right">
+                            {formatCurrency(item.amount)}
+                          </td>
+                        </tr>
+                      ))}
                       <tr className="font-bold">
                         <td className="py-2">負債合計</td>
                         <td className="py-2 text-right">
@@ -286,12 +354,12 @@ export default function BalanceSheetPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="text-left text-sm">
-                        <th className="pb-2 font-medium">科目</th>
-                        <th className="pb-2 font-medium text-right">金額</th>
+                        <th className="pb-2"></th>
+                        <th className="pb-2"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      {balanceSheetData.equity.map((item: any, index: any) => (
+                      {balanceSheetData.equity.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100">
                           <td className="py-2">{item.name}</td>
                           <td className="py-2 text-right">
@@ -305,39 +373,8 @@ export default function BalanceSheetPage() {
                           {formatCurrency(totalEquity)}
                         </td>
                       </tr>
-                      <tr className="font-bold">
-                        <td className="py-2">負債・純資産合計</td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(totalLiabilitiesAndEquity)}
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
-                </div>
-              </div>
-            </div>
-
-            {/* 貸借対照表の検証 */}
-            <div className="mt-8 p-4 bg-gray-50 rounded-md print:bg-white">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium">貸借対照表の検証</h4>
-                  <p className="text-sm text-gray-500">
-                    資産合計 = 負債・純資産合計
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">資産合計</p>
-                    <p className="font-bold">{formatCurrency(totalAssets)}</p>
-                  </div>
-                  <div className="text-2xl">=</div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">負債・純資産合計</p>
-                    <p className="font-bold">
-                      {formatCurrency(totalLiabilitiesAndEquity)}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
