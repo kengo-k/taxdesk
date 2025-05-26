@@ -102,14 +102,8 @@ export default function BalanceSheetPage() {
       const totalAmount = taxes[taxes.length - 1].taxAmount
       setBalanceSheetData((prev) => ({
         ...prev,
-        assets: taxCalculationParameters[1].response.flatMap((item) => {
-          if (item.custom_fields?.category === 'deductible_from_tax') {
-            return []
-          }
-          if (item.value === 0) {
-            return []
-          }
-          return [{ name: item.name, amount: item.value }]
+        assets: taxCalculationParameters[1].response.map((item) => {
+          return { name: item.name, amount: item.value }
         }),
         liabilities: taxCalculationParameters[5].response.flatMap((item) => {
           if (item.value === 0) {

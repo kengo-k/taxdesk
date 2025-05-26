@@ -439,7 +439,7 @@ async function getMonthlyKamokuKarikataBreakdown(
     select kari_km.kamoku_cd as code,
           substring(j.date, 5, 2) as month,
           sum(karikata_value) as value,
-          max(kari_sm.saimoku_ryaku_name) as name,
+          max(kari_km.kamoku_ryaku_name) as name,
           max(kari_km.custom_fields::text) as custom_fields
     from journals j
             join saimoku_masters kari_sm on kari_sm.saimoku_cd = j.karikata_cd
@@ -461,7 +461,7 @@ async function getAnnualKamokuKarikataBreakdown(
   return await conn.$queryRaw<BreakdownResult[]>`
     select kari_km.kamoku_cd as code,
           sum(karikata_value) as value,
-          max(kari_sm.saimoku_ryaku_name) as name,
+          max(kari_km.kamoku_ryaku_name) as name,
           max(kari_km.custom_fields::text) as custom_fields
     from journals j
             join saimoku_masters kari_sm on kari_sm.saimoku_cd = j.karikata_cd
@@ -569,7 +569,7 @@ async function getMonthlyKamokuKasikataBreakdown(
     select kasi_km.kamoku_cd as code,
           substring(j.date, 5, 2) as month,
           sum(kasikata_value) as value,
-          max(kasi_sm.saimoku_ryaku_name) as name,
+          max(kasi_km.kamoku_ryaku_name) as name,
           max(kasi_km.custom_fields::text) as custom_fields
     from journals j
             join saimoku_masters kasi_sm on kasi_sm.saimoku_cd = j.kasikata_cd
@@ -591,7 +591,7 @@ async function getAnnualKamokuKasikataBreakdown(
   return await conn.$queryRaw<BreakdownResult[]>`
     select kasi_km.kamoku_cd as code,
           sum(kasikata_value) as value,
-          max(kasi_sm.saimoku_ryaku_name) as name,
+          max(kasi_km.kamoku_ryaku_name) as name,
           max(kasi_km.custom_fields::text) as custom_fields
     from journals j
             join saimoku_masters kasi_sm on kasi_sm.saimoku_cd = j.kasikata_cd
