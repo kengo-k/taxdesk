@@ -150,54 +150,6 @@ export default function LedgerPage() {
     )
   }, [fiscalYear, account, month, checked, note, currentPage, pageSize])
 
-  // useEffect(() => {
-  //   updateUrlParams()
-  //   setMonth(null)
-  //   setCurrentPage(1)
-  //   if (fiscalYear != null && account != null) {
-  //     dispatch(
-  //       fetchTransactions({
-  //         nendo: fiscalYear,
-  //         code: account,
-  //         month: month,
-  //         page: currentPage,
-  //         pageSize: pageSize,
-  //       }),
-  //     )
-  //   } else {
-  //     // TODO ストアの台帳一覧をクリアする
-  //   }
-  // }, [account])
-
-  // useEffect(() => {
-  //   updateUrlParams()
-  //   if (fiscalYear != null && account != null) {
-  //     dispatch(
-  //       fetchTransactions({
-  //         nendo: fiscalYear,
-  //         code: account,
-  //         month: month,
-  //         page: currentPage,
-  //         pageSize: pageSize,
-  //       }),
-  //     )
-  //   }
-  // }, [month])
-
-  // // コンポーネントマウント時に年度一覧と勘定科目データを取得
-  // useEffect(() => {
-  //   // ストアに年度データがない場合のみ取得
-  //   if (fiscalYears.length === 0 && !fiscalYearsLoading) {
-  //     dispatch(fetchFiscalYears())
-  //   }
-
-  //   // URLパラメータから年度が指定されている場合は、その年度のデータを取得
-  //   if (nendoParam != null) {
-  //     dispatch(fetchAccountCounts(nendoParam))
-  //   }
-  //   setInitialLoaded(true)
-  // }, [dispatch, nendoParam, fiscalYears.length, fiscalYearsLoading])
-
   // 勘定科目一覧と勘定科目別レコード件数をマージ
   const mergedAccounts = useMemo(() => {
     const countMap = new Map<string, number>()
@@ -229,54 +181,6 @@ export default function LedgerPage() {
       dispatch(fetchAccountList(fiscalYear))
     }
   }, [dispatch, fiscalYear])
-
-  // // 検索条件が変更されたときにReduxの検索パラメータを更新し、取引データを取得
-  // useEffect(() => {
-  //   if (fiscalYear == null) {
-  //     // TODO 全ての検索条件をクリアする
-  //     // TODO ストアの台帳一覧をクリアする
-  //     return
-  //   }
-  //   if (account == null) {
-  //     // TODO 勘定科目をクリアする
-  //     // TODO ストアの台帳一覧をクリアする
-  //     return
-  //   }
-  //   const searchParams: TransactionSearchParams = {
-  //     nendo: fiscalYear,
-  //     page: currentPage,
-  //     pageSize: pageSize,
-  //     code: null,
-  //     month: null,
-  //   }
-
-  //   // 勘定科目コードを取得
-  //   searchParams.code = account
-
-  //   // 月を設定
-  //   if (month != null) {
-  //     searchParams.month = month
-  //   }
-
-  //   // 検索パラメータを更新
-  //   dispatch(updateSearchParams(searchParams))
-
-  //   // 取引データを取得
-  //   dispatch(fetchTransactions(searchParams))
-  // }, [dispatch, fiscalYear, account, month, currentPage, pageSize])
-
-  // 勘定科目IDからコードを取得する関数
-  // const getCodeFromAccountId = (accountId: string): string | null => {
-  //   if (accountId === 'unset') return null
-
-  //   // マージされた勘定科目データから検索
-  //   if (mergedAccounts.length > 0) {
-  //     const account = mergedAccounts.find((acc) => acc.id === accountId)
-  //     if (account) return account.code
-  //   }
-
-  //   return null
-  // }
 
   // URLパラメータを更新する関数
   const updateUrlParams = () => {
