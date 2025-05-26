@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 
@@ -22,10 +22,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  buildTaxParameters,
+  calculateTax,
+  getSteps,
+} from '@/lib/client/tax-calculation'
+import {
   fetchFiscalYears,
   selectAllFiscalYears,
   selectFiscalYearLoading,
 } from '@/lib/redux/features/fiscalYearSlice'
+import {
+  fetchTaxCalculationParameters,
+  selectTaxCalculationParameters,
+} from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 export default function BalanceSheetPage() {
@@ -33,26 +42,16 @@ export default function BalanceSheetPage() {
   const dispatch = useAppDispatch()
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
+  const taxCalculationParameters = useAppSelector(
+    selectTaxCalculationParameters,
+  )
 
   // 期間選択の状態
   const [fiscalYear, setFiscalYear] = useState('none')
   const [balanceSheetData, setBalanceSheetData] = useState({
-    assets: [
-      { name: '現金及び預金', amount: 5000000 },
-      { name: '売掛金', amount: 2000000 },
-      { name: '棚卸資産', amount: 1000000 },
-      { name: '固定資産', amount: 3000000 },
-    ],
-    liabilities: [
-      { name: '買掛金', amount: 1500000 },
-      { name: '未払金', amount: 500000 },
-      { name: '借入金', amount: 2000000 },
-    ],
-    equity: [
-      { name: '資本金', amount: 1000000 },
-      { name: '資本剰余金', amount: 500000 },
-      { name: '利益剰余金', amount: 4500000 },
-    ],
+    assets: [] as { name: string; amount: number }[],
+    liabilities: [] as { name: string; amount: number }[],
+    equity: [] as { name: string; amount: number }[],
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -72,6 +71,70 @@ export default function BalanceSheetPage() {
       setFiscalYear('none')
     }
   }, [fiscalYears])
+
+  // 税額計算パラメータの取得
+  useEffect(() => {
+    if (fiscalYear !== 'none') {
+      dispatch(fetchTaxCalculationParameters(fiscalYear))
+    }
+  }, [dispatch, fiscalYear])
+
+  // 税額計算
+  const taxCalculation = useMemo(() => {
+    if (fiscalYear === 'none') return null
+    try {
+      const parameters = buildTaxParameters(
+        taxCalculationParameters,
+        fiscalYear,
+      )
+      const steps = getSteps(fiscalYear)
+      return calculateTax(steps, parameters)
+    } catch (error) {
+      console.error('Tax calculation failed:', error)
+      return null
+    }
+  }, [fiscalYear, taxCalculationParameters])
+
+  // 税額計算結果を反映
+  useEffect(() => {
+    if (taxCalculation && taxCalculationParameters.length > 0) {
+      const taxes = taxCalculation.getResult()
+      const totalAmount = taxes[taxes.length - 1].taxAmount
+      setBalanceSheetData((prev) => ({
+        ...prev,
+        assets: taxCalculationParameters[1].response.flatMap((item) => {
+          if (item.custom_fields?.category === 'deductible_from_tax') {
+            return []
+          }
+          if (item.value === 0) {
+            return []
+          }
+          return [{ name: item.name, amount: item.value }]
+        }),
+        liabilities: taxCalculationParameters[5].response.flatMap((item) => {
+          if (item.value === 0) {
+            return []
+          }
+          return [{ name: item.name, amount: item.value }]
+        }),
+        equity: prev.equity.map((item) => {
+          if (item.name === '利益剰余金') {
+            return {
+              ...item,
+              amount:
+                taxCalculationParameters[0].response.reduce((acc, item) => {
+                  if (item.custom_fields?.category === 'business_revenue') {
+                    return acc + item.value
+                  }
+                  return acc
+                }, 0) - totalAmount,
+            }
+          }
+          return item
+        }),
+      }))
+    }
+  }, [taxCalculation, taxCalculationParameters])
 
   // 合計金額の計算
   const totalAssets = balanceSheetData.assets.reduce(
@@ -371,6 +434,12 @@ export default function BalanceSheetPage() {
                         <td className="py-2">純資産合計</td>
                         <td className="py-2 text-right">
                           {formatCurrency(totalEquity)}
+                        </td>
+                      </tr>
+                      <tr className="font-bold">
+                        <td className="py-2">負債・純資産合計</td>
+                        <td className="py-2 text-right">
+                          {formatCurrency(totalLiabilitiesAndEquity)}
                         </td>
                       </tr>
                     </tbody>
