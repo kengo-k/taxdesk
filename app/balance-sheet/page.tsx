@@ -351,12 +351,6 @@ export default function BalanceSheetPage() {
                           </td>
                         </tr>
                       ))}
-                      <tr className="font-bold">
-                        <td className="py-2">資産合計</td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(totalAssets)}
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -418,15 +412,24 @@ export default function BalanceSheetPage() {
                           {formatCurrency(totalEquity)}
                         </td>
                       </tr>
-                      <tr className="font-bold">
-                        <td className="py-2">負債・純資産合計</td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(totalLiabilitiesAndEquity)}
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+            {/* 合計行を横並びで表示 */}
+            <div className="w-full border-t border-gray-200 mt-4 pt-4 flex flex-col md:flex-row md:gap-8">
+              <div className="flex-1">
+                <span className="font-bold">資産合計</span>
+                <span className="font-bold float-right">
+                  {formatCurrency(totalAssets)}
+                </span>
+              </div>
+              <div className="flex-1">
+                <span className="font-bold">負債・純資産合計</span>
+                <span className="font-bold float-right">
+                  {formatCurrency(totalLiabilitiesAndEquity)}
+                </span>
               </div>
             </div>
           </CardContent>
