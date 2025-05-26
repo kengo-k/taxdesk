@@ -235,25 +235,50 @@ export default function IncomeStatementPage() {
           </div>
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    会計年度
-                  </label>
-                  <Select value={fiscalYear} onValueChange={setFiscalYear}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="会計年度を選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">未設定</SelectItem>
-                      {fiscalYears.map((year) => (
-                        <SelectItem key={year.id} value={year.id}>
-                          {year.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      会計年度
+                    </label>
+                    <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="会計年度を選択してください" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">未設定</SelectItem>
+                        {fiscalYears.map((year) => (
+                          <SelectItem key={year.id} value={year.id}>
+                            {year.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {fiscalYear !== 'none' && (
+                    <Button
+                      variant="destructive"
+                      className="print:hidden"
+                      onClick={() => {
+                        // TODO: 期末仕分け作成処理を実装
+                        console.log('Create year-end journal entries')
+                      }}
+                    >
+                      期末仕分けを作成
+                    </Button>
+                  )}
                 </div>
+                {fiscalYear !== 'none' && (
+                  <div className="flex flex-col items-end gap-1">
+                    <p className="text-xs text-gray-500">
+                      当期純利益と法人税の仕分けを自動作成します
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      ※
+                      すでに期末仕分けが作成済みです。再作成する場合は上記ボタンをクリックしてください。
+                    </p>
+                  </div>
+                )}
               </div>
               {fiscalYear === 'none' && (
                 <div className="mt-6 text-center">
@@ -304,25 +329,50 @@ export default function IncomeStatementPage() {
         {/* 年度選択と操作ボタン */}
         <Card className="mb-6 print:hidden">
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  会計年度
-                </label>
-                <Select value={fiscalYear} onValueChange={setFiscalYear}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="会計年度を選択してください" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">未設定</SelectItem>
-                    {fiscalYears.map((year) => (
-                      <SelectItem key={year.id} value={year.id}>
-                        {year.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    会計年度
+                  </label>
+                  <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="会計年度を選択してください" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      {fiscalYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {fiscalYear !== 'none' && (
+                  <Button
+                    variant="destructive"
+                    className="print:hidden"
+                    onClick={() => {
+                      // TODO: 期末仕分け作成処理を実装
+                      console.log('Create year-end journal entries')
+                    }}
+                  >
+                    期末仕分けを作成
+                  </Button>
+                )}
               </div>
+              {fiscalYear !== 'none' && (
+                <div className="flex flex-col items-end gap-1">
+                  <p className="text-xs text-gray-500">
+                    当期純利益と法人税の仕分けを自動作成します
+                  </p>
+                  <p className="text-xs text-amber-600">
+                    ※
+                    すでに期末仕分けが作成済みです。再作成する場合は上記ボタンをクリックしてください。
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
