@@ -57,6 +57,7 @@ const arePropsEqual = (
   if (
     prevEdited.date !== nextEdited.date ||
     prevEdited.other_cd !== nextEdited.other_cd ||
+    prevEdited.account_name !== nextEdited.account_name ||
     prevEdited.karikata_value !== nextEdited.karikata_value ||
     prevEdited.kasikata_value !== nextEdited.kasikata_value ||
     prevEdited.note !== nextEdited.note ||

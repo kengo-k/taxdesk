@@ -311,6 +311,7 @@ export function TransactionTable({
         [id]: {
           ...prev[id],
           account_name: accountName || '',
+          [field]: value, // 科目コードも確実に更新
         },
       }))
     }
