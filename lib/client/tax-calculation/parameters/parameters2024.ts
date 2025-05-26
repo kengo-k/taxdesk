@@ -43,7 +43,7 @@ export const parameters2024Selector: ParameterSelector = () => {
     {
       kamokuBunruiCd: KAMOKU_BUNRUI.LIABILITY,
       breakdownLevel: 'saimoku',
-      breakdownType: 'kasikata',
+      breakdownType: 'karikata',
       timeUnit: 'annual',
     },
     {
