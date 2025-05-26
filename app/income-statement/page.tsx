@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { ArrowLeft } from 'lucide-react'
 
@@ -47,7 +48,10 @@ export default function IncomeStatementPage() {
   )
 
   // 年度選択の状態
-  const [fiscalYear, setFiscalYear] = useState('none')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const fiscalYearParam = searchParams.get('fiscalYear')
+  const [fiscalYear, setFiscalYear] = useState(fiscalYearParam || 'none')
 
   const [incomeStatementData, setIncomeStatementData] = useState({
     business_revenue: { name: '売上高', amount: 0 },
@@ -72,10 +76,15 @@ export default function IncomeStatementPage() {
   // 年度が取得できたら、初期値を設定
   useEffect(() => {
     if (fiscalYears.length > 0) {
-      // 初期値は未選択状態のままにする
-      setFiscalYear('none')
+      // URLパラメータが有効な年度でなければ未選択にする
+      if (
+        !fiscalYearParam ||
+        !fiscalYears.some((y) => y.id === fiscalYearParam)
+      ) {
+        setFiscalYear('none')
+      }
     }
-  }, [fiscalYears])
+  }, [fiscalYears, fiscalYearParam])
 
   // 税額計算パラメータの取得
   useEffect(() => {
@@ -153,6 +162,16 @@ export default function IncomeStatementPage() {
       currency: 'JPY',
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  // 年度プルダウン変更時のハンドラ
+  const handleFiscalYearChange = (value: string) => {
+    setFiscalYear(value)
+    if (value && value !== 'none') {
+      router.push(`?fiscalYear=${value}`)
+    } else {
+      router.push('?')
+    }
   }
 
   // データ読み込み中の表示
@@ -241,7 +260,10 @@ export default function IncomeStatementPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       会計年度
                     </label>
-                    <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                    <Select
+                      value={fiscalYear}
+                      onValueChange={handleFiscalYearChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="会計年度を選択してください" />
                       </SelectTrigger>
@@ -335,7 +357,10 @@ export default function IncomeStatementPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     会計年度
                   </label>
-                  <Select value={fiscalYear} onValueChange={setFiscalYear}>
+                  <Select
+                    value={fiscalYear}
+                    onValueChange={handleFiscalYearChange}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="会計年度を選択してください" />
                     </SelectTrigger>
