@@ -111,20 +111,8 @@ export default function BalanceSheetPage() {
           }
           return [{ name: item.name, amount: item.value }]
         }),
-        equity: prev.equity.map((item) => {
-          if (item.name === '利益剰余金') {
-            return {
-              ...item,
-              amount:
-                taxCalculationParameters[0].response.reduce((acc, item) => {
-                  if (item.custom_fields?.category === 'business_revenue') {
-                    return acc + item.value
-                  }
-                  return acc
-                }, 0) - totalAmount,
-            }
-          }
-          return item
+        equity: taxCalculationParameters[6].response.map((item) => {
+          return { name: item.name, amount: item.value }
         }),
       }))
     }
