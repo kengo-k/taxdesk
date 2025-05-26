@@ -108,7 +108,18 @@ export const TransactionRow = memo(function TransactionRow({
   const id = transaction.journal_id.toString()
 
   return (
-    <tr key={id} className={`border-t ${isEdited ? 'bg-amber-50' : ''}`}>
+    <tr
+      key={id}
+      className={`border-t ${
+        isEdited
+          ? 'bg-amber-50'
+          : isWeekend(editedTransaction.date || '')
+            ? getDayOfWeekKanji(editedTransaction.date || '') === '土'
+              ? 'bg-blue-50' // 土曜日は青色系（一般的なカレンダーの色）
+              : 'bg-red-50' // 日曜日は赤色系（一般的なカレンダーの色）
+            : ''
+      }`}
+    >
       {deleteMode && isCurrentFiscalYear && (
         <td className="py-2 px-1 text-center">
           <Checkbox
@@ -163,9 +174,7 @@ export const TransactionRow = memo(function TransactionRow({
               value={getDayOfWeekKanji(editedTransaction.date || '')}
               readOnly
               tabIndex={-1}
-              className={`h-8 text-sm text-center bg-gray-50 ${
-                isWeekend(editedTransaction.date || '') ? 'text-red-600' : ''
-              }`}
+              className="h-8 text-sm text-center bg-gray-50"
             />
           </div>
         </div>

@@ -715,7 +715,15 @@ export function TransactionTable({
           <tbody>
             {/* 新規登録用の空の入力行を固定で表示する */}
             {isCurrentFiscalYear && (
-              <tr className="border-t bg-blue-50">
+              <tr
+                className={`border-t ${
+                  isWeekend(newTransaction.date || '')
+                    ? getDayOfWeekKanji(newTransaction.date || '') === '土'
+                      ? 'bg-blue-50' // 土曜日は青色系（一般的なカレンダーの色）
+                      : 'bg-red-50' // 日曜日は赤色系（一般的なカレンダーの色）
+                    : 'bg-gray-50' // 新規登録行のデフォルト背景色（薄いグレー）
+                }`}
+              >
                 {deleteMode && (
                   <td className="py-2 px-1 text-center">
                     {/* 新規登録行には削除チェックボックスは表示しない */}
@@ -767,11 +775,7 @@ export function TransactionTable({
                         value={getDayOfWeekKanji(newTransaction.date || '')}
                         readOnly
                         tabIndex={-1}
-                        className={`h-8 text-sm text-center bg-gray-50 ${
-                          isWeekend(newTransaction.date || '')
-                            ? 'text-red-600'
-                            : ''
-                        }`}
+                        className="h-8 text-sm text-center bg-gray-50"
                       />
                     </div>
                   </div>
