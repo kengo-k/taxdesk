@@ -18,7 +18,7 @@ export interface FiscalYear {
 // 状態の型定義
 interface FiscalYearState {
   fiscalYears: FiscalYear[]
-  selectedYear: string | null
+  selectedYear: string
   loading: boolean
   error: string | null
 }
@@ -68,7 +68,7 @@ export const fiscalYearSlice = createSlice({
     },
     // 選択解除
     clearSelectedFiscalYear: (state) => {
-      state.selectedYear = null
+      state.selectedYear = 'none'
     },
   },
   extraReducers: (builder) => {

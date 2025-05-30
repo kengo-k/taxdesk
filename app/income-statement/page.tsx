@@ -50,7 +50,7 @@ export default function IncomeStatementPage() {
   // 年度選択の状態
   const router = useRouter()
   const searchParams = useSearchParams()
-  const fiscalYearParam = searchParams.get('fiscalYear')
+  const fiscalYearParam = searchParams.get('fiscal_year')
   const [fiscalYear, setFiscalYear] = useState(fiscalYearParam || 'none')
 
   const [incomeStatementData, setIncomeStatementData] = useState({
@@ -168,7 +168,7 @@ export default function IncomeStatementPage() {
   const handleFiscalYearChange = (value: string) => {
     setFiscalYear(value)
     if (value && value !== 'none') {
-      router.push(`?fiscalYear=${value}`)
+      router.push(`?fiscal_year=${value}`)
     } else {
       router.push('?')
     }
@@ -197,7 +197,7 @@ export default function IncomeStatementPage() {
         <main className="flex-1 container mx-auto px-4 py-6">
           <div className="mb-6 flex items-center print:hidden">
             <Link
-              href="/"
+              href={fiscalYear !== 'none' ? `/?fiscal_year=${fiscalYear}` : '/'}
               className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -244,7 +244,7 @@ export default function IncomeStatementPage() {
         <main className="flex-1 container mx-auto px-4 py-6">
           <div className="mb-6 flex items-center print:hidden">
             <Link
-              href="/"
+              href={fiscalYear !== 'none' ? `/?fiscal_year=${fiscalYear}` : '/'}
               className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -339,7 +339,7 @@ export default function IncomeStatementPage() {
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="mb-6 flex items-center print:hidden">
           <Link
-            href="/"
+            href={fiscalYear !== 'none' ? `/?fiscal_year=${fiscalYear}` : '/'}
             className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />

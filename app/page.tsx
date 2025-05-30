@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useEffect, useMemo } from 'react'
 
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import {
   BarChart3,
@@ -151,8 +152,10 @@ function calculateMonthlyChartData(
 
 export default function Home() {
   const dispatch = useAppDispatch()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const selectedYearId = useAppSelector(selectSelectedFiscalYearId) as string
+  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYearId)
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
@@ -182,19 +185,20 @@ export default function Home() {
   )
 
   const taxCalculation = useMemo(() => {
-    if (selectedYearId === 'none') return null
+    if (selectedFiscalYear === 'none') {
+      return null
+    }
     try {
       const parameters = buildTaxParameters(
         taxCalculationParameters,
-        selectedYearId,
+        selectedFiscalYear,
       )
-      const steps = getSteps(selectedYearId)
+      const steps = getSteps(selectedFiscalYear)
       return calculateTax(steps, parameters)
     } catch (error) {
-      console.error('Tax calculation failed:', error)
       return null
     }
-  }, [selectedYearId, taxCalculationParameters])
+  }, [selectedFiscalYear, taxCalculationParameters])
 
   const assetChartData = useMemo(
     () => calculateChartData(assetByYearLoading, assetByYear, 'asset'),
@@ -233,6 +237,11 @@ export default function Home() {
 
   const handleYearChange = (value: string) => {
     dispatch(selectFiscalYear(value))
+    if (value === 'none') {
+      router.replace('/')
+    } else {
+      router.replace(`/?fiscal_year=${value}`)
+    }
   }
 
   useEffect(() => {
@@ -240,16 +249,23 @@ export default function Home() {
   }, [dispatch])
 
   useEffect(() => {
-    if (selectedYearId && selectedYearId !== 'none') {
-      dispatch(fetchDashboardData(selectedYearId))
-      dispatch(fetchTaxCalculationParameters(selectedYearId))
+    const yearParam = searchParams.get('fiscal_year')
+    if (yearParam && fiscalYears.some((year) => year.id === yearParam)) {
+      dispatch(selectFiscalYear(yearParam))
+    }
+  }, [dispatch, searchParams, fiscalYears])
+
+  useEffect(() => {
+    if (selectedFiscalYear && selectedFiscalYear !== 'none') {
+      dispatch(fetchDashboardData(selectedFiscalYear))
+      dispatch(fetchTaxCalculationParameters(selectedFiscalYear))
     } else {
       dispatch(clearData())
     }
-  }, [dispatch, selectedYearId])
+  }, [dispatch, selectedFiscalYear])
 
   const isChartDataLoading = useMemo(() => {
-    if (selectedYearId === 'none') return false
+    if (selectedFiscalYear === 'none') return false
     return (
       assetByYearLoading ||
       revenueByYearLoading ||
@@ -258,7 +274,7 @@ export default function Home() {
       expenseByMonthLoading
     )
   }, [
-    selectedYearId,
+    selectedFiscalYear,
     assetByYearLoading,
     revenueByYearLoading,
     expenseByYearLoading,
@@ -274,7 +290,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">年度：</span>
             <Select
-              value={selectedYearId || 'none'}
+              value={selectedFiscalYear || 'none'}
               onValueChange={handleYearChange}
             >
               <SelectTrigger className="w-[180px]">
@@ -293,7 +309,11 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FeatureCard
-            href="/ledger"
+            href={
+              selectedFiscalYear !== 'none'
+                ? `/ledger?fiscal_year=${selectedFiscalYear}`
+                : '/ledger'
+            }
             icon={BookOpen}
             title="元帳"
             description="日々の取引を記録し、収入と支出を管理します。各取引の詳細情報も入力できます。"
@@ -303,7 +323,11 @@ export default function Home() {
           />
 
           <FeatureCard
-            href="/balance-sheet"
+            href={
+              selectedFiscalYear !== 'none'
+                ? `/balance-sheet?fiscal_year=${selectedFiscalYear}`
+                : '/balance-sheet'
+            }
             icon={Scale}
             title="貸借対照表"
             description="資産、負債、純資産の状況を確認し、財務状態を把握します。特定時点での財政状態を表示します。"
@@ -313,7 +337,11 @@ export default function Home() {
           />
 
           <FeatureCard
-            href="/income-statement"
+            href={
+              selectedFiscalYear !== 'none'
+                ? `/income-statement?fiscal_year=${selectedFiscalYear}`
+                : '/income-statement'
+            }
             icon={BarChart3}
             title="損益計算書"
             description="指定期間の収益と費用を集計し、事業の収益性を分析します。月次・四半期・年次の報告書を生成できます。"
@@ -360,7 +388,7 @@ export default function Home() {
         </div>
 
         <TaxEstimationCard
-          selectedYearId={selectedYearId}
+          selectedYearId={selectedFiscalYear}
           taxCalculation={taxCalculation}
         />
 
@@ -370,7 +398,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`資産の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
+                title={`資産の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
                 value={assetChartData.value}
                 data={assetChartData.data}
                 labels={assetChartData.labels}
@@ -385,7 +413,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`収入の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
+                title={`収入の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
                 value={revenueChartData.value}
                 data={revenueChartData.data}
                 labels={revenueChartData.labels}
@@ -400,7 +428,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`支出の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
+                title={`支出の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
                 value={expenseChartData.value}
                 data={expenseChartData.data}
                 labels={expenseChartData.labels}
@@ -414,7 +442,9 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h3 className="font-medium text-lg mb-4">
             収入の内訳 月別
-            {selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}
+            {selectedFiscalYear === 'none'
+              ? ''
+              : ` (${selectedFiscalYear}年度)`}
           </h3>
           {revenueByMonthLoading ? (
             <LoadingSpinner />
@@ -430,7 +460,9 @@ export default function Home() {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <h3 className="font-medium text-lg mb-4">
             支出の内訳 月別
-            {selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}
+            {selectedFiscalYear === 'none'
+              ? ''
+              : ` (${selectedFiscalYear}年度)`}
           </h3>
           {expenseByMonthLoading ? (
             <LoadingSpinner />
@@ -470,7 +502,7 @@ function TaxEstimationCard({
       <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium text-lg">税額シミュレーション</h3>
-          <Link href={`/tax-simulation?year=${selectedYearId}`}>
+          <Link href={`/tax-simulation?fiscal_year=${selectedYearId}`}>
             <Button
               variant="outline"
               size="sm"
@@ -497,7 +529,7 @@ function TaxEstimationCard({
             ? ` (${selectedYearId}年度${isCurrentYear ? ' 見込み額' : ' 確定額'})`
             : ''}
         </h3>
-        <Link href={`/tax-simulation?year=${selectedYearId}`}>
+        <Link href={`/tax-simulation?fiscal_year=${selectedYearId}`}>
           <Button
             variant="outline"
             size="sm"
