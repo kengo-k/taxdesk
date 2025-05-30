@@ -104,9 +104,8 @@ export const fetchTaxCalculationParameters = createAsyncThunk(
   },
 )
 
-// 汎用API用のThunkアクション
-export const fetchGenericAssetByYear = createAsyncThunk(
-  'report/fetchGenericAssetByYear',
+export const fetchDashboardData = createAsyncThunk(
+  'report/fetchDashboardData',
   async (fiscalYear: string) => {
     const response = await fetch(
       `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
@@ -121,120 +120,24 @@ export const fetchGenericAssetByYear = createAsyncThunk(
               breakdownType: 'net',
               timeUnit: 'annual',
             },
-          ],
-        }),
-      },
-    )
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch asset breakdown by year')
-    }
-
-    const result = await response.json()
-    return result.data
-  },
-)
-
-export const fetchGenericRevenueByYear = createAsyncThunk(
-  'report/fetchGenericRevenueByYear',
-  async (fiscalYear: string) => {
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
             {
               kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
               breakdownLevel: 'saimoku',
               breakdownType: 'net',
               timeUnit: 'annual',
             },
-          ],
-        }),
-      },
-    )
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch revenue breakdown by year')
-    }
-
-    const result = await response.json()
-    return result.data
-  },
-)
-
-export const fetchGenericExpenseByYear = createAsyncThunk(
-  'report/fetchGenericExpenseByYear',
-  async (fiscalYear: string) => {
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
             {
               kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
               breakdownLevel: 'saimoku',
               breakdownType: 'net',
               timeUnit: 'annual',
             },
-          ],
-        }),
-      },
-    )
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch expense breakdown by year')
-    }
-
-    const result = await response.json()
-    return result.data
-  },
-)
-
-export const fetchGenericRevenueByMonth = createAsyncThunk(
-  'report/fetchGenericRevenueByMonth',
-  async (fiscalYear: string) => {
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
             {
               kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
               breakdownLevel: 'saimoku',
               breakdownType: 'net',
               timeUnit: 'month',
             },
-          ],
-        }),
-      },
-    )
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch revenue breakdown by month')
-    }
-
-    const result = await response.json()
-    return result.data
-  },
-)
-
-export const fetchGenericExpenseByMonth = createAsyncThunk(
-  'report/fetchGenericExpenseByMonth',
-  async (fiscalYear: string) => {
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
             {
               kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
               breakdownLevel: 'saimoku',
@@ -247,7 +150,7 @@ export const fetchGenericExpenseByMonth = createAsyncThunk(
     )
 
     if (!response.ok) {
-      throw new Error('Failed to fetch expense breakdown by month')
+      throw new Error('Failed to fetch dashboard data')
     }
 
     const result = await response.json()
@@ -282,92 +185,6 @@ export const reportSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // 内訳データ用のReducers
-    // 資産の年別集計
-    builder
-      .addCase(fetchGenericAssetByYear.pending, (state) => {
-        state.breakdown.saimokuNetAssetsByYear.loading = true
-        state.breakdown.saimokuNetAssetsByYear.error = null
-      })
-      .addCase(fetchGenericAssetByYear.fulfilled, (state, action) => {
-        state.breakdown.saimokuNetAssetsByYear.loading = false
-        state.breakdown.saimokuNetAssetsByYear.data =
-          action.payload.annual[0].response
-      })
-      .addCase(fetchGenericAssetByYear.rejected, (state, action) => {
-        state.breakdown.saimokuNetAssetsByYear.loading = false
-        state.breakdown.saimokuNetAssetsByYear.error =
-          action.error.message || 'Unknown error'
-      })
-
-    // 収益の年別集計
-    builder
-      .addCase(fetchGenericRevenueByYear.pending, (state) => {
-        state.breakdown.saimokuNetRevenuesByYear.loading = true
-        state.breakdown.saimokuNetRevenuesByYear.error = null
-      })
-      .addCase(fetchGenericRevenueByYear.fulfilled, (state, action) => {
-        state.breakdown.saimokuNetRevenuesByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByYear.data =
-          action.payload.annual[0].response
-      })
-      .addCase(fetchGenericRevenueByYear.rejected, (state, action) => {
-        state.breakdown.saimokuNetRevenuesByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByYear.error =
-          action.error.message || 'Unknown error'
-      })
-
-    // 費用の年別集計
-    builder
-      .addCase(fetchGenericExpenseByYear.pending, (state) => {
-        state.breakdown.saimokuNetExpensesByYear.loading = true
-        state.breakdown.saimokuNetExpensesByYear.error = null
-      })
-      .addCase(fetchGenericExpenseByYear.fulfilled, (state, action) => {
-        state.breakdown.saimokuNetExpensesByYear.loading = false
-        state.breakdown.saimokuNetExpensesByYear.data =
-          action.payload.annual[0].response
-      })
-      .addCase(fetchGenericExpenseByYear.rejected, (state, action) => {
-        state.breakdown.saimokuNetExpensesByYear.loading = false
-        state.breakdown.saimokuNetExpensesByYear.error =
-          action.error.message || 'Unknown error'
-      })
-
-    // 収益の月別集計
-    builder
-      .addCase(fetchGenericRevenueByMonth.pending, (state) => {
-        state.breakdown.saimokuNetRevenuesByMonth.loading = true
-        state.breakdown.saimokuNetRevenuesByMonth.error = null
-      })
-      .addCase(fetchGenericRevenueByMonth.fulfilled, (state, action) => {
-        state.breakdown.saimokuNetRevenuesByMonth.loading = false
-        state.breakdown.saimokuNetRevenuesByMonth.data =
-          action.payload.monthly[0].response
-      })
-      .addCase(fetchGenericRevenueByMonth.rejected, (state, action) => {
-        state.breakdown.saimokuNetRevenuesByMonth.loading = false
-        state.breakdown.saimokuNetRevenuesByMonth.error =
-          action.error.message || 'Unknown error'
-      })
-
-    // 費用の月別集計
-    builder
-      .addCase(fetchGenericExpenseByMonth.pending, (state) => {
-        state.breakdown.saimokuNetExpensesByMonth.loading = true
-        state.breakdown.saimokuNetExpensesByMonth.error = null
-      })
-      .addCase(fetchGenericExpenseByMonth.fulfilled, (state, action) => {
-        state.breakdown.saimokuNetExpensesByMonth.loading = false
-        state.breakdown.saimokuNetExpensesByMonth.data =
-          action.payload.monthly[0].response
-      })
-      .addCase(fetchGenericExpenseByMonth.rejected, (state, action) => {
-        state.breakdown.saimokuNetExpensesByMonth.loading = false
-        state.breakdown.saimokuNetExpensesByMonth.error =
-          action.error.message || 'Unknown error'
-      })
-
     builder
       .addCase(fetchTaxCalculationParameters.pending, (state) => {
         state.taxCalculationParameters.loading = true
@@ -381,6 +198,46 @@ export const reportSlice = createSlice({
         state.taxCalculationParameters.loading = false
         state.taxCalculationParameters.error =
           action.error.message || 'Unknown error'
+      })
+
+    // Dashboard data
+    builder
+      .addCase(fetchDashboardData.pending, (state) => {
+        state.breakdown.saimokuNetAssetsByYear.loading = true
+        state.breakdown.saimokuNetRevenuesByYear.loading = true
+        state.breakdown.saimokuNetExpensesByYear.loading = true
+        state.breakdown.saimokuNetRevenuesByMonth.loading = true
+        state.breakdown.saimokuNetExpensesByMonth.loading = true
+      })
+      .addCase(fetchDashboardData.fulfilled, (state, action) => {
+        const { annual, monthly } = action.payload
+
+        // Set loading to false for all states
+        state.breakdown.saimokuNetAssetsByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByYear.loading = false
+        state.breakdown.saimokuNetExpensesByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByMonth.loading = false
+        state.breakdown.saimokuNetExpensesByMonth.loading = false
+
+        // Update data for each state
+        state.breakdown.saimokuNetAssetsByYear.data = annual[0].response
+        state.breakdown.saimokuNetRevenuesByYear.data = annual[1].response
+        state.breakdown.saimokuNetExpensesByYear.data = annual[2].response
+        state.breakdown.saimokuNetRevenuesByMonth.data = monthly[0].response
+        state.breakdown.saimokuNetExpensesByMonth.data = monthly[1].response
+      })
+      .addCase(fetchDashboardData.rejected, (state, action) => {
+        const error = action.error.message || 'Unknown error'
+        state.breakdown.saimokuNetAssetsByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByYear.loading = false
+        state.breakdown.saimokuNetExpensesByYear.loading = false
+        state.breakdown.saimokuNetRevenuesByMonth.loading = false
+        state.breakdown.saimokuNetExpensesByMonth.loading = false
+        state.breakdown.saimokuNetAssetsByYear.error = error
+        state.breakdown.saimokuNetRevenuesByYear.error = error
+        state.breakdown.saimokuNetExpensesByYear.error = error
+        state.breakdown.saimokuNetRevenuesByMonth.error = error
+        state.breakdown.saimokuNetExpensesByMonth.error = error
       })
   },
 })

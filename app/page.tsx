@@ -37,11 +37,7 @@ import {
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
-  fetchGenericAssetByYear,
-  fetchGenericExpenseByMonth,
-  fetchGenericExpenseByYear,
-  fetchGenericRevenueByMonth,
-  fetchGenericRevenueByYear,
+  fetchDashboardData,
   fetchTaxCalculationParameters,
   selectSaimokuNetAssetsByYear,
   selectSaimokuNetAssetsByYearLoading,
@@ -154,55 +150,35 @@ function calculateMonthlyChartData(
 
 export default function Home() {
   const dispatch = useAppDispatch()
-  const taxCalculationParameters = useAppSelector(
-    selectTaxCalculationParameters,
-  )
 
-  const fiscalYears = useAppSelector(selectAllFiscalYears)
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
-  const loading = useAppSelector(selectFiscalYearLoading)
+  const fiscalYears = useAppSelector(selectAllFiscalYears)
+  const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
-  const genericExpenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
-  const genericExpenseByMonthLoading = useAppSelector(
+  const expenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
+  const expenseByMonthLoading = useAppSelector(
     selectSaimokuNetExpensesByMonthLoading,
   )
-  const genericExpenseByYear = useAppSelector(selectSaimokuNetExpensesByYear)
-  const genericExpenseByYearLoading = useAppSelector(
+  const expenseByYear = useAppSelector(selectSaimokuNetExpensesByYear)
+  const expenseByYearLoading = useAppSelector(
     selectSaimokuNetExpensesByYearLoading,
   )
 
-  const genericAssetByYear = useAppSelector(selectSaimokuNetAssetsByYear)
-  const genericAssetByYearLoading = useAppSelector(
-    selectSaimokuNetAssetsByYearLoading,
-  )
+  const assetByYear = useAppSelector(selectSaimokuNetAssetsByYear)
+  const assetByYearLoading = useAppSelector(selectSaimokuNetAssetsByYearLoading)
 
-  const genericRevenueByMonth = useAppSelector(selectSaimokuNetRevenuesByMonth)
-  const genericRevenueByMonthLoading = useAppSelector(
+  const revenueByMonth = useAppSelector(selectSaimokuNetRevenuesByMonth)
+  const revenueByMonthLoading = useAppSelector(
     selectSaimokuNetRevenuesByMonthLoading,
   )
-  const genericRevenueByYear = useAppSelector(selectSaimokuNetRevenuesByYear)
-  const genericRevenueByYearLoading = useAppSelector(
+  const revenueByYear = useAppSelector(selectSaimokuNetRevenuesByYear)
+  const revenueByYearLoading = useAppSelector(
     selectSaimokuNetRevenuesByYearLoading,
   )
 
-  useEffect(() => {
-    dispatch(fetchFiscalYears())
-  }, [dispatch])
-
-  useEffect(() => {
-    if (selectedYearId) {
-      dispatch(fetchGenericExpenseByMonth(selectedYearId))
-      dispatch(fetchGenericExpenseByYear(selectedYearId))
-      dispatch(fetchGenericRevenueByMonth(selectedYearId))
-      dispatch(fetchGenericRevenueByYear(selectedYearId))
-      dispatch(fetchGenericAssetByYear(selectedYearId))
-      dispatch(fetchTaxCalculationParameters(selectedYearId))
-    }
-  }, [dispatch, selectedYearId])
-
-  const handleYearChange = (value: string) => {
-    dispatch(selectFiscalYear(value))
-  }
+  const taxCalculationParameters = useAppSelector(
+    selectTaxCalculationParameters,
+  )
 
   const taxCalculation = useMemo(() => {
     if (!selectedYearId) return null
@@ -220,56 +196,56 @@ export default function Home() {
   }, [selectedYearId, taxCalculationParameters])
 
   const assetChartData = useMemo(
-    () =>
-      calculateChartData(
-        genericAssetByYearLoading,
-        genericAssetByYear,
-        'asset',
-      ),
-    [genericAssetByYearLoading, genericAssetByYear],
+    () => calculateChartData(assetByYearLoading, assetByYear, 'asset'),
+    [assetByYearLoading, assetByYear],
   )
 
   const revenueChartData = useMemo(
-    () =>
-      calculateChartData(
-        genericRevenueByYearLoading,
-        genericRevenueByYear,
-        'income',
-      ),
-    [genericRevenueByYearLoading, genericRevenueByYear],
+    () => calculateChartData(revenueByYearLoading, revenueByYear, 'income'),
+    [revenueByYearLoading, revenueByYear],
   )
 
   const expenseChartData = useMemo(
-    () =>
-      calculateChartData(
-        genericExpenseByYearLoading,
-        genericExpenseByYear,
-        'expense',
-      ),
-    [genericExpenseByYearLoading, genericExpenseByYear],
+    () => calculateChartData(expenseByYearLoading, expenseByYear, 'expense'),
+    [expenseByYearLoading, expenseByYear],
   )
 
   const monthlyRevenueData = useMemo(
     () =>
       calculateMonthlyChartData(
-        genericRevenueByMonthLoading,
-        genericRevenueByMonth,
+        revenueByMonthLoading,
+        revenueByMonth,
         'income',
       ),
-    [genericRevenueByMonthLoading, genericRevenueByMonth],
+    [revenueByMonthLoading, revenueByMonth],
   )
 
   const monthlyExpenseData = useMemo(
     () =>
       calculateMonthlyChartData(
-        genericExpenseByMonthLoading,
-        genericExpenseByMonth,
+        expenseByMonthLoading,
+        expenseByMonth,
         'expense',
       ),
-    [genericExpenseByMonthLoading, genericExpenseByMonth],
+    [expenseByMonthLoading, expenseByMonth],
   )
 
-  if (loading) {
+  const handleYearChange = (value: string) => {
+    dispatch(selectFiscalYear(value))
+  }
+
+  useEffect(() => {
+    dispatch(fetchFiscalYears())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (selectedYearId) {
+      dispatch(fetchDashboardData(selectedYearId))
+      dispatch(fetchTaxCalculationParameters(selectedYearId))
+    }
+  }, [dispatch, selectedYearId])
+
+  if (fiscalYearsLoading) {
     return (
       <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
         <div className="text-center">
