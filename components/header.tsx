@@ -9,9 +9,9 @@ export function Header() {
     <header className="border-b bg-white">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">会計管理システム</h1>
+          <h1 className="text-xl font-bold">経営管理プラットフォーム</h1>
           <p className="text-sm text-gray-500">
-            経理業務を効率化するための総合ソリューション
+            経営を支える統合ソリューション
           </p>
         </div>
         <div className="flex items-center gap-4">
