@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import * as React from 'react'
+import { useEffect, useMemo } from 'react'
 
 import Link from 'next/link'
 
@@ -56,19 +57,111 @@ import {
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
+const FISCAL_YEAR_MONTHS = [
+  '4月',
+  '5月',
+  '6月',
+  '7月',
+  '8月',
+  '9月',
+  '10月',
+  '11月',
+  '12月',
+  '1月',
+  '2月',
+  '3月',
+]
+
+interface ChartData {
+  value: string
+  data: number[]
+  labels: string[]
+  colors: string[]
+  amounts: number[]
+}
+
+interface MonthlyData {
+  name: string
+  values: Array<{ month: string; value: number }>
+}
+
+interface ChartDataset {
+  label: string
+  name: string
+  data: number[]
+  backgroundColor: string
+}
+
+function calculateChartData(
+  isLoading: boolean,
+  data: Array<{ value?: number; name?: string }> | null | undefined,
+  colorType: 'asset' | 'income' | 'expense',
+): ChartData {
+  if (isLoading || !data) {
+    return {
+      value: 'Loading...',
+      data: [],
+      labels: [],
+      colors: [],
+      amounts: [],
+    }
+  }
+
+  const values = data.map((item) => item.value || 0)
+  const labels = data.map((item) => item.name || '')
+  const colors = getChartColors(colorType, data.length)
+  const totalValue = values.reduce((sum, value) => sum + value, 0)
+
+  return {
+    value: formatCurrency(totalValue),
+    data: values,
+    labels,
+    colors,
+    amounts: values,
+  }
+}
+
+function calculateMonthlyChartData(
+  isLoading: boolean,
+  data: MonthlyData[] | null | undefined,
+  colorType: 'income' | 'expense',
+): { labels: string[]; datasets: ChartDataset[] } {
+  if (isLoading || !data?.length) {
+    return { labels: [], datasets: [] }
+  }
+
+  return {
+    labels: FISCAL_YEAR_MONTHS,
+    datasets: data.map((item, index) => {
+      const monthlyData = item.values
+      const monthlyName = item.name || ''
+
+      const values = new Array(12).fill(0)
+      monthlyData.forEach((monthItem) => {
+        const monthIndex = (parseInt(monthItem.month) + 8) % 12
+        values[monthIndex] = monthItem.value
+      })
+
+      return {
+        label: monthlyName,
+        name: monthlyName,
+        data: values,
+        backgroundColor: getChartColors(colorType, data.length)[index],
+      }
+    }),
+  }
+}
+
 export default function Home() {
   const dispatch = useAppDispatch()
   const taxCalculationParameters = useAppSelector(
     selectTaxCalculationParameters,
   )
 
-  // Reduxから年度データを取得
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
   const loading = useAppSelector(selectFiscalYearLoading)
 
-  // 内訳データ
-  // 費用データ
   const genericExpenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
   const genericExpenseByMonthLoading = useAppSelector(
     selectSaimokuNetExpensesByMonthLoading,
@@ -78,13 +171,11 @@ export default function Home() {
     selectSaimokuNetExpensesByYearLoading,
   )
 
-  // 資産データ
   const genericAssetByYear = useAppSelector(selectSaimokuNetAssetsByYear)
   const genericAssetByYearLoading = useAppSelector(
     selectSaimokuNetAssetsByYearLoading,
   )
 
-  // 収入データ
   const genericRevenueByMonth = useAppSelector(selectSaimokuNetRevenuesByMonth)
   const genericRevenueByMonthLoading = useAppSelector(
     selectSaimokuNetRevenuesByMonthLoading,
@@ -94,16 +185,12 @@ export default function Home() {
     selectSaimokuNetRevenuesByYearLoading,
   )
 
-  const [dataError, setDataError] = useState<string | null>(null)
-
-  // コンポーネントマウント時に年度一覧を取得
   useEffect(() => {
     dispatch(fetchFiscalYears())
   }, [dispatch])
 
   useEffect(() => {
     if (selectedYearId) {
-      // 汎用API呼び出し
       dispatch(fetchGenericExpenseByMonth(selectedYearId))
       dispatch(fetchGenericExpenseByYear(selectedYearId))
       dispatch(fetchGenericRevenueByMonth(selectedYearId))
@@ -113,12 +200,10 @@ export default function Home() {
     }
   }, [dispatch, selectedYearId])
 
-  // 年度選択ハンドラー
   const handleYearChange = (value: string) => {
     dispatch(selectFiscalYear(value))
   }
 
-  // 税額計算
   const taxCalculation = useMemo(() => {
     if (!selectedYearId) return null
     try {
@@ -134,7 +219,56 @@ export default function Home() {
     }
   }, [selectedYearId, taxCalculationParameters])
 
-  // データ読み込み中の表示
+  const assetChartData = useMemo(
+    () =>
+      calculateChartData(
+        genericAssetByYearLoading,
+        genericAssetByYear,
+        'asset',
+      ),
+    [genericAssetByYearLoading, genericAssetByYear],
+  )
+
+  const revenueChartData = useMemo(
+    () =>
+      calculateChartData(
+        genericRevenueByYearLoading,
+        genericRevenueByYear,
+        'income',
+      ),
+    [genericRevenueByYearLoading, genericRevenueByYear],
+  )
+
+  const expenseChartData = useMemo(
+    () =>
+      calculateChartData(
+        genericExpenseByYearLoading,
+        genericExpenseByYear,
+        'expense',
+      ),
+    [genericExpenseByYearLoading, genericExpenseByYear],
+  )
+
+  const monthlyRevenueData = useMemo(
+    () =>
+      calculateMonthlyChartData(
+        genericRevenueByMonthLoading,
+        genericRevenueByMonth,
+        'income',
+      ),
+    [genericRevenueByMonthLoading, genericRevenueByMonth],
+  )
+
+  const monthlyExpenseData = useMemo(
+    () =>
+      calculateMonthlyChartData(
+        genericExpenseByMonthLoading,
+        genericExpenseByMonth,
+        'expense',
+      ),
+    [genericExpenseByMonthLoading, genericExpenseByMonth],
+  )
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
@@ -146,425 +280,277 @@ export default function Home() {
     )
   }
 
-  // エラー表示
-  if (dataError) {
-    return (
-      <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
-        <div className="text-center">
-          <p className="text-lg mb-2 text-red-500">{dataError}</p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            再読み込み
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-6">
-      {/* 主要機能セクション（先に表示） */}
       <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">主要機能</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/ledger" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-blue-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center mr-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                </div>
-                <h3 className="font-medium">元帳</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                日々の取引を記録し、収入と支出を管理します。各取引の詳細情報も入力できます。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/ledger"
+            icon={BookOpen}
+            title="元帳"
+            description="日々の取引を記録し、収入と支出を管理します。各取引の詳細情報も入力できます。"
+            iconBgColor="blue-100"
+            iconColor="blue-600"
+            hoverBorderColor="blue-200"
+          />
 
-          <Link href="/balance-sheet" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-blue-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center mr-2">
-                  <Scale className="h-5 w-5 text-blue-600" />
-                </div>
-                <h3 className="font-medium">貸借対照表</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                資産、負債、純資産の状況を確認し、財務状態を把握します。特定時点での財政状態を表示します。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/balance-sheet"
+            icon={Scale}
+            title="貸借対照表"
+            description="資産、負債、純資産の状況を確認し、財務状態を把握します。特定時点での財政状態を表示します。"
+            iconBgColor="blue-100"
+            iconColor="blue-600"
+            hoverBorderColor="blue-200"
+          />
 
-          <Link href="/income-statement" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-green-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-green-100 flex items-center justify-center mr-2">
-                  <BarChart3 className="h-5 w-5 text-green-600" />
-                </div>
-                <h3 className="font-medium">損益計算書</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                指定期間の収益と費用を集計し、事業の収益性を分析します。月次・四半期・年次の報告書を生成できます。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/income-statement"
+            icon={BarChart3}
+            title="損益計算書"
+            description="指定期間の収益と費用を集計し、事業の収益性を分析します。月次・四半期・年次の報告書を生成できます。"
+            iconBgColor="green-100"
+            iconColor="green-600"
+            hoverBorderColor="green-200"
+          />
 
-          <Link href="/master" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-purple-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-purple-100 flex items-center justify-center mr-2">
-                  <FileSpreadsheet className="h-5 w-5 text-purple-600" />
-                </div>
-                <h3 className="font-medium">マスタ管理</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                勘定科目・細目・消費税区分などのマスタデータを管理します。各種コードや設定を自由にカスタマイズできます。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/master"
+            icon={FileSpreadsheet}
+            title="マスタ管理"
+            description="勘定科目・細目・消費税区分などのマスタデータを管理します。各種コードや設定を自由にカスタマイズできます。"
+            iconBgColor="purple-100"
+            iconColor="purple-600"
+            hoverBorderColor="purple-200"
+          />
 
-          <Link href="/fiscal-year-transition" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-blue-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-blue-100 flex items-center justify-center mr-2">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                </div>
-                <h3 className="font-medium">年度移行</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                会計年度を切り替え、貸借対照表の残高を新年度に繰り越します。過去年度は読み取り専用になります。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/fiscal-year-transition"
+            icon={Calendar}
+            title="年度移行"
+            description="会計年度を切り替え、貸借対照表の残高を新年度に繰り越します。過去年度は読み取り専用になります。"
+            iconBgColor="blue-100"
+            iconColor="blue-600"
+            hoverBorderColor="blue-200"
+          />
 
-          <Link href="/backup" className="block">
-            <div className="bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-amber-200 cursor-pointer">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 rounded-md bg-amber-100 flex items-center justify-center mr-2">
-                  <Database className="h-5 w-5 text-amber-600" />
-                </div>
-                <h3 className="font-medium">バックアップ設定</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                データのバックアップと復元を管理します。定期的なバックアップスケジュールを設定できます。
-              </p>
-            </div>
-          </Link>
+          <FeatureCard
+            href="/backup"
+            icon={Database}
+            title="バックアップ設定"
+            description="データのバックアップと復元を管理します。定期的なバックアップスケジュールを設定できます。"
+            iconBgColor="amber-100"
+            iconColor="amber-600"
+            hoverBorderColor="amber-200"
+          />
         </div>
       </section>
 
-      {/* 財務サマリーセクション（後に表示） */}
       <section className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">財務サマリー</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">年度：</span>
-            <Select
-              value={selectedYearId || ''}
-              onValueChange={handleYearChange}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="年度を選択" />
-              </SelectTrigger>
-              <SelectContent>
-                {fiscalYears.map((year) => (
-                  <SelectItem key={year.id} value={year.id}>
-                    {year.id}年度
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <FinancialSummaryHeader
+          selectedYearId={selectedYearId}
+          fiscalYears={fiscalYears}
+          onYearChange={handleYearChange}
+        />
 
-        {/* 税額見込みカード - 財務サマリーの一番上に移動 */}
-        <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-lg">
-              {selectedYearId === '2024'
-                ? '現在の収支に基づく年間税額見込み'
-                : `${selectedYearId}年度の確定税額`}
-            </h3>
-            <Link href={`/tax-simulation?year=${selectedYearId}`}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <Calculator className="h-4 w-4" />
-                {selectedYearId === '2024'
-                  ? '詳細シミュレーション'
-                  : '詳細表示'}
-              </Button>
-            </Link>
-          </div>
-
-          {/* 各種税額とその合計額をカード形式で表示 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {taxCalculation
-              ?.getResult()
-              .map(
-                (
-                  tax: { taxName: string; taxAmount: number },
-                  index: number,
-                ) => {
-                  const isLast = index === taxCalculation.getResult().length - 1
-                  return (
-                    <div
-                      key={tax.taxName}
-                      className={`border rounded-lg p-4 shadow-sm ${
-                        isLast
-                          ? 'bg-blue-50 border-blue-200'
-                          : 'bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <h3
-                        className={`text-sm font-medium mb-1 ${
-                          isLast ? 'text-blue-800' : 'text-gray-800'
-                        }`}
-                      >
-                        {tax.taxName}
-                      </h3>
-                      <p
-                        className={`text-lg font-bold ${
-                          isLast ? 'text-blue-900' : 'text-gray-900'
-                        }`}
-                      >
-                        {formatCurrency(tax.taxAmount)}
-                      </p>
-                    </div>
-                  )
-                },
-              )}
-          </div>
-        </div>
+        <TaxEstimationCard
+          selectedYearId={selectedYearId}
+          taxCalculation={taxCalculation}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`資産の内訳 (${selectedYearId}年度)`}
-              value={
-                genericAssetByYearLoading
-                  ? 'Loading...'
-                  : formatCurrency(
-                      genericAssetByYear?.reduce(
-                        (sum, item) => sum + (item.value || 0),
-                        0,
-                      ) || 0,
-                    )
-              }
-              data={
-                genericAssetByYearLoading
-                  ? []
-                  : genericAssetByYear?.map((item) => item.value || 0) || []
-              }
-              labels={
-                genericAssetByYearLoading
-                  ? []
-                  : genericAssetByYear?.map((item) => item.name || '') || []
-              }
-              colors={
-                genericAssetByYearLoading
-                  ? []
-                  : getChartColors('asset', genericAssetByYear?.length || 0)
-              }
-              amounts={
-                genericAssetByYearLoading
-                  ? []
-                  : genericAssetByYear?.map((item) => item.value || 0) || []
-              }
+              value={assetChartData.value}
+              data={assetChartData.data}
+              labels={assetChartData.labels}
+              colors={assetChartData.colors}
+              amounts={assetChartData.amounts}
             />
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`収入の内訳 (${selectedYearId}年度)`}
-              value={
-                genericRevenueByYearLoading
-                  ? 'Loading...'
-                  : formatCurrency(
-                      genericRevenueByYear?.reduce(
-                        (sum, item) => sum + (item.value || 0),
-                        0,
-                      ) || 0,
-                    )
-              }
-              data={
-                genericRevenueByYearLoading
-                  ? []
-                  : genericRevenueByYear?.map((item) => item.value || 0) || []
-              }
-              labels={
-                genericRevenueByYearLoading
-                  ? []
-                  : genericRevenueByYear?.map((item) => item.name || '') || []
-              }
-              colors={
-                genericRevenueByYearLoading
-                  ? []
-                  : getChartColors('income', genericRevenueByYear?.length || 0)
-              }
-              amounts={
-                genericRevenueByYearLoading
-                  ? []
-                  : genericRevenueByYear?.map((item) => item.value || 0) || []
-              }
+              value={revenueChartData.value}
+              data={revenueChartData.data}
+              labels={revenueChartData.labels}
+              colors={revenueChartData.colors}
+              amounts={revenueChartData.amounts}
             />
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
             <DonutChart
               title={`支出の内訳 (${selectedYearId}年度)`}
-              value={
-                genericExpenseByYearLoading
-                  ? 'Loading...'
-                  : formatCurrency(
-                      genericExpenseByYear?.reduce(
-                        (sum, item) => sum + (item.value || 0),
-                        0,
-                      ) || 0,
-                    )
-              }
-              data={
-                genericExpenseByYearLoading
-                  ? []
-                  : genericExpenseByYear?.map((item) => item.value || 0) || []
-              }
-              labels={
-                genericExpenseByYearLoading
-                  ? []
-                  : genericExpenseByYear?.map((item) => item.name || '') || []
-              }
-              colors={
-                genericExpenseByYearLoading
-                  ? []
-                  : getChartColors('expense', genericExpenseByYear?.length || 0)
-              }
-              amounts={
-                genericExpenseByYearLoading
-                  ? []
-                  : genericExpenseByYear?.map((item) => item.value || 0) || []
-              }
+              value={expenseChartData.value}
+              data={expenseChartData.data}
+              labels={expenseChartData.labels}
+              colors={expenseChartData.colors}
+              amounts={expenseChartData.amounts}
             />
           </div>
         </div>
 
-        {/* 月別収入グラフ */}
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <StackedBarChart
             title={`収入の内訳 月別（${selectedYearId}年度）`}
-            data={
-              genericRevenueByMonthLoading
-                ? { labels: [], datasets: [] }
-                : {
-                    labels: [
-                      '4月',
-                      '5月',
-                      '6月',
-                      '7月',
-                      '8月',
-                      '9月',
-                      '10月',
-                      '11月',
-                      '12月',
-                      '1月',
-                      '2月',
-                      '3月',
-                    ],
-                    datasets: (() => {
-                      if (!genericRevenueByMonth?.length) {
-                        return []
-                      }
-                      // 各科目のデータを処理
-                      return genericRevenueByMonth.map((item, index) => {
-                        const monthlyData = item.values
-                        const monthlyName = item.name || ''
-
-                        // 月ごとのデータを配列に変換
-                        const data = new Array(12).fill(0)
-                        monthlyData.forEach(
-                          (monthItem: { month: string; value: number }) => {
-                            const monthIndex =
-                              (parseInt(monthItem.month) + 8) % 12
-                            data[monthIndex] = monthItem.value
-                          },
-                        )
-
-                        return {
-                          label: monthlyName,
-                          name: monthlyName,
-                          data: data,
-                          backgroundColor: getChartColors(
-                            'income',
-                            genericRevenueByMonth.length,
-                          )[index],
-                        }
-                      })
-                    })(),
-                  }
-            }
+            data={monthlyRevenueData}
           />
         </div>
 
-        {/* 月別支出グラフ */}
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <StackedBarChart
             title={`支出の内訳 月別（${selectedYearId}年度）`}
-            data={
-              genericExpenseByMonthLoading
-                ? { labels: [], datasets: [] }
-                : {
-                    labels: [
-                      '4月',
-                      '5月',
-                      '6月',
-                      '7月',
-                      '8月',
-                      '9月',
-                      '10月',
-                      '11月',
-                      '12月',
-                      '1月',
-                      '2月',
-                      '3月',
-                    ],
-                    datasets: (() => {
-                      if (!genericExpenseByMonth?.length) {
-                        return []
-                      }
-
-                      // 各科目のデータを処理
-                      return genericExpenseByMonth.map((item, index) => {
-                        const monthlyData = item.values
-                        const monthlyName = item.name || ''
-
-                        // 月ごとのデータを配列に変換
-                        const data = new Array(12).fill(0)
-                        monthlyData.forEach(
-                          (monthItem: { month: string; value: number }) => {
-                            const monthIndex =
-                              (parseInt(monthItem.month) + 8) % 12
-                            data[monthIndex] = monthItem.value
-                          },
-                        )
-
-                        return {
-                          label: monthlyName,
-                          name: monthlyName,
-                          data: data,
-                          backgroundColor: getChartColors(
-                            'expense',
-                            genericExpenseByMonth.length,
-                          )[index],
-                        }
-                      })
-                    })(),
-                  }
-            }
+            data={monthlyExpenseData}
           />
         </div>
       </section>
     </div>
+  )
+}
+
+interface FinancialSummaryHeaderProps {
+  selectedYearId: string | null
+  fiscalYears: { id: string }[]
+  onYearChange: (value: string) => void
+}
+
+function FinancialSummaryHeader({
+  selectedYearId,
+  fiscalYears,
+  onYearChange,
+}: FinancialSummaryHeaderProps) {
+  return (
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-lg font-bold">財務サマリー</h2>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium">年度：</span>
+        <Select value={selectedYearId || ''} onValueChange={onYearChange}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="年度を選択" />
+          </SelectTrigger>
+          <SelectContent>
+            {fiscalYears.map((year) => (
+              <SelectItem key={year.id} value={year.id}>
+                {year.id}年度
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
+
+interface TaxEstimationCardProps {
+  selectedYearId: string | null
+  taxCalculation: {
+    getResult: () => Array<{
+      taxName: string
+      taxAmount: number
+    }>
+  } | null
+}
+
+function TaxEstimationCard({
+  selectedYearId,
+  taxCalculation,
+}: TaxEstimationCardProps) {
+  return (
+    <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-medium text-lg">
+          {selectedYearId === '2024'
+            ? '現在の収支に基づく年間税額見込み'
+            : `${selectedYearId}年度の確定税額`}
+        </h3>
+        <Link href={`/tax-simulation?year=${selectedYearId}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <Calculator className="h-4 w-4" />
+            {selectedYearId === '2024' ? '詳細シミュレーション' : '詳細表示'}
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {taxCalculation
+          ?.getResult()
+          .map((tax: { taxName: string; taxAmount: number }, index: number) => {
+            const isLast = index === taxCalculation.getResult().length - 1
+            return (
+              <div
+                key={tax.taxName}
+                className={`border rounded-lg p-4 shadow-sm ${
+                  isLast
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <h3
+                  className={`text-sm font-medium mb-1 ${
+                    isLast ? 'text-blue-800' : 'text-gray-800'
+                  }`}
+                >
+                  {tax.taxName}
+                </h3>
+                <p
+                  className={`text-lg font-bold ${
+                    isLast ? 'text-blue-900' : 'text-gray-900'
+                  }`}
+                >
+                  {formatCurrency(tax.taxAmount)}
+                </p>
+              </div>
+            )
+          })}
+      </div>
+    </div>
+  )
+}
+
+interface FeatureCardProps {
+  href: string
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  description: string
+  iconBgColor: string
+  iconColor: string
+  hoverBorderColor: string
+}
+
+function FeatureCard({
+  href,
+  icon: Icon,
+  title,
+  description,
+  iconBgColor,
+  iconColor,
+  hoverBorderColor,
+}: FeatureCardProps) {
+  return (
+    <Link href={href} className="block">
+      <div
+        className={`bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-${hoverBorderColor} cursor-pointer`}
+      >
+        <div className="flex items-center mb-4">
+          <div
+            className={`w-8 h-8 rounded-md bg-${iconBgColor} flex items-center justify-center mr-2`}
+          >
+            <Icon className={`h-5 w-5 text-${iconColor}`} />
+          </div>
+          <h3 className="font-medium">{title}</h3>
+        </div>
+        <p className="text-sm text-gray-600 mb-4">{description}</p>
+      </div>
+    </Link>
   )
 }
