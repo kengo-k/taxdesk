@@ -37,6 +37,7 @@ import {
   selectSelectedFiscalYearId,
 } from '@/lib/redux/features/fiscalYearSlice'
 import {
+  clearData,
   fetchDashboardData,
   fetchTaxCalculationParameters,
   selectSaimokuNetAssetsByYear,
@@ -95,7 +96,7 @@ function calculateChartData(
 ): ChartData {
   if (isLoading || !data) {
     return {
-      value: 'Loading...',
+      value: '',
       data: [],
       labels: [],
       colors: [],
@@ -148,18 +149,10 @@ function calculateMonthlyChartData(
   }
 }
 
-function LoadingSpinner() {
-  return (
-    <div className="flex justify-center items-center h-[400px]">
-      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-    </div>
-  )
-}
-
 export default function Home() {
   const dispatch = useAppDispatch()
 
-  const selectedYearId = useAppSelector(selectSelectedFiscalYearId)
+  const selectedYearId = useAppSelector(selectSelectedFiscalYearId) as string
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
@@ -189,7 +182,7 @@ export default function Home() {
   )
 
   const taxCalculation = useMemo(() => {
-    if (!selectedYearId) return null
+    if (selectedYearId === 'none') return null
     try {
       const parameters = buildTaxParameters(
         taxCalculationParameters,
@@ -247,13 +240,16 @@ export default function Home() {
   }, [dispatch])
 
   useEffect(() => {
-    if (selectedYearId) {
+    if (selectedYearId && selectedYearId !== 'none') {
       dispatch(fetchDashboardData(selectedYearId))
       dispatch(fetchTaxCalculationParameters(selectedYearId))
+    } else {
+      dispatch(clearData())
     }
   }, [dispatch, selectedYearId])
 
   const isChartDataLoading = useMemo(() => {
+    if (selectedYearId === 'none') return false
     return (
       assetByYearLoading ||
       revenueByYearLoading ||
@@ -262,6 +258,7 @@ export default function Home() {
       expenseByMonthLoading
     )
   }, [
+    selectedYearId,
     assetByYearLoading,
     revenueByYearLoading,
     expenseByYearLoading,
@@ -269,22 +266,30 @@ export default function Home() {
     expenseByMonthLoading,
   ])
 
-  if (fiscalYearsLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
-        <div className="text-center">
-          <p className="text-lg mb-2">データを読み込み中...</p>
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container mx-auto px-4 py-6">
       <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold">主要機能</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">年度：</span>
+            <Select
+              value={selectedYearId || 'none'}
+              onValueChange={handleYearChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="年度を選択" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">未設定</SelectItem>
+                {fiscalYears.map((year) => (
+                  <SelectItem key={year.id} value={year.id}>
+                    {year.id}年度
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FeatureCard
@@ -350,11 +355,9 @@ export default function Home() {
       </section>
 
       <section className="mb-8">
-        <FinancialSummaryHeader
-          selectedYearId={selectedYearId}
-          fiscalYears={fiscalYears}
-          onYearChange={handleYearChange}
-        />
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold">財務サマリー</h2>
+        </div>
 
         <TaxEstimationCard
           selectedYearId={selectedYearId}
@@ -367,7 +370,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`資産の内訳 (${selectedYearId}年度)`}
+                title={`資産の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
                 value={assetChartData.value}
                 data={assetChartData.data}
                 labels={assetChartData.labels}
@@ -382,7 +385,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`収入の内訳 (${selectedYearId}年度)`}
+                title={`収入の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
                 value={revenueChartData.value}
                 data={revenueChartData.data}
                 labels={revenueChartData.labels}
@@ -397,7 +400,7 @@ export default function Home() {
               <LoadingSpinner />
             ) : (
               <DonutChart
-                title={`支出の内訳 (${selectedYearId}年度)`}
+                title={`支出の内訳${selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}`}
                 value={expenseChartData.value}
                 data={expenseChartData.data}
                 labels={expenseChartData.labels}
@@ -410,7 +413,8 @@ export default function Home() {
 
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
           <h3 className="font-medium text-lg mb-4">
-            収入の内訳 月別（{selectedYearId}年度）
+            収入の内訳 月別
+            {selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}
           </h3>
           {revenueByMonthLoading ? (
             <LoadingSpinner />
@@ -425,7 +429,8 @@ export default function Home() {
 
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <h3 className="font-medium text-lg mb-4">
-            支出の内訳 月別（{selectedYearId}年度）
+            支出の内訳 月別
+            {selectedYearId === 'none' ? '' : ` (${selectedYearId}年度)`}
           </h3>
           {expenseByMonthLoading ? (
             <LoadingSpinner />
@@ -438,39 +443,6 @@ export default function Home() {
           )}
         </div>
       </section>
-    </div>
-  )
-}
-
-interface FinancialSummaryHeaderProps {
-  selectedYearId: string | null
-  fiscalYears: { id: string }[]
-  onYearChange: (value: string) => void
-}
-
-function FinancialSummaryHeader({
-  selectedYearId,
-  fiscalYears,
-  onYearChange,
-}: FinancialSummaryHeaderProps) {
-  return (
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg font-bold">財務サマリー</h2>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">年度：</span>
-        <Select value={selectedYearId || ''} onValueChange={onYearChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="年度を選択" />
-          </SelectTrigger>
-          <SelectContent>
-            {fiscalYears.map((year) => (
-              <SelectItem key={year.id} value={year.id}>
-                {year.id}年度
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
     </div>
   )
 }
@@ -489,13 +461,41 @@ function TaxEstimationCard({
   selectedYearId,
   taxCalculation,
 }: TaxEstimationCardProps) {
+  const fiscalYears = useAppSelector(selectAllFiscalYears)
+  const selectedYear = fiscalYears.find((year) => year.id === selectedYearId)
+  const isCurrentYear = selectedYear?.isCurrent
+
+  if (!taxCalculation) {
+    return (
+      <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-medium text-lg">税額シミュレーション</h3>
+          <Link href={`/tax-simulation?year=${selectedYearId}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <Calculator className="h-4 w-4" />
+              詳細表示
+            </Button>
+          </Link>
+        </div>
+        <div className="flex justify-center items-center h-[120px] text-gray-500">
+          データがありません
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-medium text-lg">
-          {selectedYearId === '2024'
-            ? '現在の収支に基づく年間税額見込み'
-            : `${selectedYearId}年度の確定税額`}
+          税額シミュレーション
+          {selectedYearId !== 'none'
+            ? ` (${selectedYearId}年度${isCurrentYear ? ' 見込み額' : ' 確定額'})`
+            : ''}
         </h3>
         <Link href={`/tax-simulation?year=${selectedYearId}`}>
           <Button
@@ -504,14 +504,14 @@ function TaxEstimationCard({
             className="flex items-center gap-1"
           >
             <Calculator className="h-4 w-4" />
-            {selectedYearId === '2024' ? '詳細シミュレーション' : '詳細表示'}
+            詳細表示
           </Button>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {taxCalculation
-          ?.getResult()
+          .getResult()
           .map((tax: { taxName: string; taxAmount: number }, index: number) => {
             const isLast = index === taxCalculation.getResult().length - 1
             return (
@@ -580,5 +580,13 @@ function FeatureCard({
         <p className="text-sm text-gray-600 mb-4">{description}</p>
       </div>
     </Link>
+  )
+}
+
+function LoadingSpinner() {
+  return (
+    <div className="flex justify-center items-center h-[400px]">
+      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
   )
 }

@@ -162,26 +162,37 @@ export const reportSlice = createSlice({
   name: 'report',
   initialState,
   reducers: {
-    // 内訳データ用のクリアアクション
-    clearSaimokuNetAssetsByYear: (state) => {
-      state.breakdown.saimokuNetAssetsByYear =
-        initialState.breakdown.saimokuNetAssetsByYear
-    },
-    clearSaimokuNetRevenuesByYear: (state) => {
-      state.breakdown.saimokuNetRevenuesByYear =
-        initialState.breakdown.saimokuNetRevenuesByYear
-    },
-    clearSaimokuNetExpensesByYear: (state) => {
-      state.breakdown.saimokuNetExpensesByYear =
-        initialState.breakdown.saimokuNetExpensesByYear
-    },
-    clearSaimokuNetRevenuesByMonth: (state) => {
-      state.breakdown.saimokuNetRevenuesByMonth =
-        initialState.breakdown.saimokuNetRevenuesByMonth
-    },
-    clearSaimokuNetExpensesByMonth: (state) => {
-      state.breakdown.saimokuNetExpensesByMonth =
-        initialState.breakdown.saimokuNetExpensesByMonth
+    clearData: (state) => {
+      state.breakdown.saimokuNetAssetsByYear = {
+        data: null,
+        loading: false,
+        error: null,
+      }
+      state.breakdown.saimokuNetRevenuesByYear = {
+        data: null,
+        loading: false,
+        error: null,
+      }
+      state.breakdown.saimokuNetExpensesByYear = {
+        data: null,
+        loading: false,
+        error: null,
+      }
+      state.breakdown.saimokuNetRevenuesByMonth = {
+        data: null,
+        loading: false,
+        error: null,
+      }
+      state.breakdown.saimokuNetExpensesByMonth = {
+        data: null,
+        loading: false,
+        error: null,
+      }
+      state.taxCalculationParameters = {
+        data: [],
+        loading: false,
+        error: null,
+      }
     },
   },
   extraReducers: (builder) => {
@@ -242,14 +253,7 @@ export const reportSlice = createSlice({
   },
 })
 
-export const {
-  // 内訳データ用のクリアアクション
-  clearSaimokuNetAssetsByYear,
-  clearSaimokuNetRevenuesByYear,
-  clearSaimokuNetExpensesByYear,
-  clearSaimokuNetRevenuesByMonth,
-  clearSaimokuNetExpensesByMonth,
-} = reportSlice.actions
+export const { clearData } = reportSlice.actions
 
 export default reportSlice.reducer
 

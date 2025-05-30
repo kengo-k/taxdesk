@@ -26,7 +26,7 @@ interface FiscalYearState {
 // 初期状態
 const initialState: FiscalYearState = {
   fiscalYears: [],
-  selectedYear: null,
+  selectedYear: 'none',
   loading: false,
   error: null,
 }
