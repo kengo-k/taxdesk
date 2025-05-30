@@ -1,6 +1,8 @@
-import { ParameterBuilder, ParameterSelector } from '.'
-import { Context2024 } from '../steps/steps2024'
-
+import {
+  ParameterBuilder,
+  ParameterSelector,
+} from '@/lib/client/tax-calculation/parameters'
+import { Context2024 } from '@/lib/client/tax-calculation/steps/steps2024'
 import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
 import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 
@@ -158,7 +160,7 @@ export const parameters2024Builder: ParameterBuilder = (
     // 事業の費用および営業外費用を全て加算する
     // 租税公課のうち事業税は翌年度に損金参入するため当年度からは除外する
     // (昨年度から引き継いだ)未払法人税のうち事業税は当年度に損金参入するため加算する
-    params.expenses = state[2].response[0].value
+    params.expenses = state[2].response?.[0]?.value ?? 0
 
     params.previous_business_tax = state[4].response.reduce((acc, item) => {
       if (item.custom_fields?.category === 'include_expense') {

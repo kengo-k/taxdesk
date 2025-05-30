@@ -4,15 +4,15 @@ import {
   roundDown100 as r100,
   roundDown1000 as r1000,
 } from '@/lib/client/tax-calculation/calc'
-import { Context2023 } from '@/lib/client/tax-calculation/steps/steps2023'
+import { Context2024 } from '@/lib/client/tax-calculation/steps/steps2024'
 import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
-export type Context2024 = Context2023
+export type Context2025 = Context2024
 
 /**
- * 2024年度の税額計算ステップを定義
+ * 2025年度の税額計算ステップを定義
  */
-export const steps2024: CalculationStep<Context2024>[] = [
+export const steps2025: CalculationStep<Context2025>[] = [
   {
     category: '課税所得',
     subSteps: [

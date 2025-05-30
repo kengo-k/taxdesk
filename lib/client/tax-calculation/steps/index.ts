@@ -1,5 +1,6 @@
 import { steps2023 } from '@/lib/client/tax-calculation/steps/steps2023'
 import { steps2024 } from '@/lib/client/tax-calculation/steps/steps2024'
+import { steps2025 } from '@/lib/client/tax-calculation/steps/steps2025'
 import { CalculationStep } from '@/lib/client/tax-calculation/types'
 
 /**
@@ -10,6 +11,7 @@ export function buildStepMappings(): Record<string, CalculationStep<any>[]> {
   return {
     '2023': steps2023,
     '2024': steps2024,
+    '2025': steps2025,
   }
 }
 
