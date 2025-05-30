@@ -148,6 +148,14 @@ function calculateMonthlyChartData(
   }
 }
 
+function LoadingSpinner() {
+  return (
+    <div className="flex justify-center items-center h-[400px]">
+      <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
+  )
+}
+
 export default function Home() {
   const dispatch = useAppDispatch()
 
@@ -245,6 +253,22 @@ export default function Home() {
     }
   }, [dispatch, selectedYearId])
 
+  const isChartDataLoading = useMemo(() => {
+    return (
+      assetByYearLoading ||
+      revenueByYearLoading ||
+      expenseByYearLoading ||
+      revenueByMonthLoading ||
+      expenseByMonthLoading
+    )
+  }, [
+    assetByYearLoading,
+    revenueByYearLoading,
+    expenseByYearLoading,
+    revenueByMonthLoading,
+    expenseByMonthLoading,
+  ])
+
   if (fiscalYearsLoading) {
     return (
       <div className="container mx-auto px-4 py-6 flex justify-center items-center h-full">
@@ -339,51 +363,79 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            <DonutChart
-              title={`資産の内訳 (${selectedYearId}年度)`}
-              value={assetChartData.value}
-              data={assetChartData.data}
-              labels={assetChartData.labels}
-              colors={assetChartData.colors}
-              amounts={assetChartData.amounts}
-            />
+            {assetByYearLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <DonutChart
+                title={`資産の内訳 (${selectedYearId}年度)`}
+                value={assetChartData.value}
+                data={assetChartData.data}
+                labels={assetChartData.labels}
+                colors={assetChartData.colors}
+                amounts={assetChartData.amounts}
+              />
+            )}
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            <DonutChart
-              title={`収入の内訳 (${selectedYearId}年度)`}
-              value={revenueChartData.value}
-              data={revenueChartData.data}
-              labels={revenueChartData.labels}
-              colors={revenueChartData.colors}
-              amounts={revenueChartData.amounts}
-            />
+            {revenueByYearLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <DonutChart
+                title={`収入の内訳 (${selectedYearId}年度)`}
+                value={revenueChartData.value}
+                data={revenueChartData.data}
+                labels={revenueChartData.labels}
+                colors={revenueChartData.colors}
+                amounts={revenueChartData.amounts}
+              />
+            )}
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            <DonutChart
-              title={`支出の内訳 (${selectedYearId}年度)`}
-              value={expenseChartData.value}
-              data={expenseChartData.data}
-              labels={expenseChartData.labels}
-              colors={expenseChartData.colors}
-              amounts={expenseChartData.amounts}
-            />
+            {expenseByYearLoading ? (
+              <LoadingSpinner />
+            ) : (
+              <DonutChart
+                title={`支出の内訳 (${selectedYearId}年度)`}
+                value={expenseChartData.value}
+                data={expenseChartData.data}
+                labels={expenseChartData.labels}
+                colors={expenseChartData.colors}
+                amounts={expenseChartData.amounts}
+              />
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-          <StackedBarChart
-            title={`収入の内訳 月別（${selectedYearId}年度）`}
-            data={monthlyRevenueData}
-          />
+          <h3 className="font-medium text-lg mb-4">
+            収入の内訳 月別（{selectedYearId}年度）
+          </h3>
+          {revenueByMonthLoading ? (
+            <LoadingSpinner />
+          ) : monthlyRevenueData.datasets.length === 0 ? (
+            <div className="flex justify-center items-center h-[400px] text-gray-500">
+              データがありません
+            </div>
+          ) : (
+            <StackedBarChart data={monthlyRevenueData} />
+          )}
         </div>
 
         <div className="bg-white rounded-lg p-6 shadow-sm">
-          <StackedBarChart
-            title={`支出の内訳 月別（${selectedYearId}年度）`}
-            data={monthlyExpenseData}
-          />
+          <h3 className="font-medium text-lg mb-4">
+            支出の内訳 月別（{selectedYearId}年度）
+          </h3>
+          {expenseByMonthLoading ? (
+            <LoadingSpinner />
+          ) : monthlyExpenseData.datasets.length === 0 ? (
+            <div className="flex justify-center items-center h-[400px] text-gray-500">
+              データがありません
+            </div>
+          ) : (
+            <StackedBarChart data={monthlyExpenseData} />
+          )}
         </div>
       </section>
     </div>

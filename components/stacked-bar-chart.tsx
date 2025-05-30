@@ -7,7 +7,7 @@ import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 Chart.register(...registerables)
 
 interface StackedBarChartProps {
-  title: string
+  title?: string
   data: {
     labels: string[] // X軸のラベル（月）
     datasets: {
@@ -109,7 +109,7 @@ export function StackedBarChart({ title, data }: StackedBarChartProps) {
 
   return (
     <div className="relative h-full">
-      <h2 className="font-medium text-left mb-2">{title}</h2>
+      {title && <h2 className="font-medium text-left mb-2">{title}</h2>}
       <div className="h-64 relative">
         <canvas ref={chartRef} />
       </div>
