@@ -13,7 +13,10 @@ import {
   Calendar,
   Database,
   FileSpreadsheet,
+  Grid,
+  Receipt,
   Scale,
+  Wallet,
 } from 'lucide-react'
 
 import { DonutChart } from '@/components/donut-chart'
@@ -26,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
@@ -307,79 +311,148 @@ export default function Home() {
             </Select>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <FeatureCard
-            href={
-              selectedFiscalYear !== 'none'
-                ? `/ledger?fiscal_year=${selectedFiscalYear}`
-                : '/ledger'
-            }
-            icon={BookOpen}
-            title="元帳"
-            description="日々の取引を記録し、収入と支出を管理します。各取引の詳細情報も入力できます。"
-            iconBgColor="blue-100"
-            iconColor="blue-600"
-            hoverBorderColor="blue-200"
-          />
 
-          <FeatureCard
-            href={
-              selectedFiscalYear !== 'none'
-                ? `/balance-sheet?fiscal_year=${selectedFiscalYear}`
-                : '/balance-sheet'
-            }
-            icon={Scale}
-            title="貸借対照表"
-            description="資産、負債、純資産の状況を確認し、財務状態を把握します。特定時点での財政状態を表示します。"
-            iconBgColor="blue-100"
-            iconColor="blue-600"
-            hoverBorderColor="blue-200"
-          />
+        <Tabs defaultValue="accounting" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="accounting">会計管理</TabsTrigger>
+            <TabsTrigger value="business">業務管理</TabsTrigger>
+            <TabsTrigger value="system">システム管理</TabsTrigger>
+          </TabsList>
 
-          <FeatureCard
-            href={
-              selectedFiscalYear !== 'none'
-                ? `/income-statement?fiscal_year=${selectedFiscalYear}`
-                : '/income-statement'
-            }
-            icon={BarChart3}
-            title="損益計算書"
-            description="指定期間の収益と費用を集計し、事業の収益性を分析します。月次・四半期・年次の報告書を生成できます。"
-            iconBgColor="green-100"
-            iconColor="green-600"
-            hoverBorderColor="green-200"
-          />
+          <TabsContent value="accounting" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
+              <FeatureCard
+                href={
+                  selectedFiscalYear !== 'none'
+                    ? `/ledger?fiscal_year=${selectedFiscalYear}`
+                    : '/ledger'
+                }
+                icon={BookOpen}
+                title="元帳"
+                description=""
+                iconBgColor="blue-100"
+                iconColor="blue-600"
+                hoverBorderColor="blue-200"
+              />
 
-          <FeatureCard
-            href="/master"
-            icon={FileSpreadsheet}
-            title="マスタ管理"
-            description="勘定科目・細目・消費税区分などのマスタデータを管理します。各種コードや設定を自由にカスタマイズできます。"
-            iconBgColor="purple-100"
-            iconColor="purple-600"
-            hoverBorderColor="purple-200"
-          />
+              <FeatureCard
+                href="#"
+                icon={FileSpreadsheet}
+                title="仕訳帳"
+                description=""
+                iconBgColor="purple-100"
+                iconColor="purple-600"
+                hoverBorderColor="purple-200"
+              />
 
-          <FeatureCard
-            href="/fiscal-year-transition"
-            icon={Calendar}
-            title="年度移行"
-            description="会計年度を切り替え、貸借対照表の残高を新年度に繰り越します。過去年度は読み取り専用になります。"
-            iconBgColor="blue-100"
-            iconColor="blue-600"
-            hoverBorderColor="blue-200"
-          />
+              <FeatureCard
+                href={
+                  selectedFiscalYear !== 'none'
+                    ? `/balance-sheet?fiscal_year=${selectedFiscalYear}`
+                    : '/balance-sheet'
+                }
+                icon={Scale}
+                title="貸借対照表"
+                description=""
+                iconBgColor="green-100"
+                iconColor="green-600"
+                hoverBorderColor="green-200"
+              />
 
-          <FeatureCard
-            href="/backup"
-            icon={Database}
-            title="バックアップ設定"
-            description="データのバックアップと復元を管理します。定期的なバックアップスケジュールを設定できます。"
-            iconBgColor="amber-100"
-            iconColor="amber-600"
-            hoverBorderColor="amber-200"
-          />
-        </div>
+              <FeatureCard
+                href={
+                  selectedFiscalYear !== 'none'
+                    ? `/income-statement?fiscal_year=${selectedFiscalYear}`
+                    : '/income-statement'
+                }
+                icon={BarChart3}
+                title="損益計算書"
+                description=""
+                iconBgColor="gray-100"
+                iconColor="gray-600"
+                hoverBorderColor="gray-200"
+              />
+
+              <FeatureCard
+                href="#"
+                icon={Grid}
+                title="財務諸表一覧"
+                description=""
+                iconBgColor="red-100"
+                iconColor="red-600"
+                hoverBorderColor="red-200"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="business" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <FeatureCard
+                href="#"
+                icon={Wallet}
+                title="給与明細照会"
+                description=""
+                iconBgColor="red-100"
+                iconColor="red-600"
+                hoverBorderColor="red-200"
+              />
+
+              <FeatureCard
+                href="#"
+                icon={Receipt}
+                title="出張旅費管理"
+                description=""
+                iconBgColor="gray-100"
+                iconColor="gray-600"
+                hoverBorderColor="gray-200"
+              />
+
+              <FeatureCard
+                href="#"
+                icon={Database}
+                title="減価償却資産台帳"
+                description=""
+                iconBgColor="green-100"
+                iconColor="green-600"
+                hoverBorderColor="green-200"
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="system" className="mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <FeatureCard
+                href="/master"
+                icon={FileSpreadsheet}
+                title="マスタ管理"
+                description=""
+                iconBgColor="purple-100"
+                iconColor="purple-600"
+                hoverBorderColor="purple-200"
+              />
+
+              <FeatureCard
+                href="/fiscal-year-transition"
+                icon={Calendar}
+                title="年度移行"
+                description=""
+                iconBgColor="green-100"
+                iconColor="green-600"
+                hoverBorderColor="green-200"
+              />
+
+              <FeatureCard
+                href="/backup"
+                icon={Database}
+                title="バックアップ設定"
+                description=""
+                iconBgColor="blue-100"
+                iconColor="blue-600"
+                hoverBorderColor="blue-200"
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </section>
 
       <section className="mb-8">
@@ -599,17 +672,14 @@ function FeatureCard({
   return (
     <Link href={href} className="block">
       <div
-        className={`bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-${hoverBorderColor} cursor-pointer`}
+        className={`bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-${hoverBorderColor} cursor-pointer h-[100px] flex items-center`}
       >
-        <div className="flex items-center mb-4">
-          <div
-            className={`w-8 h-8 rounded-md bg-${iconBgColor} flex items-center justify-center mr-2`}
-          >
-            <Icon className={`h-5 w-5 text-${iconColor}`} />
-          </div>
-          <h3 className="font-medium">{title}</h3>
+        <div
+          className={`w-16 h-16 rounded-md bg-${iconBgColor} flex items-center justify-center mr-4`}
+        >
+          <Icon className={`h-10 w-10 text-${iconColor}`} />
         </div>
-        <p className="text-sm text-gray-600 mb-4">{description}</p>
+        <h3 className="font-medium text-lg">{title}</h3>
       </div>
     </Link>
   )
