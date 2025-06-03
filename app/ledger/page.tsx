@@ -17,12 +17,6 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
 import {
-  fetchAccountList,
-  fetchFiscalYears,
-  selectAccountList,
-  selectFiscalYears,
-} from '@/lib/redux/features/masterSlice'
-import {
   clearTransactions,
   createTransaction,
   deleteTransactions,
@@ -32,13 +26,19 @@ import {
   selectAccountCountsError,
   selectAccountCountsLoading,
   selectAllCount,
+  selectLedgerError,
+  selectLedgerLoading,
   selectPagination,
   selectSearchParams,
-  selectTransactionError,
-  selectTransactionLoading,
   selectTransactions,
   updateTransaction,
-} from '@/lib/redux/features/transactionSlice'
+} from '@/lib/redux/features/ledgerSlice'
+import {
+  fetchAccountList,
+  fetchFiscalYears,
+  selectAccountList,
+  selectFiscalYears,
+} from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 export default function LedgerPage() {
@@ -63,8 +63,8 @@ export default function LedgerPage() {
   const transactions = useAppSelector(selectTransactions)
   const allCount = useAppSelector(selectAllCount)
   const pagination = useAppSelector(selectPagination)
-  const transactionLoading = useAppSelector(selectTransactionLoading)
-  const transactionError = useAppSelector(selectTransactionError)
+  const ledgerLoading = useAppSelector(selectLedgerLoading)
+  const ledgerError = useAppSelector(selectLedgerError)
   const reduxSearchParams = useAppSelector(selectSearchParams)
 
   // Reduxから勘定科目別レコード件数を取得
@@ -600,7 +600,7 @@ export default function LedgerPage() {
                   {getSelectedAccountLabel()}
                 </h4>
 
-                {transactionLoading ? (
+                {ledgerLoading ? (
                   <div className="py-12 text-center">
                     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
                     <p className="mt-2 text-sm text-gray-500">

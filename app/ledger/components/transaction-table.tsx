@@ -18,7 +18,7 @@ import { toast } from '@/components/ui/use-toast'
 import { CreateLedgerRequest } from '@/lib/backend/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
-import { updateJournalChecked } from '@/lib/redux/features/transactionSlice'
+import { updateJournalChecked } from '@/lib/redux/features/ledgerSlice'
 import { useAppDispatch } from '@/lib/redux/hooks'
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
 

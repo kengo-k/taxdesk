@@ -328,21 +328,18 @@ export const {
 } = transactionSlice.actions
 
 export const selectTransactions = (state: RootState) =>
-  state.transaction.transactions
-export const selectAllCount = (state: RootState) => state.transaction.all_count
-export const selectPagination = (state: RootState) =>
-  state.transaction.pagination
-export const selectTransactionLoading = (state: RootState) =>
-  state.transaction.loading
-export const selectTransactionError = (state: RootState) =>
-  state.transaction.error
+  state.ledger.transactions
+export const selectAllCount = (state: RootState) => state.ledger.all_count
+export const selectPagination = (state: RootState) => state.ledger.pagination
+export const selectLedgerLoading = (state: RootState) => state.ledger.loading
+export const selectLedgerError = (state: RootState) => state.ledger.error
 export const selectSearchParams = (state: RootState) =>
-  state.transaction.searchParams
+  state.ledger.searchParams
 export const selectAccountCounts = (state: RootState) =>
-  state.transaction.accountCounts
+  state.ledger.accountCounts
 export const selectAccountCountsLoading = (state: RootState) =>
-  state.transaction.accountCountsLoading
+  state.ledger.accountCountsLoading
 export const selectAccountCountsError = (state: RootState) =>
-  state.transaction.accountCountsError
+  state.ledger.accountCountsError
 
 export default transactionSlice.reducer

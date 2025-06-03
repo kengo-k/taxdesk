@@ -1,14 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 
+import ledgerReducer from '@/lib/redux/features/ledgerSlice'
 import masterReducer from '@/lib/redux/features/masterSlice'
 import reportReducer from '@/lib/redux/features/reportSlice'
-import transactionReducer from '@/lib/redux/features/transactionSlice'
 
 export const makeStore = () => {
   return configureStore({
     reducer: {
       master: masterReducer,
-      transaction: transactionReducer,
+      ledger: ledgerReducer,
       report: reportReducer,
     },
   })
