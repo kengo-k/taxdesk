@@ -18,16 +18,14 @@ import { toast } from '@/components/ui/use-toast'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
 import {
   fetchAccountList,
+  fetchFiscalYears,
   selectAccountListError,
   selectAccountListLoading,
   selectAllAccountList,
-} from '@/lib/redux/features/accountSlice'
-import {
-  fetchFiscalYears,
   selectAllFiscalYears,
   selectFiscalYearError,
   selectFiscalYearLoading,
-} from '@/lib/redux/features/fiscalYearSlice'
+} from '@/lib/redux/features/masterSlice'
 import {
   clearTransactions,
   createTransaction,

@@ -31,7 +31,7 @@ import {
   fetchFiscalYears,
   selectAllFiscalYears,
   selectFiscalYearLoading,
-} from '@/lib/redux/features/fiscalYearSlice'
+} from '@/lib/redux/features/masterSlice'
 import {
   fetchTaxCalculationParameters,
   selectTaxCalculationParameters,
