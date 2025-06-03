@@ -19,12 +19,8 @@ import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger
 import {
   fetchAccountList,
   fetchFiscalYears,
-  selectAccountListError,
-  selectAccountListLoading,
-  selectAllAccountList,
+  selectAccountList,
   selectFiscalYears,
-  selectFiscalYearsError,
-  selectFiscalYearsLoading,
 } from '@/lib/redux/features/masterSlice'
 import {
   clearTransactions,
@@ -50,14 +46,18 @@ export default function LedgerPage() {
   const dispatch = useAppDispatch()
 
   // Reduxから年度データを取得
-  const fiscalYears = useAppSelector(selectFiscalYears)
-  const fiscalYearsLoading = useAppSelector(selectFiscalYearsLoading)
-  const fiscalYearsError = useAppSelector(selectFiscalYearsError)
+  const {
+    data: fiscalYears,
+    loading: fiscalYearsLoading,
+    error: fiscalYearsError,
+  } = useAppSelector(selectFiscalYears)
 
   // Reduxから勘定科目一覧を取得
-  const accountList = useAppSelector(selectAllAccountList)
-  const accountListLoading = useAppSelector(selectAccountListLoading)
-  const accountListError = useAppSelector(selectAccountListError)
+  const {
+    data: accountList,
+    loading: accountListLoading,
+    error: accountListError,
+  } = useAppSelector(selectAccountList)
 
   // Reduxから取引データを取得
   const transactions = useAppSelector(selectTransactions)

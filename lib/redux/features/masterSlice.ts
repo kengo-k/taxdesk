@@ -7,7 +7,6 @@ import {
 import { ListAccountItem } from '@/lib/backend/services/masters/list-accounts'
 import type { RootState } from '@/lib/redux/store'
 
-// 年度の型定義
 export interface FiscalYear {
   id: string
   label: string
@@ -16,36 +15,31 @@ export interface FiscalYear {
   isCurrent: boolean
 }
 
-// 状態の型定義
 interface MasterState {
-  // Fiscal Year related state
   fiscalYears: FiscalYear[]
-  selectedYear: string
   fiscalYearsLoading: boolean
   fiscalYearsError: string | null
 
-  // Account related state
+  selectedYear: string
+
   accountList: ListAccountItem[]
-  accountLoading: boolean
-  accountError: string | null
+  accountListLoading: boolean
+  accountListError: string | null
 }
 
 // 初期状態
 const initialState: MasterState = {
-  // Fiscal Year initial state
   fiscalYears: [],
   fiscalYearsLoading: false,
   fiscalYearsError: null,
 
   selectedYear: 'none',
 
-  // Account initial state
   accountList: [],
-  accountLoading: false,
-  accountError: null,
+  accountListLoading: false,
+  accountListError: null,
 }
 
-// 非同期アクション - 年度一覧の取得
 export const fetchFiscalYears = createAsyncThunk(
   'master/fetchFiscalYears',
   async (_, { rejectWithValue }) => {
@@ -70,7 +64,6 @@ export const fetchFiscalYears = createAsyncThunk(
   },
 )
 
-// 非同期アクション - 勘定科目一覧の取得
 export const fetchAccountList = createAsyncThunk<
   { data: ListAccountItem[] },
   string
@@ -93,7 +86,6 @@ export const fetchAccountList = createAsyncThunk<
   },
 )
 
-// スライスの作成
 export const masterSlice = createSlice({
   name: 'master',
   initialState,
@@ -107,7 +99,6 @@ export const masterSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fiscal Year reducers
       .addCase(fetchFiscalYears.pending, (state) => {
         state.fiscalYearsLoading = true
         state.fiscalYearsError = null
@@ -118,7 +109,6 @@ export const masterSlice = createSlice({
           state.fiscalYearsLoading = false
           state.fiscalYears = action.payload
 
-          // 現在の年度を初期選択
           const currentYear = action.payload.find((year) => year.isCurrent)
           if (currentYear && !state.selectedYear) {
             state.selectedYear = currentYear.id
@@ -130,42 +120,37 @@ export const masterSlice = createSlice({
         state.fiscalYearsError = action.payload as string
       })
 
-      // Account reducers
       .addCase(fetchAccountList.pending, (state) => {
-        state.accountLoading = true
-        state.accountError = null
+        state.accountListLoading = true
+        state.accountListError = null
       })
       .addCase(fetchAccountList.fulfilled, (state, action) => {
-        state.accountLoading = false
+        state.accountListLoading = false
         state.accountList = action.payload.data
       })
       .addCase(fetchAccountList.rejected, (state, action) => {
-        state.accountLoading = false
-        state.accountError = action.payload as string
+        state.accountListLoading = false
+        state.accountListError = action.payload as string
       })
   },
 })
 
-// アクションのエクスポート
 export const { setSelectedFiscalYear, clearSelectedFiscalYear } =
   masterSlice.actions
 
 export const selectSelectedFiscalYear = (state: RootState) =>
   state.master.selectedYear
 
-export const selectFiscalYears = (state: RootState) => state.master.fiscalYears
-export const selectFiscalYearsLoading = (state: RootState) =>
-  state.master.fiscalYearsLoading
-export const selectFiscalYearsError = (state: RootState) =>
-  state.master.fiscalYearsError
+export const selectFiscalYears = (state: RootState) => ({
+  data: state.master.fiscalYears,
+  loading: state.master.fiscalYearsLoading,
+  error: state.master.fiscalYearsError,
+})
 
-// Account selectors
-export const selectAllAccountList = (state: RootState) =>
-  state.master.accountList
-export const selectAccountListLoading = (state: RootState) =>
-  state.master.accountLoading
-export const selectAccountListError = (state: RootState) =>
-  state.master.accountError
+export const selectAccountList = (state: RootState) => ({
+  data: state.master.accountList,
+  loading: state.master.accountListLoading,
+  error: state.master.accountListError,
+})
 
-// リデューサーのエクスポート
 export default masterSlice.reducer
