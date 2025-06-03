@@ -34,9 +34,10 @@ interface MasterState {
 const initialState: MasterState = {
   // Fiscal Year initial state
   fiscalYears: [],
-  selectedYear: 'none',
   fiscalYearLoading: false,
   fiscalYearError: null,
+
+  selectedYear: 'none',
 
   // Account initial state
   accountList: [],
@@ -97,8 +98,7 @@ export const masterSlice = createSlice({
   name: 'master',
   initialState,
   reducers: {
-    // Fiscal Year actions
-    selectFiscalYear: (state, action: PayloadAction<string>) => {
+    setSelectedFiscalYear: (state, action: PayloadAction<string>) => {
       state.selectedYear = action.payload
     },
     clearSelectedFiscalYear: (state) => {
@@ -147,7 +147,8 @@ export const masterSlice = createSlice({
 })
 
 // アクションのエクスポート
-export const { selectFiscalYear, clearSelectedFiscalYear } = masterSlice.actions
+export const { setSelectedFiscalYear, clearSelectedFiscalYear } =
+  masterSlice.actions
 
 export const selectSelectedFiscalYear = (state: RootState) =>
   state.master.selectedYear

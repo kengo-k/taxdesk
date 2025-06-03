@@ -37,9 +37,9 @@ import { getChartColors } from '@/lib/client/utils/chart-colors'
 import {
   fetchFiscalYears,
   selectAllFiscalYears,
-  selectFiscalYear,
   selectFiscalYearLoading,
   selectSelectedFiscalYear,
+  setSelectedFiscalYear,
 } from '@/lib/redux/features/masterSlice'
 import {
   clearData,
@@ -240,7 +240,7 @@ export default function Home() {
   )
 
   const handleYearChange = (value: string) => {
-    dispatch(selectFiscalYear(value))
+    dispatch(setSelectedFiscalYear(value))
     if (value === 'none') {
       router.replace('/')
     } else {
@@ -255,7 +255,7 @@ export default function Home() {
   useEffect(() => {
     const yearParam = searchParams.get('fiscal_year')
     if (yearParam && fiscalYears.some((year) => year.id === yearParam)) {
-      dispatch(selectFiscalYear(yearParam))
+      dispatch(setSelectedFiscalYear(yearParam))
     }
   }, [dispatch, searchParams, fiscalYears])
 
