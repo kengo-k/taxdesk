@@ -23,13 +23,9 @@ import {
   fetchAccountCounts,
   fetchTransactions,
   selectAccountCounts,
-  selectAccountCountsError,
   selectAccountCountsLoading,
   selectAllCount,
-  selectLedgerError,
   selectLedgerLoading,
-  selectPagination,
-  selectSearchParams,
   selectTransactions,
   updateTransaction,
 } from '@/lib/redux/features/ledgerSlice'
@@ -62,15 +58,11 @@ export default function LedgerPage() {
   // Reduxから取引データを取得
   const transactions = useAppSelector(selectTransactions)
   const allCount = useAppSelector(selectAllCount)
-  const pagination = useAppSelector(selectPagination)
   const ledgerLoading = useAppSelector(selectLedgerLoading)
-  const ledgerError = useAppSelector(selectLedgerError)
-  const reduxSearchParams = useAppSelector(selectSearchParams)
 
   // Reduxから勘定科目別レコード件数を取得
   const accountCounts = useAppSelector(selectAccountCounts)
   const accountCountsLoading = useAppSelector(selectAccountCountsLoading)
-  const accountCountsError = useAppSelector(selectAccountCountsError)
 
   // URLパラメータから初期値を取得
   const searchParams = useSearchParams()
@@ -100,9 +92,6 @@ export default function LedgerPage() {
   const [deleteMode, setDeleteMode] = useState(false)
   const [selectedRows, setSelectedRows] = useState<string[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
-  // 初期表示用の空の配列
-  const [initialLoaded, setInitialLoaded] = useState(false)
 
   // 年度一覧がストアにない場合は取得する
   useEffect(() => {
