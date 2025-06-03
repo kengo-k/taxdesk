@@ -159,8 +159,6 @@ export const selectFiscalYearLoading = (state: RootState) =>
   state.master.fiscalYearLoading
 export const selectFiscalYearError = (state: RootState) =>
   state.master.fiscalYearError
-export const selectCurrentFiscalYear = (state: RootState) =>
-  state.master.fiscalYears.find((year) => year.id === state.master.selectedYear)
 
 // Account selectors
 export const selectAllAccountList = (state: RootState) =>
