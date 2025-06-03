@@ -21,8 +21,8 @@ interface MasterState {
   // Fiscal Year related state
   fiscalYears: FiscalYear[]
   selectedYear: string
-  fiscalYearLoading: boolean
-  fiscalYearError: string | null
+  fiscalYearsLoading: boolean
+  fiscalYearsError: string | null
 
   // Account related state
   accountList: ListAccountItem[]
@@ -34,8 +34,8 @@ interface MasterState {
 const initialState: MasterState = {
   // Fiscal Year initial state
   fiscalYears: [],
-  fiscalYearLoading: false,
-  fiscalYearError: null,
+  fiscalYearsLoading: false,
+  fiscalYearsError: null,
 
   selectedYear: 'none',
 
@@ -109,13 +109,13 @@ export const masterSlice = createSlice({
     builder
       // Fiscal Year reducers
       .addCase(fetchFiscalYears.pending, (state) => {
-        state.fiscalYearLoading = true
-        state.fiscalYearError = null
+        state.fiscalYearsLoading = true
+        state.fiscalYearsError = null
       })
       .addCase(
         fetchFiscalYears.fulfilled,
         (state, action: PayloadAction<FiscalYear[]>) => {
-          state.fiscalYearLoading = false
+          state.fiscalYearsLoading = false
           state.fiscalYears = action.payload
 
           // 現在の年度を初期選択
@@ -126,8 +126,8 @@ export const masterSlice = createSlice({
         },
       )
       .addCase(fetchFiscalYears.rejected, (state, action) => {
-        state.fiscalYearLoading = false
-        state.fiscalYearError = action.payload as string
+        state.fiscalYearsLoading = false
+        state.fiscalYearsError = action.payload as string
       })
 
       // Account reducers
@@ -154,10 +154,10 @@ export const selectSelectedFiscalYear = (state: RootState) =>
   state.master.selectedYear
 
 export const selectFiscalYears = (state: RootState) => state.master.fiscalYears
-export const selectFiscalYearLoading = (state: RootState) =>
-  state.master.fiscalYearLoading
-export const selectFiscalYearError = (state: RootState) =>
-  state.master.fiscalYearError
+export const selectFiscalYearsLoading = (state: RootState) =>
+  state.master.fiscalYearsLoading
+export const selectFiscalYearsError = (state: RootState) =>
+  state.master.fiscalYearsError
 
 // Account selectors
 export const selectAllAccountList = (state: RootState) =>

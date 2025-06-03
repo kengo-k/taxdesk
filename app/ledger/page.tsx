@@ -22,9 +22,9 @@ import {
   selectAccountListError,
   selectAccountListLoading,
   selectAllAccountList,
-  selectFiscalYearError,
-  selectFiscalYearLoading,
   selectFiscalYears,
+  selectFiscalYearsError,
+  selectFiscalYearsLoading,
 } from '@/lib/redux/features/masterSlice'
 import {
   clearTransactions,
@@ -51,8 +51,8 @@ export default function LedgerPage() {
 
   // Reduxから年度データを取得
   const fiscalYears = useAppSelector(selectFiscalYears)
-  const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
-  const fiscalYearsError = useAppSelector(selectFiscalYearError)
+  const fiscalYearsLoading = useAppSelector(selectFiscalYearsLoading)
+  const fiscalYearsError = useAppSelector(selectFiscalYearsError)
 
   // Reduxから勘定科目一覧を取得
   const accountList = useAppSelector(selectAllAccountList)

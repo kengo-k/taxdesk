@@ -36,8 +36,8 @@ import { getSteps } from '@/lib/client/tax-calculation/steps'
 import { getChartColors } from '@/lib/client/utils/chart-colors'
 import {
   fetchFiscalYears,
-  selectFiscalYearLoading,
   selectFiscalYears,
+  selectFiscalYearsLoading,
   selectSelectedFiscalYear,
   setSelectedFiscalYear,
 } from '@/lib/redux/features/masterSlice'
@@ -161,7 +161,7 @@ export default function Home() {
 
   const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
   const fiscalYears = useAppSelector(selectFiscalYears)
-  const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
+  const fiscalYearsLoading = useAppSelector(selectFiscalYearsLoading)
 
   const expenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
   const expenseByMonthLoading = useAppSelector(
