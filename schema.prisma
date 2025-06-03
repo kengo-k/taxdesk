@@ -29,9 +29,28 @@ model journals {
   karikata       saimoku_masters @relation("KarikataJournals", fields: [karikata_cd], references: [saimoku_cd])
   kasikata       saimoku_masters @relation("KasikataJournals", fields: [kasikata_cd], references: [saimoku_cd])
 
-  @@index([nendo, checked, date], map: "journals_checked_index")
-  @@index([nendo, karikata_cd, kasikata_cd, date], map: "journals_code_index")
-  @@index([nendo, date], map: "journals_default_index")
+  // Optimized indexes for journals table
+  // 1. 基本検索・ソート対応
+  @@index([nendo, deleted, date, created_at], map: "journals_base_index")
+
+  // 2. 借方コード検索対応 (list-ledgers.ts メイン)
+  @@index([nendo, deleted, karikata_cd, date, created_at], map: "journals_karikata_index")
+
+  // 3. 貸方コード検索対応 (list-ledgers.ts メイン)
+  @@index([nendo, deleted, kasikata_cd, date, created_at], map: "journals_kasikata_index")
+
+  // 4. 確認状態検索対応 (確認済み/未確認絞り込み)
+  @@index([nendo, deleted, checked, date, created_at], map: "journals_checked_index")
+
+  // 5. 複合コード検索対応 (count-by-account.ts)
+  @@index([nendo, deleted, karikata_cd, kasikata_cd, date, created_at], map: "journals_codes_index")
+
+  // 6. 借方集計処理専用 (calculate-breakdown.ts カバリングインデックス)
+  @@index([nendo, deleted, karikata_cd, karikata_value, date], map: "journals_karikata_sum_index")
+
+  // 7. 貸方集計処理専用 (calculate-breakdown.ts カバリングインデックス)
+  @@index([nendo, deleted, kasikata_cd, kasikata_value, date], map: "journals_kasikata_sum_index")
+
 }
 
 model kamoku_bunrui_masters {
