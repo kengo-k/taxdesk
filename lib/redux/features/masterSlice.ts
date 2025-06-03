@@ -26,7 +26,6 @@ interface MasterState {
 
   // Account related state
   accountList: ListAccountItem[]
-  selectedAccountId: string | null
   accountLoading: boolean
   accountError: string | null
 }
@@ -41,7 +40,6 @@ const initialState: MasterState = {
 
   // Account initial state
   accountList: [],
-  selectedAccountId: null,
   accountLoading: false,
   accountError: null,
 }
@@ -106,14 +104,6 @@ export const masterSlice = createSlice({
     clearSelectedFiscalYear: (state) => {
       state.selectedYear = 'none'
     },
-
-    // Account actions
-    selectAccount: (state, action: PayloadAction<string>) => {
-      state.selectedAccountId = action.payload
-    },
-    clearSelectedAccount: (state) => {
-      state.selectedAccountId = null
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -157,12 +147,7 @@ export const masterSlice = createSlice({
 })
 
 // アクションのエクスポート
-export const {
-  selectFiscalYear,
-  clearSelectedFiscalYear,
-  selectAccount,
-  clearSelectedAccount,
-} = masterSlice.actions
+export const { selectFiscalYear, clearSelectedFiscalYear } = masterSlice.actions
 
 // セレクターのエクスポート
 // Fiscal Year selectors
@@ -180,8 +165,6 @@ export const selectCurrentFiscalYear = (state: RootState) =>
 // Account selectors
 export const selectAllAccountList = (state: RootState) =>
   state.master.accountList
-export const selectSelectedAccountId = (state: RootState) =>
-  state.master.selectedAccountId
 export const selectAccountListLoading = (state: RootState) =>
   state.master.accountLoading
 export const selectAccountListError = (state: RootState) =>
