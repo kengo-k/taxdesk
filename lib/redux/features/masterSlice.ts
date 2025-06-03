@@ -153,10 +153,7 @@ export const { setSelectedFiscalYear, clearSelectedFiscalYear } =
 export const selectSelectedFiscalYear = (state: RootState) =>
   state.master.selectedYear
 
-// セレクターのエクスポート
-// Fiscal Year selectors
-export const selectAllFiscalYears = (state: RootState) =>
-  state.master.fiscalYears
+export const selectFiscalYears = (state: RootState) => state.master.fiscalYears
 export const selectFiscalYearLoading = (state: RootState) =>
   state.master.fiscalYearLoading
 export const selectFiscalYearError = (state: RootState) =>

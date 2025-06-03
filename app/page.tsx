@@ -36,8 +36,8 @@ import { getSteps } from '@/lib/client/tax-calculation/steps'
 import { getChartColors } from '@/lib/client/utils/chart-colors'
 import {
   fetchFiscalYears,
-  selectAllFiscalYears,
   selectFiscalYearLoading,
+  selectFiscalYears,
   selectSelectedFiscalYear,
   setSelectedFiscalYear,
 } from '@/lib/redux/features/masterSlice'
@@ -160,7 +160,7 @@ export default function Home() {
   const searchParams = useSearchParams()
 
   const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
-  const fiscalYears = useAppSelector(selectAllFiscalYears)
+  const fiscalYears = useAppSelector(selectFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 
   const expenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
@@ -566,7 +566,7 @@ function TaxEstimationCard({
   selectedYearId,
   taxCalculation,
 }: TaxEstimationCardProps) {
-  const fiscalYears = useAppSelector(selectAllFiscalYears)
+  const fiscalYears = useAppSelector(selectFiscalYears)
   const selectedYear = fiscalYears.find((year) => year.id === selectedYearId)
   const isCurrentYear = selectedYear?.isCurrent
 

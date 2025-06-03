@@ -29,8 +29,8 @@ import {
 } from '@/lib/client/tax-calculation'
 import {
   fetchFiscalYears,
-  selectAllFiscalYears,
   selectFiscalYearLoading,
+  selectFiscalYears,
 } from '@/lib/redux/features/masterSlice'
 import {
   fetchTaxCalculationParameters,
@@ -41,7 +41,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 export default function BalanceSheetPage() {
   // Redux
   const dispatch = useAppDispatch()
-  const fiscalYears = useAppSelector(selectAllFiscalYears)
+  const fiscalYears = useAppSelector(selectFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
   const taxCalculationParameters = useAppSelector(
     selectTaxCalculationParameters,
