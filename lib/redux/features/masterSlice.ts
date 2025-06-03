@@ -1,6 +1,7 @@
 import {
   type PayloadAction,
   createAsyncThunk,
+  createSelector,
   createSlice,
 } from '@reduxjs/toolkit'
 
@@ -141,16 +142,30 @@ export const { setSelectedFiscalYear, clearSelectedFiscalYear } =
 export const selectSelectedFiscalYear = (state: RootState) =>
   state.master.selectedYear
 
-export const selectFiscalYears = (state: RootState) => ({
-  data: state.master.fiscalYears,
-  loading: state.master.fiscalYearsLoading,
-  error: state.master.fiscalYearsError,
-})
+export const selectFiscalYears = createSelector(
+  [
+    (state: RootState) => state.master.fiscalYears,
+    (state: RootState) => state.master.fiscalYearsLoading,
+    (state: RootState) => state.master.fiscalYearsError,
+  ],
+  (data, loading, error) => ({
+    data,
+    loading,
+    error,
+  }),
+)
 
-export const selectAccountList = (state: RootState) => ({
-  data: state.master.accountList,
-  loading: state.master.accountListLoading,
-  error: state.master.accountListError,
-})
+export const selectAccountList = createSelector(
+  [
+    (state: RootState) => state.master.accountList,
+    (state: RootState) => state.master.accountListLoading,
+    (state: RootState) => state.master.accountListError,
+  ],
+  (data, loading, error) => ({
+    data,
+    loading,
+    error,
+  }),
+)
 
 export default masterSlice.reducer
