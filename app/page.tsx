@@ -39,7 +39,7 @@ import {
   selectAllFiscalYears,
   selectFiscalYear,
   selectFiscalYearLoading,
-  selectSelectedFiscalYearId,
+  selectSelectedFiscalYear,
 } from '@/lib/redux/features/masterSlice'
 import {
   clearData,
@@ -159,7 +159,7 @@ export default function Home() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYearId)
+  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
   const fiscalYears = useAppSelector(selectAllFiscalYears)
   const fiscalYearsLoading = useAppSelector(selectFiscalYearLoading)
 

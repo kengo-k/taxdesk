@@ -149,12 +149,13 @@ export const masterSlice = createSlice({
 // アクションのエクスポート
 export const { selectFiscalYear, clearSelectedFiscalYear } = masterSlice.actions
 
+export const selectSelectedFiscalYear = (state: RootState) =>
+  state.master.selectedYear
+
 // セレクターのエクスポート
 // Fiscal Year selectors
 export const selectAllFiscalYears = (state: RootState) =>
   state.master.fiscalYears
-export const selectSelectedFiscalYearId = (state: RootState) =>
-  state.master.selectedYear
 export const selectFiscalYearLoading = (state: RootState) =>
   state.master.fiscalYearLoading
 export const selectFiscalYearError = (state: RootState) =>
