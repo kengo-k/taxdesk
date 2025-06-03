@@ -12,37 +12,6 @@ import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
 import type { RootState } from '@/lib/redux/store'
 
-// 取引データの型定義
-export interface Transaction {
-  id: string
-  date: string
-  accountCode: string
-  counterpartyAccount: string
-  description: string
-  debit: number
-  credit: number
-  summary: string
-  balance: number
-}
-
-// エラー状態の型定義
-export interface ValidationErrors {
-  date?: string
-  debit?: string
-  credit?: string
-}
-
-// 取引とそのエラー状態を組み合わせた型
-export interface TransactionWithErrors extends Transaction {
-  errors: ValidationErrors
-  showTooltips: {
-    date: boolean
-    debit: boolean
-    credit: boolean
-  }
-}
-
-// ページネーション情報の型定義
 export interface PaginationInfo {
   page: number
   pageSize: number
@@ -50,13 +19,6 @@ export interface PaginationInfo {
   totalPages: number
 }
 
-// APIレスポンスの型定義
-interface ApiResponse {
-  transactions: Transaction[]
-  pagination: PaginationInfo
-}
-
-// 検索条件の型定義
 export interface TransactionSearchParams {
   nendo: string
   code: string | null
@@ -67,14 +29,6 @@ export interface TransactionSearchParams {
   pageSize: number
 }
 
-// 勘定科目別レコード件数の型定義
-export interface AccountCount {
-  accountCode: string
-  accountName: string
-  count: number
-}
-
-// 状態の型定義
 interface TransactionState {
   transactions: LedgerListItem[]
   all_count: number
@@ -87,7 +41,6 @@ interface TransactionState {
   accountCountsError: string | null
 }
 
-// 初期状態
 const initialState: TransactionState = {
   transactions: [],
   all_count: 0,
@@ -113,7 +66,6 @@ const initialState: TransactionState = {
   accountCountsError: null,
 }
 
-// 非同期アクション - 取引データの取得
 export const fetchTransactions = createAsyncThunk(
   'transaction/fetchTransactions',
   async (params: TransactionSearchParams, { rejectWithValue }) => {
@@ -152,7 +104,6 @@ export const fetchTransactions = createAsyncThunk(
   },
 )
 
-// 非同期アクション - 勘定科目別レコード件数の取得
 export const fetchAccountCounts = createAsyncThunk<
   { data: CountByAccountItem[] },
   string
@@ -179,7 +130,6 @@ export const fetchAccountCounts = createAsyncThunk<
   },
 )
 
-// 非同期アクション - 取引データの作成
 export const createTransaction = createAsyncThunk<
   { data: LedgerListItem },
   CreateLedgerRequest
@@ -210,7 +160,6 @@ export const createTransaction = createAsyncThunk<
   },
 )
 
-// 非同期アクション - 取引データの更新
 export const updateTransaction = createAsyncThunk<
   { data: LedgerListItem },
   UpdateLedgerRequest
@@ -241,7 +190,6 @@ export const updateTransaction = createAsyncThunk<
   },
 )
 
-// 非同期アクション - 取引データの確認状態更新
 export const updateJournalChecked = createAsyncThunk<
   { success: boolean; message: string },
   UpdateJournalCheckedRequest
@@ -275,7 +223,6 @@ export const updateJournalChecked = createAsyncThunk<
   }
 })
 
-// 非同期アクション - 取引データの削除
 export const deleteTransactions = createAsyncThunk<
   { data: { deletedIds: string[] } },
   DeleteJournalsRequest
@@ -306,24 +253,20 @@ export const deleteTransactions = createAsyncThunk<
   }
 })
 
-// スライスの作成
 export const transactionSlice = createSlice({
   name: 'transaction',
   initialState,
   reducers: {
-    // 検索条件の更新
     updateSearchParams: (
       state,
       action: PayloadAction<Partial<TransactionSearchParams>>,
     ) => {
       state.searchParams = { ...state.searchParams, ...action.payload }
     },
-    // 取引データのクリア
     clearTransactions: (state) => {
       state.transactions = []
       state.all_count = 0
     },
-    // フォーカスが外れた時のエラー表示
     setShowTooltip: (
       state,
       action: PayloadAction<{ id: number; field: 'date' | 'debit' | 'credit' }>,
@@ -332,22 +275,10 @@ export const transactionSlice = createSlice({
       const index = state.transactions.findIndex(
         (transaction) => transaction.journal_id === id,
       )
-
-      // if (index !== -1 && state.transactions[index].errors[field]) {
-      //   state.transactions[index].showTooltips[field] = true
-      // }
     },
-    // 選択行の管理
-    setSelectedRows: (state, action: PayloadAction<string[]>) => {
-      // 選択行はUIの状態なのでReduxで管理しない場合もある
-      // ここでは例として実装
-    },
-    // 取引の削除
+    setSelectedRows: (state, action: PayloadAction<string[]>) => {},
     deleteTransactions: (state, action: PayloadAction<string[]>) => {
       const idsToDelete = action.payload
-      // state.transactions = state.transactions.filter(
-      //   (transaction) => !idsToDelete.includes(transaction.id),
-      // )
       state.pagination = {
         ...state.pagination,
         totalItems: state.pagination.totalItems - idsToDelete.length,
@@ -374,7 +305,6 @@ export const transactionSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
-      // 勘定科目別レコード件数の取得状態を管理
       .addCase(fetchAccountCounts.pending, (state) => {
         state.accountCountsLoading = true
         state.accountCountsError = null
@@ -390,47 +320,6 @@ export const transactionSlice = createSlice({
   },
 })
 
-// バリデーション関数
-const validateDate = (date: string): string | undefined => {
-  // 日付形式（YYYY/MM/DD）のチェック
-  const datePattern = /^\d{4}\/\d{1,2}\/\d{1,2}$/
-  if (!datePattern.test(date)) {
-    return '日付はYYYY/MM/DD形式で入力してください'
-  }
-
-  // 有効な日付かチェック
-  const parts = date.split('/')
-  const year = Number.parseInt(parts[0], 10)
-  const month = Number.parseInt(parts[1], 10) - 1 // JavaScriptの月は0始まり
-  const day = Number.parseInt(parts[2], 10)
-  const dateObj = new Date(year, month, day)
-
-  if (
-    dateObj.getFullYear() !== year ||
-    dateObj.getMonth() !== month ||
-    dateObj.getDate() !== day ||
-    year < 1900 ||
-    year > 2100
-  ) {
-    return '有効な日付を入力してください'
-  }
-
-  return undefined
-}
-
-const validateAmount = (amount: string): string | undefined => {
-  if (amount === '') return undefined // 空の場合はエラーなし
-
-  // カンマを削除して数値チェック
-  const numericValue = amount.replace(/,/g, '')
-  if (!/^\d+$/.test(numericValue)) {
-    return '数値のみ入力可能です'
-  }
-
-  return undefined
-}
-
-// アクションのエクスポート
 export const {
   updateSearchParams,
   setShowTooltip,
@@ -438,7 +327,6 @@ export const {
   clearTransactions,
 } = transactionSlice.actions
 
-// セレクターのエクスポート
 export const selectTransactions = (state: RootState) =>
   state.transaction.transactions
 export const selectAllCount = (state: RootState) => state.transaction.all_count
@@ -457,5 +345,4 @@ export const selectAccountCountsLoading = (state: RootState) =>
 export const selectAccountCountsError = (state: RootState) =>
   state.transaction.accountCountsError
 
-// リデューサーのエクスポート
 export default transactionSlice.reducer
