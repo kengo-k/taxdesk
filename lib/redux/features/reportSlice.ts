@@ -83,80 +83,88 @@ const initialState: ReportState = {
   },
 }
 
-export const fetchTaxCalculationParameters = createAsyncThunk(
-  'report/fetchTaxCalculationParameters',
-  async (fiscalYear: string) => {
-    const requests = selectTaxParameters(fiscalYear)
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requests }),
-      },
-    )
-    if (!response.ok) {
-      throw new Error('Failed to fetch asset breakdown by year')
+export const fetchTaxCalculationParameters = createAsyncThunk<
+  {
+    data: {
+      annual: { request: BreakdownRequest; response: AnnualBreakdown[] }[]
+      monthly: { request: BreakdownRequest; response: MonthlyBreakdown[] }[]
     }
-
-    const result = await response.json()
-    return result.data
   },
-)
+  string
+>('report/fetchTaxCalculationParameters', async (fiscalYear: string) => {
+  const requests = selectTaxParameters(fiscalYear)
+  const response = await fetch(
+    `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requests }),
+    },
+  )
+  if (!response.ok) {
+    throw new Error('Failed to fetch asset breakdown by year')
+  }
 
-export const fetchDashboardData = createAsyncThunk(
-  'report/fetchDashboardData',
-  async (fiscalYear: string) => {
-    const response = await fetch(
-      `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [
-            {
-              kamokuBunruiCd: KAMOKU_BUNRUI.ASSET,
-              breakdownLevel: 'saimoku',
-              breakdownType: 'net',
-              timeUnit: 'annual',
-            },
-            {
-              kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
-              breakdownLevel: 'saimoku',
-              breakdownType: 'net',
-              timeUnit: 'annual',
-            },
-            {
-              kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
-              breakdownLevel: 'saimoku',
-              breakdownType: 'net',
-              timeUnit: 'annual',
-            },
-            {
-              kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
-              breakdownLevel: 'saimoku',
-              breakdownType: 'net',
-              timeUnit: 'month',
-            },
-            {
-              kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
-              breakdownLevel: 'saimoku',
-              breakdownType: 'net',
-              timeUnit: 'month',
-            },
-          ],
-        }),
-      },
-    )
+  return await response.json()
+})
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch dashboard data')
+export const fetchDashboardData = createAsyncThunk<
+  {
+    data: {
+      annual: { request: BreakdownRequest; response: AnnualBreakdown[] }[]
+      monthly: { request: BreakdownRequest; response: MonthlyBreakdown[] }[]
     }
-
-    const result = await response.json()
-    return result.data
   },
-)
+  string
+>('report/fetchDashboardData', async (fiscalYear: string) => {
+  const response = await fetch(
+    `/api/fiscal-years/${fiscalYear}/reports/breakdown`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requests: [
+          {
+            kamokuBunruiCd: KAMOKU_BUNRUI.ASSET,
+            breakdownLevel: 'saimoku',
+            breakdownType: 'net',
+            timeUnit: 'annual',
+          },
+          {
+            kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
+            breakdownLevel: 'saimoku',
+            breakdownType: 'net',
+            timeUnit: 'annual',
+          },
+          {
+            kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+            breakdownLevel: 'saimoku',
+            breakdownType: 'net',
+            timeUnit: 'annual',
+          },
+          {
+            kamokuBunruiCd: KAMOKU_BUNRUI.REVENUE,
+            breakdownLevel: 'saimoku',
+            breakdownType: 'net',
+            timeUnit: 'month',
+          },
+          {
+            kamokuBunruiCd: KAMOKU_BUNRUI.EXPENSE,
+            breakdownLevel: 'saimoku',
+            breakdownType: 'net',
+            timeUnit: 'month',
+          },
+        ],
+      }),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch dashboard data')
+  }
+
+  return await response.json()
+})
 
 export const reportSlice = createSlice({
   name: 'report',
@@ -203,7 +211,7 @@ export const reportSlice = createSlice({
       })
       .addCase(fetchTaxCalculationParameters.fulfilled, (state, action) => {
         state.taxCalculationParameters.loading = false
-        state.taxCalculationParameters.data = action.payload.annual
+        state.taxCalculationParameters.data = action.payload.data.annual
       })
       .addCase(fetchTaxCalculationParameters.rejected, (state, action) => {
         state.taxCalculationParameters.loading = false
@@ -221,7 +229,7 @@ export const reportSlice = createSlice({
         state.breakdown.saimokuNetExpensesByMonth.loading = true
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
-        const { annual, monthly } = action.payload
+        const { annual, monthly } = action.payload.data
 
         // Set loading to false for all states
         state.breakdown.saimokuNetAssetsByYear.loading = false
