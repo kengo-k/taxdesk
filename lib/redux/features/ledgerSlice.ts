@@ -47,7 +47,10 @@ const initialState: LedgerState = {
   accountCountsError: null,
 }
 
-export const fetchLedgers = createAsyncThunk(
+export const fetchLedgers = createAsyncThunk<
+  { data: { all_count: number; ledgers: LedgerListItem[] } },
+  LedgerSearchParams
+>(
   'ledger/fetchLedgers',
   async (params: LedgerSearchParams, { rejectWithValue }) => {
     try {
