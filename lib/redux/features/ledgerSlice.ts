@@ -1,8 +1,4 @@
-import {
-  type PayloadAction,
-  createAsyncThunk,
-  createSlice,
-} from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 
 import { DeleteJournalsRequest } from '@/lib/backend/services/journal/delete-journals'
 import { UpdateJournalCheckedRequest } from '@/lib/backend/services/journal/update-journal-checked'
@@ -19,7 +15,7 @@ export interface PaginationInfo {
   totalPages: number
 }
 
-export interface TransactionSearchParams {
+export interface LedgerSearchParams {
   nendo: string
   code: string | null
   month: string | null
@@ -29,46 +25,31 @@ export interface TransactionSearchParams {
   pageSize: number
 }
 
-interface TransactionState {
-  transactions: LedgerListItem[]
-  all_count: number
-  pagination: PaginationInfo
-  loading: boolean
-  error: string | null
-  searchParams: TransactionSearchParams
+interface LedgerState {
+  ledgerList: LedgerListItem[]
+  ledgerListCount: number
+  ledgerListLoading: boolean
+  ledgerListError: string | null
+
   accountCounts: CountByAccountItem[]
   accountCountsLoading: boolean
   accountCountsError: string | null
 }
 
-const initialState: TransactionState = {
-  transactions: [],
-  all_count: 0,
-  pagination: {
-    page: 1,
-    pageSize: 10,
-    totalItems: 0,
-    totalPages: 0,
-  },
-  loading: false,
-  error: null,
-  searchParams: {
-    nendo: 'unset',
-    code: null,
-    month: null,
-    checked: null,
-    note: null,
-    page: 1,
-    pageSize: 10,
-  },
+const initialState: LedgerState = {
+  ledgerList: [],
+  ledgerListCount: 0,
+  ledgerListLoading: false,
+  ledgerListError: null,
+
   accountCounts: [],
   accountCountsLoading: false,
   accountCountsError: null,
 }
 
-export const fetchTransactions = createAsyncThunk(
-  'transaction/fetchTransactions',
-  async (params: TransactionSearchParams, { rejectWithValue }) => {
+export const fetchLedgers = createAsyncThunk(
+  'ledger/fetchLedgers',
+  async (params: LedgerSearchParams, { rejectWithValue }) => {
     try {
       // URLパラメータを構築
       const urlParams = new URLSearchParams()
@@ -104,11 +85,11 @@ export const fetchTransactions = createAsyncThunk(
   },
 )
 
-export const fetchAccountCounts = createAsyncThunk<
+export const fetchLedgerCountsByAccount = createAsyncThunk<
   { data: CountByAccountItem[] },
   string
 >(
-  'transaction/fetchAccountCounts',
+  'ledger/fetchLedgerCountsByAccount',
   async (nendo: string, { rejectWithValue }) => {
     try {
       // APIリクエスト
@@ -130,18 +111,18 @@ export const fetchAccountCounts = createAsyncThunk<
   },
 )
 
-export const createTransaction = createAsyncThunk<
+export const createLedger = createAsyncThunk<
   { data: LedgerListItem },
   CreateLedgerRequest
 >(
-  'transaction/createTransaction',
-  async (transaction: CreateLedgerRequest, { rejectWithValue }) => {
+  'ledger/createLedger',
+  async (ledger: CreateLedgerRequest, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `/api/fiscal-years/${transaction.nendo}/ledger/${transaction.ledger_cd}`,
+        `/api/fiscal-years/${ledger.nendo}/ledger/${ledger.ledger_cd}`,
         {
           method: 'POST',
-          body: JSON.stringify(transaction),
+          body: JSON.stringify(ledger),
         },
       )
 
@@ -160,18 +141,18 @@ export const createTransaction = createAsyncThunk<
   },
 )
 
-export const updateTransaction = createAsyncThunk<
+export const updateLedger = createAsyncThunk<
   { data: LedgerListItem },
   UpdateLedgerRequest
 >(
-  'transaction/updateTransaction',
-  async (transaction: UpdateLedgerRequest, { rejectWithValue }) => {
+  'ledger/updateLedger',
+  async (ledger: UpdateLedgerRequest, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `/api/fiscal-years/${transaction.nendo}/ledger/${transaction.ledger_cd}`,
+        `/api/fiscal-years/${ledger.nendo}/ledger/${ledger.ledger_cd}`,
         {
           method: 'PUT',
-          body: JSON.stringify(transaction),
+          body: JSON.stringify(ledger),
         },
       )
 
@@ -190,10 +171,10 @@ export const updateTransaction = createAsyncThunk<
   },
 )
 
-export const updateJournalChecked = createAsyncThunk<
+export const updateLedgerChecked = createAsyncThunk<
   { success: boolean; message: string },
   UpdateJournalCheckedRequest
->('transaction/updateJournalChecked', async (request, { rejectWithValue }) => {
+>('ledger/updateLedgerChecked', async (request, { rejectWithValue }) => {
   try {
     const response = await fetch(
       `/api/fiscal-years/${request.fiscal_year}/journal/checked`,
@@ -223,10 +204,10 @@ export const updateJournalChecked = createAsyncThunk<
   }
 })
 
-export const deleteTransactions = createAsyncThunk<
+export const deleteLedgers = createAsyncThunk<
   { data: { deletedIds: string[] } },
   DeleteJournalsRequest
->('transaction/deleteTransactions', async (request, { rejectWithValue }) => {
+>('ledger/deleteLedgers', async (request, { rejectWithValue }) => {
   try {
     const response = await fetch(
       `/api/fiscal-years/${request.fiscal_year}/journal`,
@@ -253,93 +234,73 @@ export const deleteTransactions = createAsyncThunk<
   }
 })
 
-export const transactionSlice = createSlice({
-  name: 'transaction',
+export const ledgerSlice = createSlice({
+  name: 'ledger',
   initialState,
   reducers: {
-    updateSearchParams: (
-      state,
-      action: PayloadAction<Partial<TransactionSearchParams>>,
-    ) => {
-      state.searchParams = { ...state.searchParams, ...action.payload }
-    },
-    clearTransactions: (state) => {
-      state.transactions = []
-      state.all_count = 0
-    },
-    setShowTooltip: (
-      state,
-      action: PayloadAction<{ id: number; field: 'date' | 'debit' | 'credit' }>,
-    ) => {
-      const { id, field } = action.payload
-      const index = state.transactions.findIndex(
-        (transaction) => transaction.journal_id === id,
-      )
-    },
-    setSelectedRows: (state, action: PayloadAction<string[]>) => {},
-    deleteTransactions: (state, action: PayloadAction<string[]>) => {
-      const idsToDelete = action.payload
-      state.pagination = {
-        ...state.pagination,
-        totalItems: state.pagination.totalItems - idsToDelete.length,
-        totalPages: Math.ceil(
-          (state.pagination.totalItems - idsToDelete.length) /
-            state.pagination.pageSize,
-        ),
-      }
+    clearLedgers: (state) => {
+      state.ledgerList = []
+      state.ledgerListCount = 0
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTransactions.pending, (state) => {
-        state.loading = true
-        state.error = null
+      .addCase(fetchLedgers.pending, (state) => {
+        state.ledgerListLoading = true
+        state.ledgerListError = null
       })
-      .addCase(fetchTransactions.fulfilled, (state, action) => {
-        state.loading = false
-        state.transactions = action.payload.data.ledgers
-        state.all_count = action.payload.data.all_count
-        state.pagination = action.payload.pagination
+      .addCase(fetchLedgers.fulfilled, (state, action) => {
+        state.ledgerListLoading = false
+        state.ledgerList = action.payload.data.ledgers
+        state.ledgerListCount = action.payload.data.all_count
       })
-      .addCase(fetchTransactions.rejected, (state, action) => {
-        state.loading = false
-        state.error = action.payload as string
+      .addCase(fetchLedgers.rejected, (state, action) => {
+        state.ledgerListLoading = false
+        state.ledgerListError = action.payload as string
       })
-      .addCase(fetchAccountCounts.pending, (state) => {
+      .addCase(fetchLedgerCountsByAccount.pending, (state) => {
         state.accountCountsLoading = true
         state.accountCountsError = null
       })
-      .addCase(fetchAccountCounts.fulfilled, (state, action) => {
+      .addCase(fetchLedgerCountsByAccount.fulfilled, (state, action) => {
         state.accountCountsLoading = false
         state.accountCounts = action.payload.data
       })
-      .addCase(fetchAccountCounts.rejected, (state, action) => {
+      .addCase(fetchLedgerCountsByAccount.rejected, (state, action) => {
         state.accountCountsLoading = false
         state.accountCountsError = action.payload as string
       })
   },
 })
 
-export const {
-  updateSearchParams,
-  setShowTooltip,
-  setSelectedRows,
-  clearTransactions,
-} = transactionSlice.actions
+export const { clearLedgers } = ledgerSlice.actions
 
-export const selectTransactions = (state: RootState) =>
-  state.ledger.transactions
-export const selectAllCount = (state: RootState) => state.ledger.all_count
-export const selectPagination = (state: RootState) => state.ledger.pagination
-export const selectLedgerLoading = (state: RootState) => state.ledger.loading
-export const selectLedgerError = (state: RootState) => state.ledger.error
-export const selectSearchParams = (state: RootState) =>
-  state.ledger.searchParams
-export const selectAccountCounts = (state: RootState) =>
-  state.ledger.accountCounts
-export const selectAccountCountsLoading = (state: RootState) =>
-  state.ledger.accountCountsLoading
-export const selectAccountCountsError = (state: RootState) =>
-  state.ledger.accountCountsError
+export const selectLedgerList = createSelector(
+  [
+    (state: RootState) => state.ledger.ledgerList,
+    (state: RootState) => state.ledger.ledgerListCount,
+    (state: RootState) => state.ledger.ledgerListLoading,
+    (state: RootState) => state.ledger.ledgerListError,
+  ],
+  (list, count, loading, error) => ({
+    list,
+    count,
+    loading,
+    error,
+  }),
+)
 
-export default transactionSlice.reducer
+export const selectAccountCounts = createSelector(
+  [
+    (state: RootState) => state.ledger.accountCounts,
+    (state: RootState) => state.ledger.accountCountsLoading,
+    (state: RootState) => state.ledger.accountCountsError,
+  ],
+  (data, loading, error) => ({
+    data,
+    loading,
+    error,
+  }),
+)
+
+export default ledgerSlice.reducer

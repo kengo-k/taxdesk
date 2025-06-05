@@ -18,7 +18,7 @@ import { toast } from '@/components/ui/use-toast'
 import { CreateLedgerRequest } from '@/lib/backend/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
-import { updateJournalChecked } from '@/lib/redux/features/ledgerSlice'
+import { updateLedgerChecked } from '@/lib/redux/features/ledgerSlice'
 import { useAppDispatch } from '@/lib/redux/hooks'
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
 
@@ -642,7 +642,7 @@ export function TransactionTable({
 
     // 確認状態のみを更新するAPIを呼び出す
     dispatch(
-      updateJournalChecked({
+      updateLedgerChecked({
         id: parseInt(id),
         fiscal_year: nendo,
         checked: checked ? '1' : '0',

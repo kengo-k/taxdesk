@@ -17,17 +17,14 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
 import {
-  clearTransactions,
-  createTransaction,
-  deleteTransactions,
-  fetchAccountCounts,
-  fetchTransactions,
+  clearLedgers,
+  createLedger,
+  deleteLedgers,
+  fetchLedgerCountsByAccount,
+  fetchLedgers,
   selectAccountCounts,
-  selectAccountCountsLoading,
-  selectAllCount,
-  selectLedgerLoading,
-  selectTransactions,
-  updateTransaction,
+  selectLedgerList,
+  updateLedger,
 } from '@/lib/redux/features/ledgerSlice'
 import {
   fetchAccountList,
@@ -56,13 +53,15 @@ export default function LedgerPage() {
   } = useAppSelector(selectAccountList)
 
   // Reduxから取引データを取得
-  const transactions = useAppSelector(selectTransactions)
-  const allCount = useAppSelector(selectAllCount)
-  const ledgerLoading = useAppSelector(selectLedgerLoading)
+  const {
+    list: ledgerList,
+    count: ledgerListCount,
+    loading: ledgerListLoading,
+  } = useAppSelector(selectLedgerList)
 
   // Reduxから勘定科目別レコード件数を取得
-  const accountCounts = useAppSelector(selectAccountCounts)
-  const accountCountsLoading = useAppSelector(selectAccountCountsLoading)
+  const { data: accountCounts, loading: accountCountsLoading } =
+    useAppSelector(selectAccountCounts)
 
   // URLパラメータから初期値を取得
   const searchParams = useSearchParams()
@@ -108,24 +107,24 @@ export default function LedgerPage() {
       setChecked(null)
       setNote(null)
       setCurrentPage(1)
-      dispatch(clearTransactions())
+      dispatch(clearLedgers())
       // TODO ストアの勘定科目一覧をクリアする
       return
     }
     // 年度が変更された時に勘定科目一覧(件数付き)を取得する
-    dispatch(fetchAccountCounts(fiscalYear))
+    dispatch(fetchLedgerCountsByAccount(fiscalYear))
 
     if (account == null) {
       setMonth(null)
       setChecked(null)
       setNote(null)
       setCurrentPage(1)
-      dispatch(clearTransactions())
+      dispatch(clearLedgers())
       return
     }
 
     dispatch(
-      fetchTransactions({
+      fetchLedgers({
         nendo: fiscalYear,
         code: account,
         month: month,
@@ -162,7 +161,7 @@ export default function LedgerPage() {
   useEffect(() => {
     if (fiscalYear != null) {
       // 勘定科目別レコード件数を取得
-      dispatch(fetchAccountCounts(fiscalYear))
+      dispatch(fetchLedgerCountsByAccount(fiscalYear))
 
       // 勘定科目一覧を取得
       dispatch(fetchAccountList(fiscalYear))
@@ -245,7 +244,7 @@ export default function LedgerPage() {
     // 検索条件が変更されたら取引データを再取得
     if (fiscalYear && account) {
       dispatch(
-        fetchTransactions({
+        fetchLedgers({
           nendo: fiscalYear,
           code: account,
           month: month,
@@ -266,7 +265,7 @@ export default function LedgerPage() {
     // 検索条件が変更されたら取引データを再取得
     if (fiscalYear && account) {
       dispatch(
-        fetchTransactions({
+        fetchLedgers({
           nendo: fiscalYear,
           code: account,
           month: month,
@@ -281,12 +280,12 @@ export default function LedgerPage() {
 
   // 新規取引作成ハンドラー
   const handleCreateTransaction = async (transaction: any) => {
-    dispatch(createTransaction(transaction))
+    dispatch(createLedger(transaction))
       .unwrap()
       .then(() => {
         if (fiscalYear) {
           dispatch(
-            fetchTransactions({
+            fetchLedgers({
               nendo: fiscalYear,
               code: account,
               month: month,
@@ -305,12 +304,12 @@ export default function LedgerPage() {
 
   // 取引データの更新関数
   const handleUpdateTransaction = (transaction: UpdateLedgerRequest) => {
-    dispatch(updateTransaction(transaction))
+    dispatch(updateLedger(transaction))
       .unwrap()
       .then(() => {
         if (fiscalYear) {
           dispatch(
-            fetchTransactions({
+            fetchLedgers({
               nendo: fiscalYear,
               code: account,
               month: month,
@@ -347,15 +346,15 @@ export default function LedgerPage() {
     ]
 
     // 取引データをCSV形式に変換
-    const csvData = transactions.map((transaction) => {
+    const csvData = ledgerList.map((ledger) => {
       return [
-        transaction.date,
-        transaction.other_cd,
-        transaction.karikata_cd,
-        transaction.kasikata_cd,
-        transaction.karikata_value,
-        transaction.kasikata_value,
-        transaction.note,
+        ledger.date,
+        ledger.other_cd,
+        ledger.karikata_cd,
+        ledger.kasikata_cd,
+        ledger.karikata_value,
+        ledger.kasikata_value,
+        ledger.note,
       ].join(',')
     })
 
@@ -425,7 +424,7 @@ export default function LedgerPage() {
   const handleDelete = () => {
     // Reduxアクションで取引を削除
     dispatch(
-      deleteTransactions({
+      deleteLedgers({
         fiscal_year: fiscalYear || '',
         ids: selectedRows.map((id) => parseInt(id)),
       }),
@@ -445,7 +444,10 @@ export default function LedgerPage() {
 
   // ページ変更ハンドラー
   const handlePageChange = (page: number) => {
-    const newPage = Math.max(1, Math.min(page, Math.ceil(allCount / pageSize)))
+    const newPage = Math.max(
+      1,
+      Math.min(page, Math.ceil(ledgerListCount / pageSize)),
+    )
     setCurrentPage(newPage)
     updateUrlParams()
   }
@@ -493,10 +495,10 @@ export default function LedgerPage() {
     return 'L' // デフォルト値
   }
 
-  const handleDeleteTransactions = async (ids: string[]) => {
+  const handleDeleteLedgers = async (ids: string[]) => {
     try {
       await dispatch(
-        deleteTransactions({
+        deleteLedgers({
           fiscal_year: fiscalYear || '',
           ids: ids.map((id) => parseInt(id)),
         }),
@@ -509,7 +511,7 @@ export default function LedgerPage() {
       setSelectedRows([])
       // 取引一覧を再取得
       await dispatch(
-        fetchTransactions({
+        fetchLedgers({
           nendo: fiscalYear || '',
           code: account,
           month: month || null,
@@ -571,7 +573,7 @@ export default function LedgerPage() {
             onToggleDeleteMode={toggleDeleteMode}
             onDeleteClick={handleDeleteClick}
             onDownloadCSV={handleDownloadCSV}
-            onDeleteTransactions={handleDeleteTransactions}
+            onDeleteTransactions={handleDeleteLedgers}
           />
 
           {/* 元帳一覧セクション */}
@@ -589,7 +591,7 @@ export default function LedgerPage() {
                   {getSelectedAccountLabel()}
                 </h4>
 
-                {ledgerLoading ? (
+                {ledgerListLoading ? (
                   <div className="py-12 text-center">
                     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
                     <p className="mt-2 text-sm text-gray-500">
@@ -601,7 +603,7 @@ export default function LedgerPage() {
                     {/* 取引テーブル */}
                     <TransactionTable
                       ledger_cd={account}
-                      transactions={transactions}
+                      transactions={ledgerList}
                       deleteMode={deleteMode}
                       selectedRows={selectedRows}
                       accountList={mergedAccounts}
@@ -620,8 +622,8 @@ export default function LedgerPage() {
 
                     {/* ページネーション */}
                     <Pagination
-                      totalItems={allCount}
-                      totalPages={Math.ceil(allCount / pageSize)}
+                      totalItems={ledgerListCount}
+                      totalPages={Math.ceil(ledgerListCount / pageSize)}
                       currentPage={currentPage}
                       pageSize={pageSize}
                       onPageChange={handlePageChange}
