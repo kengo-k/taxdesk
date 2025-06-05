@@ -41,7 +41,7 @@ const initialState: MasterState = {
   accountListError: null,
 }
 
-export const fetchFiscalYears = createAsyncThunk(
+export const fetchFiscalYears = createAsyncThunk<{ data: FiscalYear[] }, void>(
   'master/fetchFiscalYears',
   async (_, { rejectWithValue }) => {
     try {
@@ -49,12 +49,7 @@ export const fetchFiscalYears = createAsyncThunk(
       if (!response.ok) {
         throw new Error(`APIエラー: ${response.status}`)
       }
-      const data = await response.json()
-      if (data.success && Array.isArray(data.data)) {
-        return data.data
-      } else {
-        throw new Error('APIからの応答が不正です')
-      }
+      return await response.json()
     } catch (error) {
       return rejectWithValue(
         error instanceof Error
@@ -104,18 +99,10 @@ export const masterSlice = createSlice({
         state.fiscalYearsLoading = true
         state.fiscalYearsError = null
       })
-      .addCase(
-        fetchFiscalYears.fulfilled,
-        (state, action: PayloadAction<FiscalYear[]>) => {
-          state.fiscalYearsLoading = false
-          state.fiscalYears = action.payload
-
-          const currentYear = action.payload.find((year) => year.isCurrent)
-          if (currentYear && !state.selectedYear) {
-            state.selectedYear = currentYear.id
-          }
-        },
-      )
+      .addCase(fetchFiscalYears.fulfilled, (state, action) => {
+        state.fiscalYearsLoading = false
+        state.fiscalYears = action.payload.data
+      })
       .addCase(fetchFiscalYears.rejected, (state, action) => {
         state.fiscalYearsLoading = false
         state.fiscalYearsError = action.payload as string
