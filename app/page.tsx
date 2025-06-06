@@ -163,7 +163,7 @@ export default function Home() {
     loading: dashboardLoading,
     error: dashboardError,
   } = useAppSelector(selectDashboard)
-  const taxCalculationParameters = useAppSelector(
+  const { data: taxCalculationParameters } = useAppSelector(
     selectTaxCalculationParameters,
   )
 

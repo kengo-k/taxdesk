@@ -1,4 +1,7 @@
-import { BreakdownRequest } from '@/lib/backend/services/reports/calculate-breakdown'
+import {
+  AnnualBreakdown,
+  BreakdownRequest,
+} from '@/lib/backend/services/reports/calculate-breakdown'
 import {
   parameters2023Builder,
   parameters2023Selector,
@@ -11,14 +14,11 @@ import {
   parameters2025Builder,
   parameters2025Selector,
 } from '@/lib/client/tax-calculation/parameters/parameters2025'
-import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 
 /**
  * 年度別のパラメータビルダー関数の型定義
  */
-export type ParameterBuilder = (
-  state: ReturnType<typeof selectTaxCalculationParameters>,
-) => any
+export type ParameterBuilder = (state: AnnualBreakdown[][]) => any
 export type ParameterSelector = () => Omit<BreakdownRequest, 'fiscalYear'>[]
 
 /**
@@ -52,7 +52,7 @@ export function buildParameterMappings(): Record<
  * @returns 税額計算パラメータ
  */
 export function buildTaxParameters(
-  state: ReturnType<typeof selectTaxCalculationParameters>,
+  state: AnnualBreakdown[][],
   fiscalYear: string,
 ): any {
   const mappings = buildParameterMappings()

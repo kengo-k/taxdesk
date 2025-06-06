@@ -38,7 +38,7 @@ export default function TaxSimulationPage() {
 
   const searchParams = useSearchParams()
   const yearParam = searchParams.get('year') || '2024'
-  const taxCalculationParameters = useAppSelector(
+  const { data: taxCalculationParameters } = useAppSelector(
     selectTaxCalculationParameters,
   )
 

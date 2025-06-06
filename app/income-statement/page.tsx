@@ -42,7 +42,7 @@ export default function IncomeStatementPage() {
   const dispatch = useAppDispatch()
   const { data: fiscalYears, loading: fiscalYearsLoading } =
     useAppSelector(selectFiscalYears)
-  const taxCalculationParameters = useAppSelector(
+  const { data: taxCalculationParameters } = useAppSelector(
     selectTaxCalculationParameters,
   )
 

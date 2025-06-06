@@ -201,6 +201,11 @@ export const selectDashboard = createSelector(
   (data, loading, error) => ({ data, loading, error }),
 )
 
-export const selectTaxCalculationParameters = (state: {
-  report: ReportState
-}) => state.report.taxCalculationParameters
+export const selectTaxCalculationParameters = createSelector(
+  [
+    (state: RootState) => state.report.taxCalculationParameters,
+    (state: RootState) => state.report.taxCalculationParametersLoading,
+    (state: RootState) => state.report.taxCalculationParametersError,
+  ],
+  (data, loading, error) => ({ data, loading, error }),
+)

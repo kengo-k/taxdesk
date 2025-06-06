@@ -1,10 +1,10 @@
+import { AnnualBreakdown } from '@/lib/backend/services/reports/calculate-breakdown'
 import {
   ParameterBuilder,
   ParameterSelector,
 } from '@/lib/client/tax-calculation/parameters'
 import { Context2023 } from '@/lib/client/tax-calculation/steps/steps2023'
 import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
-import { selectTaxCalculationParameters } from '@/lib/redux/features/reportSlice'
 
 export const parameters2023Selector: ParameterSelector = () => {
   return [
@@ -55,7 +55,7 @@ export const parameters2023Selector: ParameterSelector = () => {
  * 2023年度の税額計算パラメータを構築する
  */
 export const parameters2023Builder: ParameterBuilder = (
-  state: ReturnType<typeof selectTaxCalculationParameters>,
+  state: AnnualBreakdown[][],
 ): Context2023 => {
   return {
     sales: state[0][0].value,
