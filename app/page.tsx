@@ -161,7 +161,6 @@ export default function Home() {
       saimokuNetExpensesByMonth,
     },
     loading: dashboardLoading,
-    error: dashboardError,
   } = useAppSelector(selectDashboard)
   const { data: taxCalculationParameters } = useAppSelector(
     selectTaxCalculationParameters,
@@ -248,11 +247,6 @@ export default function Home() {
       dispatch(clearData())
     }
   }, [dispatch, selectedFiscalYear])
-
-  const isChartDataLoading = useMemo(() => {
-    if (selectedFiscalYear === 'none') return false
-    return dashboardLoading
-  }, [selectedFiscalYear, dashboardLoading])
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -434,50 +428,20 @@ export default function Home() {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {dashboardLoading ? (
-              <LoadingSpinner />
-            ) : (
-              <DonutChart
-                title={`資産の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
-                value={assetChartData.value}
-                data={assetChartData.data}
-                labels={assetChartData.labels}
-                colors={assetChartData.colors}
-                amounts={assetChartData.amounts}
-              />
-            )}
-          </div>
+          <DonutChartContainer
+            loading={dashboardLoading}
+            chartData={assetChartData}
+          />
 
-          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {dashboardLoading ? (
-              <LoadingSpinner />
-            ) : (
-              <DonutChart
-                title={`収入の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
-                value={revenueChartData.value}
-                data={revenueChartData.data}
-                labels={revenueChartData.labels}
-                colors={revenueChartData.colors}
-                amounts={revenueChartData.amounts}
-              />
-            )}
-          </div>
+          <DonutChartContainer
+            loading={dashboardLoading}
+            chartData={revenueChartData}
+          />
 
-          <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {dashboardLoading ? (
-              <LoadingSpinner />
-            ) : (
-              <DonutChart
-                title={`支出の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
-                value={expenseChartData.value}
-                data={expenseChartData.data}
-                labels={expenseChartData.labels}
-                colors={expenseChartData.colors}
-                amounts={expenseChartData.amounts}
-              />
-            )}
-          </div>
+          <DonutChartContainer
+            loading={dashboardLoading}
+            chartData={expenseChartData}
+          />
         </div>
 
         <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
@@ -657,6 +621,32 @@ function LoadingSpinner() {
   return (
     <div className="flex justify-center items-center h-[400px]">
       <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+    </div>
+  )
+}
+
+function DonutChartContainer({
+  loading,
+  chartData,
+}: {
+  loading: boolean
+  chartData: ChartData
+}) {
+  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
+  return (
+    <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <DonutChart
+          title={`資産の内訳${selectedFiscalYear === 'none' ? '' : ` (${selectedFiscalYear}年度)`}`}
+          value={chartData.value}
+          data={chartData.data}
+          labels={chartData.labels}
+          colors={chartData.colors}
+          amounts={chartData.amounts}
+        />
+      )}
     </div>
   )
 }
