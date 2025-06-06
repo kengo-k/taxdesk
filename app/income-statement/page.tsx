@@ -119,14 +119,14 @@ export default function IncomeStatementPage() {
         ...prev,
         business_revenue: {
           ...business_revenue,
-          amount: taxCalculationParameters[0].response.reduce((acc, item) => {
+          amount: taxCalculationParameters[0].reduce((acc, item) => {
             if (item.custom_fields?.category === 'business_revenue') {
               return acc + item.value
             }
             return acc
           }, 0),
         },
-        other_revenue: taxCalculationParameters[0].response.flatMap((item) => {
+        other_revenue: taxCalculationParameters[0].flatMap((item) => {
           if (item.custom_fields?.category === 'other_revenue') {
             return [{ name: item.name, amount: item.value }]
           }
@@ -134,7 +134,7 @@ export default function IncomeStatementPage() {
         }),
         expenses: {
           ...expenses,
-          amount: taxCalculationParameters[2].response[0].value,
+          amount: taxCalculationParameters[2][0].value,
         },
         taxes: { name: '法人税、住民税及び事業税', amount: totalAmount },
       }))

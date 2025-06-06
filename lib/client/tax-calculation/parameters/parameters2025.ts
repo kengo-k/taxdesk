@@ -152,7 +152,7 @@ export const parameters2025Builder: ParameterBuilder = (
     // 収益全体
     // 事業の売上および営業外収益を全て加算する
     // 利息は源泉徴収前の総額を使用する
-    params.sales = state[0].response.reduce((acc, item) => {
+    params.sales = state[0].reduce((acc, item) => {
       return acc + item.value
     }, 0)
 
@@ -160,9 +160,9 @@ export const parameters2025Builder: ParameterBuilder = (
     // 事業の費用および営業外費用を全て加算する
     // 租税公課のうち事業税は翌年度に損金参入するため当年度からは除外する
     // (昨年度から引き継いだ)未払法人税のうち事業税は当年度に損金参入するため加算する
-    params.expenses = state[2].response?.[0]?.value ?? 0
+    params.expenses = state[2][0].value ?? 0
 
-    params.previous_business_tax = state[4].response.reduce((acc, item) => {
+    params.previous_business_tax = state[4].reduce((acc, item) => {
       if (item.custom_fields?.category === 'include_expense') {
         return acc + item.value
       }
@@ -171,7 +171,7 @@ export const parameters2025Builder: ParameterBuilder = (
 
     // 法人税額から控除する金額
     // custom_fields に含まれるcategoryがdeductible_from_taxである金額の合計を算出する
-    params.corporate_tax_deduction = state[1].response.reduce((acc, item) => {
+    params.corporate_tax_deduction = state[1].reduce((acc, item) => {
       if (item.custom_fields?.category === 'deductible_from_tax') {
         return acc + item.value
       }

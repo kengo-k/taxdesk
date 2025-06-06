@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 
 import {
   AnnualBreakdown,
@@ -7,80 +7,39 @@ import {
 } from '@/lib/backend/services/reports/calculate-breakdown'
 import { selectTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { KAMOKU_BUNRUI } from '@/lib/constants/kamoku-bunrui'
+import { RootState } from '@/lib/redux/store'
 
 export interface ReportState {
   // 内訳データ用の状態
-  breakdown: {
-    saimokuNetAssetsByYear: {
-      data: AnnualBreakdown[] | null
-      loading: boolean
-      error: string | null
-    }
-    saimokuNetRevenuesByYear: {
-      data: AnnualBreakdown[] | null
-      loading: boolean
-      error: string | null
-    }
-    saimokuNetExpensesByYear: {
-      data: AnnualBreakdown[] | null
-      loading: boolean
-      error: string | null
-    }
-    saimokuNetRevenuesByMonth: {
-      data: MonthlyBreakdown[] | null
-      loading: boolean
-      error: string | null
-    }
-    saimokuNetExpensesByMonth: {
-      data: MonthlyBreakdown[] | null
-      loading: boolean
-      error: string | null
-    }
+  dashboard: {
+    saimokuNetAssetsByYear: AnnualBreakdown[] | null
+    saimokuNetRevenuesByYear: AnnualBreakdown[] | null
+    saimokuNetExpensesByYear: AnnualBreakdown[] | null
+    saimokuNetRevenuesByMonth: MonthlyBreakdown[] | null
+    saimokuNetExpensesByMonth: MonthlyBreakdown[] | null
   }
-  taxCalculationParameters: {
-    data: {
-      request: BreakdownRequest
-      response: AnnualBreakdown[]
-    }[]
-    loading: boolean
-    error: string | null
-  }
+  dashboardLoading: boolean
+  dashboardError: string | null
+  taxCalculationParameters: AnnualBreakdown[][]
+  taxCalculationParametersLoading: boolean
+  taxCalculationParametersError: string | null
 }
 
 const initialState: ReportState = {
   // 内訳データ用の初期状態
-  breakdown: {
-    saimokuNetAssetsByYear: {
-      data: null,
-      loading: false,
-      error: null,
-    },
-    saimokuNetRevenuesByYear: {
-      data: null,
-      loading: false,
-      error: null,
-    },
-    saimokuNetExpensesByYear: {
-      data: null,
-      loading: false,
-      error: null,
-    },
-    saimokuNetRevenuesByMonth: {
-      data: null,
-      loading: false,
-      error: null,
-    },
-    saimokuNetExpensesByMonth: {
-      data: null,
-      loading: false,
-      error: null,
-    },
+  dashboard: {
+    saimokuNetAssetsByYear: null,
+    saimokuNetRevenuesByYear: null,
+    saimokuNetExpensesByYear: null,
+    saimokuNetRevenuesByMonth: null,
+    saimokuNetExpensesByMonth: null,
   },
-  taxCalculationParameters: {
-    data: [],
-    loading: false,
-    error: null,
-  },
+  dashboardLoading: false,
+  dashboardError: null,
+
+  taxCalculationParameters: [],
+  taxCalculationParametersLoading: false,
+  taxCalculationParametersError: null,
 }
 
 export const fetchTaxCalculationParameters = createAsyncThunk<
@@ -171,92 +130,60 @@ export const reportSlice = createSlice({
   initialState,
   reducers: {
     clearData: (state) => {
-      state.breakdown.saimokuNetAssetsByYear = {
-        data: null,
-        loading: false,
-        error: null,
-      }
-      state.breakdown.saimokuNetRevenuesByYear = {
-        data: null,
-        loading: false,
-        error: null,
-      }
-      state.breakdown.saimokuNetExpensesByYear = {
-        data: null,
-        loading: false,
-        error: null,
-      }
-      state.breakdown.saimokuNetRevenuesByMonth = {
-        data: null,
-        loading: false,
-        error: null,
-      }
-      state.breakdown.saimokuNetExpensesByMonth = {
-        data: null,
-        loading: false,
-        error: null,
-      }
-      state.taxCalculationParameters = {
-        data: [],
-        loading: false,
-        error: null,
-      }
+      state.dashboard.saimokuNetAssetsByYear = null
+      state.dashboard.saimokuNetRevenuesByYear = null
+      state.dashboard.saimokuNetExpensesByYear = null
+      state.dashboard.saimokuNetRevenuesByMonth = null
+      state.dashboard.saimokuNetExpensesByMonth = null
+      state.dashboardLoading = false
+      state.dashboardError = null
+
+      state.taxCalculationParameters = []
+      state.taxCalculationParametersLoading = false
+      state.taxCalculationParametersError = null
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTaxCalculationParameters.pending, (state) => {
-        state.taxCalculationParameters.loading = true
-        state.taxCalculationParameters.error = null
+        state.taxCalculationParametersLoading = true
+        state.taxCalculationParametersError = null
       })
       .addCase(fetchTaxCalculationParameters.fulfilled, (state, action) => {
-        state.taxCalculationParameters.loading = false
-        state.taxCalculationParameters.data = action.payload.data.annual
+        state.taxCalculationParametersLoading = false
+        state.taxCalculationParameters = action.payload.data.annual.map(
+          (item) => item.response,
+        )
       })
       .addCase(fetchTaxCalculationParameters.rejected, (state, action) => {
-        state.taxCalculationParameters.loading = false
-        state.taxCalculationParameters.error =
+        state.taxCalculationParametersLoading = false
+        state.taxCalculationParametersError =
           action.error.message || 'Unknown error'
       })
 
     // Dashboard data
     builder
       .addCase(fetchDashboardData.pending, (state) => {
-        state.breakdown.saimokuNetAssetsByYear.loading = true
-        state.breakdown.saimokuNetRevenuesByYear.loading = true
-        state.breakdown.saimokuNetExpensesByYear.loading = true
-        state.breakdown.saimokuNetRevenuesByMonth.loading = true
-        state.breakdown.saimokuNetExpensesByMonth.loading = true
+        state.dashboardLoading = true
+        state.dashboardError = null
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         const { annual, monthly } = action.payload.data
 
         // Set loading to false for all states
-        state.breakdown.saimokuNetAssetsByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByYear.loading = false
-        state.breakdown.saimokuNetExpensesByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByMonth.loading = false
-        state.breakdown.saimokuNetExpensesByMonth.loading = false
+        state.dashboardLoading = false
 
         // Update data for each state
-        state.breakdown.saimokuNetAssetsByYear.data = annual[0].response
-        state.breakdown.saimokuNetRevenuesByYear.data = annual[1].response
-        state.breakdown.saimokuNetExpensesByYear.data = annual[2].response
-        state.breakdown.saimokuNetRevenuesByMonth.data = monthly[0].response
-        state.breakdown.saimokuNetExpensesByMonth.data = monthly[1].response
+        state.dashboard.saimokuNetAssetsByYear = annual[0].response
+        state.dashboard.saimokuNetRevenuesByYear = annual[1].response
+        state.dashboard.saimokuNetExpensesByYear = annual[2].response
+        state.dashboard.saimokuNetRevenuesByMonth = monthly[0].response
+        state.dashboard.saimokuNetExpensesByMonth = monthly[1].response
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         const error = action.error.message || 'Unknown error'
-        state.breakdown.saimokuNetAssetsByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByYear.loading = false
-        state.breakdown.saimokuNetExpensesByYear.loading = false
-        state.breakdown.saimokuNetRevenuesByMonth.loading = false
-        state.breakdown.saimokuNetExpensesByMonth.loading = false
-        state.breakdown.saimokuNetAssetsByYear.error = error
-        state.breakdown.saimokuNetRevenuesByYear.error = error
-        state.breakdown.saimokuNetExpensesByYear.error = error
-        state.breakdown.saimokuNetRevenuesByMonth.error = error
-        state.breakdown.saimokuNetExpensesByMonth.error = error
+        state.dashboardLoading = false
+        state.dashboardError = error
       })
   },
 })
@@ -265,46 +192,15 @@ export const { clearData } = reportSlice.actions
 
 export default reportSlice.reducer
 
-// 内訳データ用のセレクター
-export const selectSaimokuNetAssetsByYear = (state: { report: ReportState }) =>
-  state.report.breakdown.saimokuNetAssetsByYear.data
-
-export const selectSaimokuNetAssetsByYearLoading = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetAssetsByYear.loading
-
-export const selectSaimokuNetRevenuesByYear = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetRevenuesByYear.data
-
-export const selectSaimokuNetRevenuesByYearLoading = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetRevenuesByYear.loading
-
-export const selectSaimokuNetExpensesByYear = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetExpensesByYear.data
-
-export const selectSaimokuNetExpensesByYearLoading = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetExpensesByYear.loading
-
-export const selectSaimokuNetRevenuesByMonth = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetRevenuesByMonth.data
-
-export const selectSaimokuNetRevenuesByMonthLoading = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetRevenuesByMonth.loading
-
-export const selectSaimokuNetExpensesByMonth = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetExpensesByMonth.data
-
-export const selectSaimokuNetExpensesByMonthLoading = (state: {
-  report: ReportState
-}) => state.report.breakdown.saimokuNetExpensesByMonth.loading
+export const selectDashboard = createSelector(
+  [
+    (state: RootState) => state.report.dashboard,
+    (state: RootState) => state.report.dashboardLoading,
+    (state: RootState) => state.report.dashboardError,
+  ],
+  (data, loading, error) => ({ data, loading, error }),
+)
 
 export const selectTaxCalculationParameters = (state: {
   report: ReportState
-}) => state.report.taxCalculationParameters.data
+}) => state.report.taxCalculationParameters

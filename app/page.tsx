@@ -44,16 +44,7 @@ import {
   clearData,
   fetchDashboardData,
   fetchTaxCalculationParameters,
-  selectSaimokuNetAssetsByYear,
-  selectSaimokuNetAssetsByYearLoading,
-  selectSaimokuNetExpensesByMonth,
-  selectSaimokuNetExpensesByMonthLoading,
-  selectSaimokuNetExpensesByYear,
-  selectSaimokuNetExpensesByYearLoading,
-  selectSaimokuNetRevenuesByMonth,
-  selectSaimokuNetRevenuesByMonthLoading,
-  selectSaimokuNetRevenuesByYear,
-  selectSaimokuNetRevenuesByYearLoading,
+  selectDashboard,
   selectTaxCalculationParameters,
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
@@ -159,30 +150,19 @@ export default function Home() {
   const searchParams = useSearchParams()
 
   const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
-  const { data: fiscalYears, loading: fiscalYearsLoading } =
-    useAppSelector(selectFiscalYears)
+  const { data: fiscalYears } = useAppSelector(selectFiscalYears)
 
-  const expenseByMonth = useAppSelector(selectSaimokuNetExpensesByMonth)
-  const expenseByMonthLoading = useAppSelector(
-    selectSaimokuNetExpensesByMonthLoading,
-  )
-  const expenseByYear = useAppSelector(selectSaimokuNetExpensesByYear)
-  const expenseByYearLoading = useAppSelector(
-    selectSaimokuNetExpensesByYearLoading,
-  )
-
-  const assetByYear = useAppSelector(selectSaimokuNetAssetsByYear)
-  const assetByYearLoading = useAppSelector(selectSaimokuNetAssetsByYearLoading)
-
-  const revenueByMonth = useAppSelector(selectSaimokuNetRevenuesByMonth)
-  const revenueByMonthLoading = useAppSelector(
-    selectSaimokuNetRevenuesByMonthLoading,
-  )
-  const revenueByYear = useAppSelector(selectSaimokuNetRevenuesByYear)
-  const revenueByYearLoading = useAppSelector(
-    selectSaimokuNetRevenuesByYearLoading,
-  )
-
+  const {
+    data: {
+      saimokuNetAssetsByYear,
+      saimokuNetRevenuesByYear,
+      saimokuNetExpensesByYear,
+      saimokuNetRevenuesByMonth,
+      saimokuNetExpensesByMonth,
+    },
+    loading: dashboardLoading,
+    error: dashboardError,
+  } = useAppSelector(selectDashboard)
   const taxCalculationParameters = useAppSelector(
     selectTaxCalculationParameters,
   )
@@ -204,38 +184,40 @@ export default function Home() {
   }, [selectedFiscalYear, taxCalculationParameters])
 
   const assetChartData = useMemo(
-    () => calculateChartData(assetByYearLoading, assetByYear, 'asset'),
-    [assetByYearLoading, assetByYear],
+    () => calculateChartData(dashboardLoading, saimokuNetAssetsByYear, 'asset'),
+    [dashboardLoading, saimokuNetAssetsByYear],
   )
 
   const revenueChartData = useMemo(
-    () => calculateChartData(revenueByYearLoading, revenueByYear, 'income'),
-    [revenueByYearLoading, revenueByYear],
+    () =>
+      calculateChartData(dashboardLoading, saimokuNetRevenuesByYear, 'income'),
+    [dashboardLoading, saimokuNetRevenuesByYear],
   )
 
   const expenseChartData = useMemo(
-    () => calculateChartData(expenseByYearLoading, expenseByYear, 'expense'),
-    [expenseByYearLoading, expenseByYear],
+    () =>
+      calculateChartData(dashboardLoading, saimokuNetExpensesByYear, 'expense'),
+    [dashboardLoading, saimokuNetExpensesByYear],
   )
 
   const monthlyRevenueData = useMemo(
     () =>
       calculateMonthlyChartData(
-        revenueByMonthLoading,
-        revenueByMonth,
+        dashboardLoading,
+        saimokuNetRevenuesByMonth,
         'income',
       ),
-    [revenueByMonthLoading, revenueByMonth],
+    [dashboardLoading, saimokuNetRevenuesByMonth],
   )
 
   const monthlyExpenseData = useMemo(
     () =>
       calculateMonthlyChartData(
-        expenseByMonthLoading,
-        expenseByMonth,
+        dashboardLoading,
+        saimokuNetExpensesByMonth,
         'expense',
       ),
-    [expenseByMonthLoading, expenseByMonth],
+    [dashboardLoading, saimokuNetExpensesByMonth],
   )
 
   const handleYearChange = (value: string) => {
@@ -269,21 +251,8 @@ export default function Home() {
 
   const isChartDataLoading = useMemo(() => {
     if (selectedFiscalYear === 'none') return false
-    return (
-      assetByYearLoading ||
-      revenueByYearLoading ||
-      expenseByYearLoading ||
-      revenueByMonthLoading ||
-      expenseByMonthLoading
-    )
-  }, [
-    selectedFiscalYear,
-    assetByYearLoading,
-    revenueByYearLoading,
-    expenseByYearLoading,
-    revenueByMonthLoading,
-    expenseByMonthLoading,
-  ])
+    return dashboardLoading
+  }, [selectedFiscalYear, dashboardLoading])
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -466,7 +435,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {assetByYearLoading ? (
+            {dashboardLoading ? (
               <LoadingSpinner />
             ) : (
               <DonutChart
@@ -481,7 +450,7 @@ export default function Home() {
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {revenueByYearLoading ? (
+            {dashboardLoading ? (
               <LoadingSpinner />
             ) : (
               <DonutChart
@@ -496,7 +465,7 @@ export default function Home() {
           </div>
 
           <div className="bg-white rounded-lg p-6 shadow-sm min-h-[400px]">
-            {expenseByYearLoading ? (
+            {dashboardLoading ? (
               <LoadingSpinner />
             ) : (
               <DonutChart
@@ -518,7 +487,7 @@ export default function Home() {
               ? ''
               : ` (${selectedFiscalYear}年度)`}
           </h3>
-          {revenueByMonthLoading ? (
+          {dashboardLoading ? (
             <LoadingSpinner />
           ) : monthlyRevenueData.datasets.length === 0 ? (
             <div className="flex justify-center items-center h-[400px] text-gray-500">
@@ -536,7 +505,7 @@ export default function Home() {
               ? ''
               : ` (${selectedFiscalYear}年度)`}
           </h3>
-          {expenseByMonthLoading ? (
+          {dashboardLoading ? (
             <LoadingSpinner />
           ) : monthlyExpenseData.datasets.length === 0 ? (
             <div className="flex justify-center items-center h-[400px] text-gray-500">

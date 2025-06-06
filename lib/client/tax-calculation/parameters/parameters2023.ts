@@ -58,7 +58,7 @@ export const parameters2023Builder: ParameterBuilder = (
   state: ReturnType<typeof selectTaxCalculationParameters>,
 ): Context2023 => {
   return {
-    sales: state[0].response[0].value,
+    sales: state[0][0].value,
     expenses: 7202571,
     previous_business_tax: 4500,
     corporate_tax_deduction: 1,

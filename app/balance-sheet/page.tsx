@@ -110,16 +110,16 @@ export default function BalanceSheetPage() {
       const totalAmount = taxes[taxes.length - 1].taxAmount
       setBalanceSheetData((prev) => ({
         ...prev,
-        assets: taxCalculationParameters[1].response.map((item) => {
+        assets: taxCalculationParameters[1].map((item) => {
           return { name: item.name, amount: item.value }
         }),
-        liabilities: taxCalculationParameters[5].response.flatMap((item) => {
+        liabilities: taxCalculationParameters[5].flatMap((item) => {
           if (item.value === 0) {
             return []
           }
           return [{ name: item.name, amount: item.value }]
         }),
-        equity: taxCalculationParameters[6].response.map((item) => {
+        equity: taxCalculationParameters[6].map((item) => {
           return { name: item.name, amount: item.value }
         }),
       }))
