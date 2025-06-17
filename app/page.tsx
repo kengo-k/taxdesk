@@ -350,7 +350,7 @@ export default function Home() {
           <TabsContent value="business" className="mt-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
               <FeatureCard
-                href="#"
+                href="/payroll"
                 icon={Wallet}
                 title="給与明細照会"
                 description=""
