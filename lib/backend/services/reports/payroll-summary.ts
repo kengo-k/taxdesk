@@ -11,6 +11,7 @@ interface PayrollSummary {
   payroll_base: number
   payroll_deduction: PayrollItem[]
   payroll_addition: PayrollItem[]
+  net_payment: number
 }
 
 interface PayrollDetailRow {
@@ -134,11 +135,16 @@ export async function getPayrollSummary(
       }
     }
 
+    const totalDeduction = Array.from(deductionMap.values()).reduce((sum, item) => sum + item.amount, 0)
+    const totalAddition = Array.from(additionMap.values()).reduce((sum, item) => sum + item.amount, 0)
+    const net_payment = payroll_base - totalDeduction + totalAddition
+
     result.push({
       month,
       payroll_base,
       payroll_deduction: Array.from(deductionMap.values()),
       payroll_addition: Array.from(additionMap.values()),
+      net_payment,
     })
   }
 
