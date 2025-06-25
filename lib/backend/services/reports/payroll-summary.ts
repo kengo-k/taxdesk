@@ -45,21 +45,6 @@ export async function getPayrollSummary(
              join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
     where j.nendo = ${fiscalYear}
       and kasi_s.custom_fields ->> 'category' = 'payroll_base'
-    except
-    select j.date,
-           j.karikata_cd,
-           j.kasikata_cd,
-           kari_s.saimoku_full_name as kari_saimoku_name,
-           kasi_s.saimoku_full_name as kasi_saimoku_name,
-           kari_s.custom_fields::text as kari_custom_fields,
-           kasi_s.custom_fields::text as kasi_custom_fields,
-           j.karikata_value as amount,
-           kasi_s.custom_fields ->> 'category' as payroll_type
-    from journals j
-             join saimoku_masters kari_s on j.karikata_cd = kari_s.saimoku_cd
-             join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
-    where j.nendo = ${fiscalYear}
-      and kari_s.custom_fields ->> 'category' = 'fiscal_carryover'
     union all
     select j.date,
            j.karikata_cd,
@@ -110,6 +95,13 @@ export async function getPayrollSummary(
     const additionMap = new Map<string, PayrollItem>()
 
     for (const row of rows) {
+      const kariCustomFields = JSON.parse(row.kari_custom_fields || '{}')
+      const isFiscalCarryover = kariCustomFields.category === 'fiscal_carryover'
+      
+      if (isFiscalCarryover) {
+        continue
+      }
+
       if (row.payroll_type === 'payroll_base') {
         payroll_base += Number(row.amount)
       } else if (row.payroll_type === 'payroll_deduction') {
@@ -135,8 +127,14 @@ export async function getPayrollSummary(
       }
     }
 
-    const totalDeduction = Array.from(deductionMap.values()).reduce((sum, item) => sum + item.amount, 0)
-    const totalAddition = Array.from(additionMap.values()).reduce((sum, item) => sum + item.amount, 0)
+    const totalDeduction = Array.from(deductionMap.values()).reduce(
+      (sum, item) => sum + item.amount,
+      0,
+    )
+    const totalAddition = Array.from(additionMap.values()).reduce(
+      (sum, item) => sum + item.amount,
+      0,
+    )
     const net_payment = payroll_base - totalDeduction + totalAddition
 
     result.push({
