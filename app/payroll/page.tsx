@@ -3,10 +3,8 @@
 import * as React from 'react'
 import { useState } from 'react'
 
-import { ChevronDown, ChevronUp, TrendingDown, Wallet } from 'lucide-react'
+import { Wallet } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -15,7 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 
 interface PayrollData {
@@ -190,118 +195,41 @@ function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
   )
 }
 
-function PayrollCard({ data, isExpanded, onToggle }: { 
-  data: PayrollData
-  isExpanded: boolean
-  onToggle: () => void
-}) {
+function PayrollTable({ data }: { data: PayrollData[] }) {
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="text-sm font-medium">
-              {data.monthName}
-            </Badge>
-            <h3 className="text-lg font-semibold">{formatCurrency(data.totalPayment)}</h3>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggle}
-            className="h-8 w-8 p-0"
-          >
-            {isExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-      </CardHeader>
-      
-      {isExpanded && (
-        <CardContent className="pt-0">
-          <div className="space-y-4">
-            {/* 給与所得部分 */}
-            <div className="bg-blue-50 rounded-lg p-3">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">給与所得</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">基本給与</span>
-                  <span className="font-medium text-blue-600">{formatCurrency(data.baseSalary)}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                    源泉徴収税
-                  </span>
-                  <span className="text-sm text-red-600">-{formatCurrency(data.withholdingTax)}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3 text-orange-500" />
-                    社会保険料
-                  </span>
-                  <span className="text-sm text-orange-600">-{formatCurrency(data.socialInsurance)}</span>
-                </div>
-                
-                <Separator className="my-2" />
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-blue-800">給与手取り</span>
-                  <span className="font-medium text-blue-800">{formatCurrency(data.baseSalary - data.withholdingTax - data.socialInsurance)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 経費清算部分 */}
-            {data.expenseReimbursement > 0 && (
-              <div className="bg-green-50 rounded-lg p-3">
-                <h4 className="text-sm font-medium text-green-800 mb-2">経費清算</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">立替経費</span>
-                  <span className="font-medium text-green-600">{formatCurrency(data.expenseReimbursement)}</span>
-                </div>
-              </div>
-            )}
-            
-            <Separator />
-            
-            <div className="flex justify-between items-center pt-2">
-              <span className="font-medium text-lg">振込総額</span>
-              <span className="font-bold text-xl">{formatCurrency(data.totalPayment)}</span>
-            </div>
-          </div>
-        </CardContent>
-      )}
+    <Card>
+      <CardContent className="p-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>月</TableHead>
+              <TableHead className="text-right">基本給与</TableHead>
+              <TableHead className="text-right">源泉徴収税</TableHead>
+              <TableHead className="text-right">社会保険料</TableHead>
+              <TableHead className="text-right">経費清算</TableHead>
+              <TableHead className="text-right font-semibold">振込総額</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((payroll) => (
+              <TableRow key={payroll.month}>
+                <TableCell className="font-medium">{payroll.monthName}</TableCell>
+                <TableCell className="text-right">{formatCurrency(payroll.baseSalary)}</TableCell>
+                <TableCell className="text-right text-red-600">-{formatCurrency(payroll.withholdingTax)}</TableCell>
+                <TableCell className="text-right text-orange-600">-{formatCurrency(payroll.socialInsurance)}</TableCell>
+                <TableCell className="text-right text-green-600">{formatCurrency(payroll.expenseReimbursement)}</TableCell>
+                <TableCell className="text-right font-semibold">{formatCurrency(payroll.totalPayment)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
     </Card>
   )
 }
 
 export default function PayrollPage() {
   const [selectedYear, setSelectedYear] = useState('2024')
-  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set())
-
-  const toggleCard = (month: number) => {
-    const newExpanded = new Set(expandedCards)
-    if (newExpanded.has(month)) {
-      newExpanded.delete(month)
-    } else {
-      newExpanded.add(month)
-    }
-    setExpandedCards(newExpanded)
-  }
-
-  const toggleAll = () => {
-    if (expandedCards.size === mockPayrollData.length) {
-      setExpandedCards(new Set())
-    } else {
-      setExpandedCards(new Set(mockPayrollData.map(item => item.month)))
-    }
-  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -311,28 +239,18 @@ export default function PayrollPage() {
           <p className="text-gray-600 mt-1">月別の給与支払い状況を確認できます</p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">年度：</span>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2024">2024年度</SelectItem>
-                <SelectItem value="2023">2023年度</SelectItem>
-                <SelectItem value="2022">2022年度</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleAll}
-          >
-            {expandedCards.size === mockPayrollData.length ? '全て閉じる' : '全て展開'}
-          </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">年度：</span>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2024">2024年度</SelectItem>
+              <SelectItem value="2023">2023年度</SelectItem>
+              <SelectItem value="2022">2022年度</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -340,16 +258,7 @@ export default function PayrollPage() {
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">月別給与明細</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockPayrollData.map((payroll) => (
-            <PayrollCard
-              key={payroll.month}
-              data={payroll}
-              isExpanded={expandedCards.has(payroll.month)}
-              onToggle={() => toggleCard(payroll.month)}
-            />
-          ))}
-        </div>
+        <PayrollTable data={mockPayrollData} />
       </div>
     </div>
   )
