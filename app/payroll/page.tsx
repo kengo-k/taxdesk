@@ -5,13 +5,6 @@ import { useEffect, useState } from 'react'
 
 import { Wallet } from 'lucide-react'
 
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import {
-  fetchPayrollSummary,
-  selectPayrollSummary,
-  PayrollSummary,
-} from '@/lib/redux/features/payrollSlice'
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -28,7 +21,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
+import {
+  PayrollSummary,
+  fetchPayrollSummary,
+  selectPayrollSummary,
+} from '@/lib/redux/features/payrollSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 interface PayrollData {
   month: number
@@ -40,7 +38,6 @@ interface PayrollData {
   totalPayment: number
 }
 
-
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('ja-JP', {
     style: 'currency',
@@ -49,47 +46,71 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-
 function convertToPayrollData(summaries: PayrollSummary[]): PayrollData[] {
-  return summaries.map((summary) => {
-    const monthNum = parseInt(summary.month.substring(4, 6))
-    const monthName = `${monthNum}月`
-    
-    const withholdingTax = summary.payroll_deduction
-      .filter(item => item.name.includes('所得税') || item.name.includes('源泉徴収'))
-      .reduce((sum, item) => sum + item.amount, 0)
-    
-    const socialInsurance = summary.payroll_deduction
-      .filter(item => item.name.includes('社会保険') || item.name.includes('健康保険') || item.name.includes('厚生年金'))
-      .reduce((sum, item) => sum + item.amount, 0)
-    
-    const expenseReimbursement = summary.payroll_addition
-      .filter(item => item.name.includes('経費') || item.name.includes('清算') || item.name.includes('立替') || item.name.includes('年末調整'))
-      .reduce((sum, item) => sum + item.amount, 0)
+  return summaries
+    .map((summary) => {
+      const monthNum = parseInt(summary.month.substring(4, 6))
+      const monthName = `${monthNum}月`
 
-    return {
-      month: monthNum,
-      monthName,
-      baseSalary: summary.payroll_base,
-      withholdingTax,
-      socialInsurance,
-      expenseReimbursement,
-      totalPayment: summary.net_payment,
-    }
-  }).sort((a, b) => {
-    if (a.month >= 4 && b.month >= 4) return a.month - b.month
-    if (a.month < 4 && b.month < 4) return a.month - b.month
-    if (a.month >= 4 && b.month < 4) return -1
-    if (a.month < 4 && b.month >= 4) return 1
-    return 0
-  })
+      const withholdingTax = summary.payroll_deduction
+        .filter(
+          (item) =>
+            item.name.includes('所得税') || item.name.includes('源泉徴収'),
+        )
+        .reduce((sum, item) => sum + item.amount, 0)
+
+      const socialInsurance = summary.payroll_deduction
+        .filter(
+          (item) =>
+            item.name.includes('社会保険') ||
+            item.name.includes('健康保険') ||
+            item.name.includes('厚生年金'),
+        )
+        .reduce((sum, item) => sum + item.amount, 0)
+
+      const expenseReimbursement = summary.payroll_addition
+        .filter(
+          (item) =>
+            item.name.includes('経費') ||
+            item.name.includes('清算') ||
+            item.name.includes('立替') ||
+            item.name.includes('年末調整'),
+        )
+        .reduce((sum, item) => sum + item.amount, 0)
+
+      return {
+        month: monthNum,
+        monthName,
+        baseSalary: summary.payroll_base,
+        withholdingTax,
+        socialInsurance,
+        expenseReimbursement,
+        totalPayment: summary.net_payment,
+      }
+    })
+    .sort((a, b) => {
+      if (a.month >= 4 && b.month >= 4) return a.month - b.month
+      if (a.month < 4 && b.month < 4) return a.month - b.month
+      if (a.month >= 4 && b.month < 4) return -1
+      if (a.month < 4 && b.month >= 4) return 1
+      return 0
+    })
 }
 
 function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
   const totalBaseSalary = data.reduce((sum, item) => sum + item.baseSalary, 0)
-  const totalWithholding = data.reduce((sum, item) => sum + item.withholdingTax, 0)
-  const totalSocialInsurance = data.reduce((sum, item) => sum + item.socialInsurance, 0)
-  const totalExpenseReimbursement = data.reduce((sum, item) => sum + item.expenseReimbursement, 0)
+  const totalWithholding = data.reduce(
+    (sum, item) => sum + item.withholdingTax,
+    0,
+  )
+  const totalSocialInsurance = data.reduce(
+    (sum, item) => sum + item.socialInsurance,
+    0,
+  )
+  const totalExpenseReimbursement = data.reduce(
+    (sum, item) => sum + item.expenseReimbursement,
+    0,
+  )
   const totalPayment = data.reduce((sum, item) => sum + item.totalPayment, 0)
 
   return (
@@ -104,23 +125,33 @@ function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">基本給与総額</p>
-            <p className="text-lg font-bold text-blue-600">{formatCurrency(totalBaseSalary)}</p>
+            <p className="text-lg font-bold text-blue-600">
+              {formatCurrency(totalBaseSalary)}
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">源泉徴収税</p>
-            <p className="text-lg font-bold text-red-600">{formatCurrency(totalWithholding)}</p>
+            <p className="text-lg font-bold text-red-600">
+              {formatCurrency(totalWithholding)}
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">社会保険料</p>
-            <p className="text-lg font-bold text-orange-600">{formatCurrency(totalSocialInsurance)}</p>
+            <p className="text-lg font-bold text-orange-600">
+              {formatCurrency(totalSocialInsurance)}
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">経費清算</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency(totalExpenseReimbursement)}</p>
+            <p className="text-lg font-bold text-green-600">
+              {formatCurrency(totalExpenseReimbursement)}
+            </p>
           </div>
           <div className="text-center">
             <p className="text-sm text-gray-600 mb-1">振込総額</p>
-            <p className="text-xl font-bold text-gray-900">{formatCurrency(totalPayment)}</p>
+            <p className="text-xl font-bold text-gray-900">
+              {formatCurrency(totalPayment)}
+            </p>
           </div>
         </div>
       </CardContent>
@@ -128,7 +159,21 @@ function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
   )
 }
 
-function PayrollTable({ data }: { data: PayrollData[] }) {
+function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
+  const sortedSummaries = summaries
+    .map((summary) => ({
+      ...summary,
+      monthNum: parseInt(summary.month.substring(4, 6)),
+      monthName: `${parseInt(summary.month.substring(4, 6))}月`,
+    }))
+    .sort((a, b) => {
+      if (a.monthNum >= 4 && b.monthNum >= 4) return a.monthNum - b.monthNum
+      if (a.monthNum < 4 && b.monthNum < 4) return a.monthNum - b.monthNum
+      if (a.monthNum >= 4 && b.monthNum < 4) return -1
+      if (a.monthNum < 4 && b.monthNum >= 4) return 1
+      return 0
+    })
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -137,23 +182,64 @@ function PayrollTable({ data }: { data: PayrollData[] }) {
             <TableRow>
               <TableHead>月</TableHead>
               <TableHead className="text-right">基本給与</TableHead>
-              <TableHead className="text-right">源泉徴収税</TableHead>
-              <TableHead className="text-right">社会保険料</TableHead>
-              <TableHead className="text-right">経費清算</TableHead>
+              <TableHead className="text-right">差引額</TableHead>
+              <TableHead className="text-right">加算額</TableHead>
               <TableHead className="text-right font-semibold">振込総額</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((payroll) => (
-              <TableRow key={payroll.month}>
-                <TableCell className="font-medium">{payroll.monthName}</TableCell>
-                <TableCell className="text-right">{formatCurrency(payroll.baseSalary)}</TableCell>
-                <TableCell className="text-right text-red-600">-{formatCurrency(payroll.withholdingTax)}</TableCell>
-                <TableCell className="text-right text-orange-600">-{formatCurrency(payroll.socialInsurance)}</TableCell>
-                <TableCell className="text-right text-green-600">{formatCurrency(payroll.expenseReimbursement)}</TableCell>
-                <TableCell className="text-right font-semibold">{formatCurrency(payroll.totalPayment)}</TableCell>
-              </TableRow>
-            ))}
+            {sortedSummaries.map((summary) => {
+              const totalDeduction = summary.payroll_deduction.reduce((sum, item) => sum + item.amount, 0)
+              const totalAddition = summary.payroll_addition.reduce((sum, item) => sum + item.amount, 0)
+              
+              return (
+                <TableRow key={summary.month}>
+                  <TableCell className="font-medium">
+                    {summary.monthName}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(summary.payroll_base)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="text-sm space-y-1">
+                      {summary.payroll_deduction.map((item, index) => (
+                        <div key={index} className="text-red-600">
+                          {item.name}: {formatCurrency(item.amount)}
+                        </div>
+                      ))}
+                      {summary.payroll_deduction.length > 0 && (
+                        <>
+                          <div className="border-t border-gray-300 my-1"></div>
+                          <div className="font-medium text-red-700">
+                            小計: {formatCurrency(totalDeduction)}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="text-sm space-y-1">
+                      {summary.payroll_addition.map((item, index) => (
+                        <div key={index} className="text-green-600">
+                          {item.name}: {formatCurrency(item.amount)}
+                        </div>
+                      ))}
+                      {summary.payroll_addition.length > 0 && (
+                        <>
+                          <div className="border-t border-gray-300 my-1"></div>
+                          <div className="font-medium text-green-700">
+                            小計: {formatCurrency(totalAddition)}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatCurrency(summary.net_payment)}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </CardContent>
@@ -165,7 +251,7 @@ export default function PayrollPage() {
   const [selectedYear, setSelectedYear] = useState('2024')
   const dispatch = useAppDispatch()
   const { summaries, loading, error } = useAppSelector(selectPayrollSummary)
-  
+
   const payrollData = React.useMemo(() => {
     if (!summaries || !Array.isArray(summaries)) {
       return []
@@ -202,9 +288,11 @@ export default function PayrollPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">給与明細照会</h1>
-          <p className="text-gray-600 mt-1">月別の給与支払い状況を確認できます</p>
+          <p className="text-gray-600 mt-1">
+            月別の給与支払い状況を確認できます
+          </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">年度：</span>
           <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -224,7 +312,7 @@ export default function PayrollPage() {
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">月別給与明細</h2>
-        <PayrollTable data={payrollData} />
+        <PayrollTable summaries={summaries || []} />
       </div>
     </div>
   )
