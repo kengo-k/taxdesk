@@ -206,10 +206,9 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
                     <div className="text-sm min-w-[200px]">
                       {summary.payroll_deduction.length > 0 && (
                         <div className="mb-3">
-                          <div className="font-mono">
+                          <div className="font-mono border-b border-gray-300 pb-1 inline-block">
                             {formatCurrency(totalDeduction)}
                           </div>
-                          <div className="border-b border-gray-300 mt-1"></div>
                         </div>
                       )}
                       <div className="space-y-1.5">
@@ -226,10 +225,9 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
                     <div className="text-sm min-w-[200px]">
                       {summary.payroll_addition.length > 0 && (
                         <div className="mb-3">
-                          <div className="font-mono">
+                          <div className="font-mono border-b border-gray-300 pb-1 inline-block">
                             {formatCurrency(totalAddition)}
                           </div>
-                          <div className="border-b border-gray-300 mt-1"></div>
                         </div>
                       )}
                       <div className="space-y-1.5">
