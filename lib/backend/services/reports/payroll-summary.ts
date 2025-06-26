@@ -112,7 +112,7 @@ export async function getPayrollSummary(
         if (kariCustomFields.category === 'payroll_deduction') {
           // 年末調整還付分として加算項目に分類
           const code = row.kasikata_cd
-          const name = `年末調整還付 (${row.kasi_saimoku_name})`
+          const name = `年末調整還付`
           const amount = Number(row.amount)
 
           if (additionMap.has(code)) {
@@ -160,8 +160,8 @@ export async function getPayrollSummary(
     result.push({
       month,
       payroll_base,
-      payroll_deduction: Array.from(deductionMap.values()),
-      payroll_addition: Array.from(additionMap.values()),
+      payroll_deduction: Array.from(deductionMap.values()).sort((a, b) => a.code.localeCompare(b.code)),
+      payroll_addition: Array.from(additionMap.values()).sort((a, b) => a.code.localeCompare(b.code)),
       net_payment,
     })
   }
