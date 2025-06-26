@@ -44,6 +44,7 @@ export async function getPayrollSummary(
              join saimoku_masters kari_s on j.karikata_cd = kari_s.saimoku_cd
              join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
     where j.nendo = ${fiscalYear}
+      and j.deleted = '0'
       and kasi_s.custom_fields ->> 'category' = 'payroll_base'
     union all
     select j.date,
@@ -59,6 +60,7 @@ export async function getPayrollSummary(
              join saimoku_masters kari_s on j.karikata_cd = kari_s.saimoku_cd
              join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
     where j.nendo = ${fiscalYear}
+      and j.deleted = '0'
       and kasi_s.custom_fields ->> 'category' = 'payroll_deduction'
     union all
     select j.date,
@@ -74,6 +76,7 @@ export async function getPayrollSummary(
              join saimoku_masters kari_s on j.karikata_cd = kari_s.saimoku_cd
              join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
     where j.nendo = ${fiscalYear}
+      and j.deleted = '0'
       and kasi_s.custom_fields ->> 'category' = 'payroll_addition'
     order by date`
   console.log(JSON.stringify(payrollData, null, 2))
