@@ -1,9 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Wallet } from 'lucide-react'
+
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import {
+  fetchPayrollSummary,
+  selectPayrollSummary,
+  PayrollSummary,
+} from '@/lib/redux/features/payrollSlice'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -33,116 +40,6 @@ interface PayrollData {
   totalPayment: number
 }
 
-const mockPayrollData: PayrollData[] = [
-  {
-    month: 4,
-    monthName: '4月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 12000,
-    totalPayment: 281500,
-  },
-  {
-    month: 5,
-    monthName: '5月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 8500,
-    totalPayment: 277500,
-  },
-  {
-    month: 6,
-    monthName: '6月',
-    baseSalary: 380000,
-    withholdingTax: 32000,
-    socialInsurance: 57000,
-    expenseReimbursement: 15000,
-    totalPayment: 306000,
-  },
-  {
-    month: 7,
-    monthName: '7月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 3200,
-    totalPayment: 272700,
-  },
-  {
-    month: 8,
-    monthName: '8月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 0,
-    totalPayment: 269500,
-  },
-  {
-    month: 9,
-    monthName: '9月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 9800,
-    totalPayment: 279300,
-  },
-  {
-    month: 10,
-    monthName: '10月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 6500,
-    totalPayment: 276000,
-  },
-  {
-    month: 11,
-    monthName: '11月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 4300,
-    totalPayment: 273800,
-  },
-  {
-    month: 12,
-    monthName: '12月',
-    baseSalary: 420000,
-    withholdingTax: 38000,
-    socialInsurance: 63000,
-    expenseReimbursement: 11000,
-    totalPayment: 330000,
-  },
-  {
-    month: 1,
-    monthName: '1月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 7200,
-    totalPayment: 276700,
-  },
-  {
-    month: 2,
-    monthName: '2月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 5100,
-    totalPayment: 274600,
-  },
-  {
-    month: 3,
-    monthName: '3月',
-    baseSalary: 350000,
-    withholdingTax: 28000,
-    socialInsurance: 52500,
-    expenseReimbursement: 13500,
-    totalPayment: 283000,
-  },
-]
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('ja-JP', {
@@ -150,6 +47,42 @@ function formatCurrency(amount: number): string {
     currency: 'JPY',
     minimumFractionDigits: 0,
   }).format(amount)
+}
+
+
+function convertToPayrollData(summaries: PayrollSummary[]): PayrollData[] {
+  return summaries.map((summary) => {
+    const monthNum = parseInt(summary.month.substring(4, 6))
+    const monthName = `${monthNum}月`
+    
+    const withholdingTax = summary.payroll_deduction
+      .filter(item => item.name.includes('所得税') || item.name.includes('源泉徴収'))
+      .reduce((sum, item) => sum + item.amount, 0)
+    
+    const socialInsurance = summary.payroll_deduction
+      .filter(item => item.name.includes('社会保険') || item.name.includes('健康保険') || item.name.includes('厚生年金'))
+      .reduce((sum, item) => sum + item.amount, 0)
+    
+    const expenseReimbursement = summary.payroll_addition
+      .filter(item => item.name.includes('経費') || item.name.includes('清算') || item.name.includes('立替'))
+      .reduce((sum, item) => sum + item.amount, 0)
+
+    return {
+      month: monthNum,
+      monthName,
+      baseSalary: summary.payroll_base,
+      withholdingTax,
+      socialInsurance,
+      expenseReimbursement,
+      totalPayment: summary.net_payment,
+    }
+  }).sort((a, b) => {
+    if (a.month >= 4 && b.month >= 4) return a.month - b.month
+    if (a.month < 4 && b.month < 4) return a.month - b.month
+    if (a.month >= 4 && b.month < 4) return -1
+    if (a.month < 4 && b.month >= 4) return 1
+    return 0
+  })
 }
 
 function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
@@ -230,6 +163,39 @@ function PayrollTable({ data }: { data: PayrollData[] }) {
 
 export default function PayrollPage() {
   const [selectedYear, setSelectedYear] = useState('2024')
+  const dispatch = useAppDispatch()
+  const { summaries, loading, error } = useAppSelector(selectPayrollSummary)
+  
+  const payrollData = React.useMemo(() => {
+    if (!summaries || !Array.isArray(summaries)) {
+      return []
+    }
+    return convertToPayrollData(summaries)
+  }, [summaries])
+
+  useEffect(() => {
+    dispatch(fetchPayrollSummary(selectedYear))
+  }, [dispatch, selectedYear])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-600">データを読み込み中...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-red-600">{error}</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -254,11 +220,11 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <PayrollSummaryCard data={mockPayrollData} />
+      <PayrollSummaryCard data={payrollData} />
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">月別給与明細</h2>
-        <PayrollTable data={mockPayrollData} />
+        <PayrollTable data={payrollData} />
       </div>
     </div>
   )
