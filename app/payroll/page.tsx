@@ -175,67 +175,77 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
     })
 
   return (
-    <Card>
-      <CardContent className="p-6">
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-gray-50">
               <TableHead>月</TableHead>
               <TableHead className="text-right">基本給与</TableHead>
               <TableHead className="text-right">差引額</TableHead>
               <TableHead className="text-right">加算額</TableHead>
-              <TableHead className="text-right font-semibold">振込総額</TableHead>
+              <TableHead className="text-right">振込総額</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedSummaries.map((summary) => {
+            {sortedSummaries.map((summary, summaryIndex) => {
               const totalDeduction = summary.payroll_deduction.reduce((sum, item) => sum + item.amount, 0)
               const totalAddition = summary.payroll_addition.reduce((sum, item) => sum + item.amount, 0)
               
               return (
-                <TableRow key={summary.month}>
-                  <TableCell className="font-medium">
+                <TableRow key={summary.month} className={summaryIndex % 2 === 0 ? "bg-white" : "bg-gray-25"}>
+                  <TableCell className="py-4 align-top">
                     {summary.monthName}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(summary.payroll_base)}
+                  <TableCell className="text-right py-4 align-top">
+                    <span className="font-mono">
+                      {formatCurrency(summary.payroll_base)}
+                    </span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="text-sm space-y-1">
-                      {summary.payroll_deduction.map((item, index) => (
-                        <div key={index} className="text-red-600">
-                          {item.name}: {formatCurrency(item.amount)}
-                        </div>
-                      ))}
+                  <TableCell className="text-right py-4 align-top">
+                    <div className="text-sm min-w-[200px]">
                       {summary.payroll_deduction.length > 0 && (
-                        <>
-                          <div className="border-t border-gray-300 my-1"></div>
-                          <div className="font-medium text-red-700">
-                            小計: {formatCurrency(totalDeduction)}
+                        <div className="mb-3">
+                          <div className="font-mono">
+                            {formatCurrency(totalDeduction)}
                           </div>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="text-sm space-y-1">
-                      {summary.payroll_addition.map((item, index) => (
-                        <div key={index} className="text-green-600">
-                          {item.name}: {formatCurrency(item.amount)}
+                          <div className="border-b border-gray-300 mt-1"></div>
                         </div>
-                      ))}
-                      {summary.payroll_addition.length > 0 && (
-                        <>
-                          <div className="border-t border-gray-300 my-1"></div>
-                          <div className="font-medium text-green-700">
-                            小計: {formatCurrency(totalAddition)}
-                          </div>
-                        </>
                       )}
+                      <div className="space-y-1.5">
+                        {summary.payroll_deduction.map((item, index) => (
+                          <div key={index} className="text-gray-600 leading-relaxed text-xs">
+                            <span className="font-medium">{item.name}:</span>{" "}
+                            <span className="font-mono">{formatCurrency(item.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {formatCurrency(summary.net_payment)}
+                  <TableCell className="text-right py-4 align-top">
+                    <div className="text-sm min-w-[200px]">
+                      {summary.payroll_addition.length > 0 && (
+                        <div className="mb-3">
+                          <div className="font-mono">
+                            {formatCurrency(totalAddition)}
+                          </div>
+                          <div className="border-b border-gray-300 mt-1"></div>
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        {summary.payroll_addition.map((item, index) => (
+                          <div key={index} className="text-gray-600 leading-relaxed text-xs">
+                            <span className="font-medium">{item.name}:</span>{" "}
+                            <span className="font-mono">{formatCurrency(item.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right py-4 align-top">
+                    <span className="font-mono">
+                      {formatCurrency(summary.net_payment)}
+                    </span>
                   </TableCell>
                 </TableRow>
               )
