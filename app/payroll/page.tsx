@@ -64,7 +64,7 @@ function convertToPayrollData(summaries: PayrollSummary[]): PayrollData[] {
       .reduce((sum, item) => sum + item.amount, 0)
     
     const expenseReimbursement = summary.payroll_addition
-      .filter(item => item.name.includes('経費') || item.name.includes('清算') || item.name.includes('立替'))
+      .filter(item => item.name.includes('経費') || item.name.includes('清算') || item.name.includes('立替') || item.name.includes('年末調整'))
       .reduce((sum, item) => sum + item.amount, 0)
 
     return {

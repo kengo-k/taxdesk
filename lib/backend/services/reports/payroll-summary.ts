@@ -103,7 +103,24 @@ export async function getPayrollSummary(
       }
 
       if (row.payroll_type === 'payroll_base') {
-        payroll_base += Number(row.amount)
+        const kariCustomFields = JSON.parse(row.kari_custom_fields || '{}')
+        
+        // 年末調整の場合（借方がpayroll_deduction、貸方がpayroll_base）
+        if (kariCustomFields.category === 'payroll_deduction') {
+          // 年末調整還付分として加算項目に分類
+          const code = row.kasikata_cd
+          const name = `年末調整還付 (${row.kasi_saimoku_name})`
+          const amount = Number(row.amount)
+
+          if (additionMap.has(code)) {
+            additionMap.get(code)!.amount += amount
+          } else {
+            additionMap.set(code, { code, name, amount })
+          }
+        } else {
+          // 通常の基本給与
+          payroll_base += Number(row.amount)
+        }
       } else if (row.payroll_type === 'payroll_deduction') {
         const code = row.kasikata_cd
         const name = row.kasi_saimoku_name
