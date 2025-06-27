@@ -7,13 +7,7 @@ import { LogOut } from 'lucide-react'
 export function Header() {
   return (
     <header className="border-b bg-white">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold">経営管理プラットフォーム</h1>
-          <p className="text-sm text-gray-500">
-            経営を支える統合ソリューション
-          </p>
-        </div>
+      <div className="container mx-auto h-[73px] px-4 flex justify-end items-center">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm">2024年度</span>
