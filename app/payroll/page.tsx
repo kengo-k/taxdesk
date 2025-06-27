@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Wallet } from 'lucide-react'
@@ -260,7 +260,7 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
   )
 }
 
-export default function PayrollPage() {
+function PayrollContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fiscalYearParam = searchParams.get('fiscal_year')
@@ -346,5 +346,13 @@ export default function PayrollPage() {
         <PayrollTable summaries={summaries || []} />
       </div>
     </div>
+  )
+}
+
+export default function PayrollPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+      <PayrollContent />
+    </Suspense>
   )
 }

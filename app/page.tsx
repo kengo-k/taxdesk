@@ -1,22 +1,13 @@
 'use client'
 
 import * as React from 'react'
-import { useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import {
-  BarChart3,
-  BookOpen,
   Calculator,
-  Calendar,
-  Database,
-  FileSpreadsheet,
-  Grid,
-  Receipt,
-  Scale,
-  Wallet,
 } from 'lucide-react'
 
 import { DonutChart } from '@/components/donut-chart'
@@ -29,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { calculateTax, formatCurrency } from '@/lib/client/tax-calculation/calc'
 import { buildTaxParameters } from '@/lib/client/tax-calculation/parameters'
 import { getSteps } from '@/lib/client/tax-calculation/steps'
@@ -144,7 +134,7 @@ function calculateMonthlyChartData(
   }
 }
 
-export default function Home() {
+function HomeContent() {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -252,7 +242,7 @@ export default function Home() {
     <div className="container mx-auto px-4 py-6">
       <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">主要機能</h2>
+          <h2 className="text-lg font-bold">ダッシュボード</h2>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">年度：</span>
             <Select
@@ -273,148 +263,6 @@ export default function Home() {
             </Select>
           </div>
         </div>
-
-        <Tabs defaultValue="accounting" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="accounting">会計管理</TabsTrigger>
-            <TabsTrigger value="business">業務管理</TabsTrigger>
-            <TabsTrigger value="system">システム管理</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="accounting" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 w-full">
-              <FeatureCard
-                href={
-                  selectedFiscalYear !== 'none'
-                    ? `/ledger?fiscal_year=${selectedFiscalYear}`
-                    : '/ledger'
-                }
-                icon={BookOpen}
-                title="元帳"
-                description=""
-                iconBgColor="blue-100"
-                iconColor="blue-600"
-                hoverBorderColor="blue-200"
-              />
-
-              <FeatureCard
-                href="#"
-                icon={FileSpreadsheet}
-                title="仕訳帳"
-                description=""
-                iconBgColor="purple-100"
-                iconColor="purple-600"
-                hoverBorderColor="purple-200"
-              />
-
-              <FeatureCard
-                href={
-                  selectedFiscalYear !== 'none'
-                    ? `/balance-sheet?fiscal_year=${selectedFiscalYear}`
-                    : '/balance-sheet'
-                }
-                icon={Scale}
-                title="貸借対照表"
-                description=""
-                iconBgColor="green-100"
-                iconColor="green-600"
-                hoverBorderColor="green-200"
-              />
-
-              <FeatureCard
-                href={
-                  selectedFiscalYear !== 'none'
-                    ? `/income-statement?fiscal_year=${selectedFiscalYear}`
-                    : '/income-statement'
-                }
-                icon={BarChart3}
-                title="損益計算書"
-                description=""
-                iconBgColor="gray-100"
-                iconColor="gray-600"
-                hoverBorderColor="gray-200"
-              />
-
-              <FeatureCard
-                href="#"
-                icon={Grid}
-                title="財務諸表一覧"
-                description=""
-                iconBgColor="red-100"
-                iconColor="red-600"
-                hoverBorderColor="red-200"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="business" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-              <FeatureCard
-                href="/payroll"
-                icon={Wallet}
-                title="給与明細照会"
-                description=""
-                iconBgColor="red-100"
-                iconColor="red-600"
-                hoverBorderColor="red-200"
-              />
-
-              <FeatureCard
-                href="#"
-                icon={Receipt}
-                title="出張旅費管理"
-                description=""
-                iconBgColor="gray-100"
-                iconColor="gray-600"
-                hoverBorderColor="gray-200"
-              />
-
-              <FeatureCard
-                href="#"
-                icon={Database}
-                title="減価償却資産台帳"
-                description=""
-                iconBgColor="green-100"
-                iconColor="green-600"
-                hoverBorderColor="green-200"
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="system" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-              <FeatureCard
-                href="/master"
-                icon={FileSpreadsheet}
-                title="マスタ管理"
-                description=""
-                iconBgColor="purple-100"
-                iconColor="purple-600"
-                hoverBorderColor="purple-200"
-              />
-
-              <FeatureCard
-                href="/fiscal-year-transition"
-                icon={Calendar}
-                title="年度移行"
-                description=""
-                iconBgColor="green-100"
-                iconColor="green-600"
-                hoverBorderColor="green-200"
-              />
-
-              <FeatureCard
-                href="/backup"
-                icon={Database}
-                title="バックアップ設定"
-                description=""
-                iconBgColor="blue-100"
-                iconColor="blue-600"
-                hoverBorderColor="blue-200"
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
       </section>
 
       <section className="mb-8">
@@ -582,40 +430,6 @@ function TaxEstimationCard({
   )
 }
 
-interface FeatureCardProps {
-  href: string
-  icon: React.ComponentType<{ className?: string }>
-  title: string
-  description: string
-  iconBgColor: string
-  iconColor: string
-  hoverBorderColor: string
-}
-
-function FeatureCard({
-  href,
-  icon: Icon,
-  title,
-  description,
-  iconBgColor,
-  iconColor,
-  hoverBorderColor,
-}: FeatureCardProps) {
-  return (
-    <Link href={href} className="block">
-      <div
-        className={`bg-white rounded-lg p-6 shadow-sm border transition-all hover:shadow-md hover:border-${hoverBorderColor} cursor-pointer h-[100px] flex items-center`}
-      >
-        <div
-          className={`w-16 h-16 rounded-md bg-${iconBgColor} flex items-center justify-center mr-4`}
-        >
-          <Icon className={`h-10 w-10 text-${iconColor}`} />
-        </div>
-        <h3 className="font-medium text-lg">{title}</h3>
-      </div>
-    </Link>
-  )
-}
 
 function LoadingSpinner() {
   return (
@@ -648,5 +462,13 @@ function DonutChartContainer({
         />
       )}
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+      <HomeContent />
+    </Suspense>
   )
 }

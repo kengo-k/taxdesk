@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -37,7 +37,7 @@ import {
 } from '@/lib/redux/features/reportSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
-export default function BalanceSheetPage() {
+function BalanceSheetContent() {
   // Redux
   const dispatch = useAppDispatch()
   const { data: fiscalYears, loading: fiscalYearsLoading } =
@@ -460,5 +460,13 @@ export default function BalanceSheetPage() {
         </Card>
       </main>
     </div>
+  )
+}
+
+export default function BalanceSheetPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+      <BalanceSheetContent />
+    </Suspense>
   )
 }

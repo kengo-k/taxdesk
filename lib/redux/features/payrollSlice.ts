@@ -29,7 +29,7 @@ const initialState: PayrollState = {
 }
 
 export const fetchPayrollSummary = createAsyncThunk<
-  PayrollSummary[],
+  PayrollSummary[] | { data: PayrollSummary[] },
   string
 >('payroll/fetchPayrollSummary', async (fiscalYear: string) => {
   const response = await fetch(`/api/fiscal-years/${fiscalYear}/reports/payroll-summary`)
@@ -59,7 +59,7 @@ export const payrollSlice = createSlice({
       })
       .addCase(fetchPayrollSummary.fulfilled, (state, action) => {
         state.loading = false
-        state.summaries = Array.isArray(action.payload) ? action.payload : action.payload.data || []
+        state.summaries = Array.isArray(action.payload) ? action.payload : (action.payload as { data: PayrollSummary[] }).data || []
       })
       .addCase(fetchPayrollSummary.rejected, (state, action) => {
         state.loading = false
