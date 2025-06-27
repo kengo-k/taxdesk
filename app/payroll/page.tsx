@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 import { Wallet } from 'lucide-react'
 
@@ -26,6 +27,10 @@ import {
   fetchPayrollSummary,
   selectPayrollSummary,
 } from '@/lib/redux/features/payrollSlice'
+import {
+  fetchFiscalYears,
+  selectFiscalYears,
+} from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 interface PayrollData {
@@ -256,9 +261,14 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
 }
 
 export default function PayrollPage() {
-  const [selectedYear, setSelectedYear] = useState('2024')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const fiscalYearParam = searchParams.get('fiscal_year')
+  
+  const [selectedYear, setSelectedYear] = useState(fiscalYearParam || '2024')
   const dispatch = useAppDispatch()
   const { summaries, loading, error } = useAppSelector(selectPayrollSummary)
+  const { data: fiscalYears, loading: fiscalYearsLoading } = useAppSelector(selectFiscalYears)
 
   const payrollData = React.useMemo(() => {
     if (!summaries || !Array.isArray(summaries)) {
@@ -266,6 +276,17 @@ export default function PayrollPage() {
     }
     return convertToPayrollData(summaries)
   }, [summaries])
+
+  useEffect(() => {
+    if (fiscalYears.length === 0 && !fiscalYearsLoading) {
+      dispatch(fetchFiscalYears())
+    }
+  }, [dispatch, fiscalYears.length, fiscalYearsLoading])
+
+  const handleYearChange = (value: string) => {
+    setSelectedYear(value)
+    router.replace(`/payroll?fiscal_year=${value}`)
+  }
 
   useEffect(() => {
     dispatch(fetchPayrollSummary(selectedYear))
@@ -303,14 +324,16 @@ export default function PayrollPage() {
 
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">年度：</span>
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <Select value={selectedYear} onValueChange={handleYearChange}>
             <SelectTrigger className="w-[120px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2024">2024年度</SelectItem>
-              <SelectItem value="2023">2023年度</SelectItem>
-              <SelectItem value="2022">2022年度</SelectItem>
+              {fiscalYears.map((year) => (
+                <SelectItem key={year.id} value={year.id}>
+                  {year.id}年度
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
