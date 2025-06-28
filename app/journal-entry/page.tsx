@@ -22,6 +22,8 @@ import {
   fetchJournals,
   selectJournalList,
 } from '@/lib/redux/features/journalSlice'
+import { validateJournalField, validateJournalRow } from '@/lib/schemas/journal-validation'
+import { getFieldDisplayName } from '@/lib/schemas/common-validation'
 import {
   fetchAccountList,
   fetchFiscalYears,
@@ -60,16 +62,80 @@ function JournalEntryContent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
-  // フォーカス連動エラーサマリー用のモック状態
+  // フォーカス連動エラーサマリー用の状態
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null)
-  const [showErrorSummary] = useState(true) // モック表示用
+  
+  // 新規行のバリデーション状態
+  const [newRowData, setNewRowData] = useState({
+    date: '',
+    karikata_cd: '',
+    kasikata_cd: '',
+    karikata_value: 0,
+    kasikata_value: 0,
+    note: '',
+    nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+  })
+  const [newRowErrors, setNewRowErrors] = useState<Record<string, string>>({})
 
-  // モックエラーデータ
-  const mockFocusedRowErrors = [
-    { field: '日付', message: '正しい形式（YYYYMMDD）で入力してください' },
-    { field: '借方金額', message: '数値を入力してください' },
-    { field: '摘要', message: '摘要は必須です' },
-  ]
+  // エラーサマリー表示用
+  const showErrorSummary = focusedRowId === 'new' && Object.keys(newRowErrors).length > 0
+  const focusedRowErrors = Object.entries(newRowErrors).map(([field, message]) => ({
+    field: getFieldDisplayName(field),
+    message,
+  }))
+
+  // getFieldDisplayName は common-validation から import済み
+
+  // 新規行フィールド変更ハンドラー
+  const handleNewRowFieldChange = (field: string, value: string | number) => {
+    setNewRowData(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+    
+    // エラーをクリア
+    if (newRowErrors[field]) {
+      setNewRowErrors(prev => {
+        const { [field]: _, ...rest } = prev
+        return rest
+      })
+    }
+  }
+
+  // 個別バリデーションは削除（Enterキーのみでバリデーション）
+
+  // Enterキー押下時の全体バリデーション＆登録処理
+  const handleNewRowSubmit = () => {
+    const rowValidation = validateJournalRow(newRowData)
+    
+    if (!rowValidation.valid) {
+      setNewRowErrors(rowValidation.errors)
+      return
+    }
+
+    // バリデーション成功時の登録処理
+    console.log('新規仕訳登録:', newRowData)
+    
+    // 登録後、フィールドをクリア
+    setNewRowData({
+      date: '',
+      karikata_cd: '',
+      kasikata_cd: '',
+      karikata_value: 0,
+      kasikata_value: 0,
+      note: '',
+      nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+    })
+    setNewRowErrors({})
+  }
+
+  // キーダウンハンドラー
+  const handleNewRowKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      handleNewRowSubmit()
+    }
+  }
 
   // 年度データを取得
   useEffect(() => {
@@ -350,7 +416,7 @@ function JournalEntryContent() {
                 </span>
               </div>
               <ul className="text-sm text-red-700 space-y-1">
-                {mockFocusedRowErrors.map((error, index) => (
+                {focusedRowErrors.map((error, index) => (
                   <li key={index}>
                     • <span className="font-medium">{error.field}:</span> {error.message}
                   </li>
@@ -395,16 +461,24 @@ function JournalEntryContent() {
                     <Input
                       type="text"
                       placeholder="YYYYMMDD"
-                      className="h-8 text-sm border-red-500"
+                      value={newRowData.date}
+                      onChange={(e) => handleNewRowFieldChange('date', e.target.value)}
+                      onKeyDown={handleNewRowKeyDown}
                       onFocus={() => setFocusedRowId('new')}
                       onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm ${newRowErrors.date ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1">
                     <Input
                       type="text"
                       placeholder="科目コード"
-                      className="h-8 text-sm"
+                      value={newRowData.karikata_cd}
+                      onChange={(e) => handleNewRowFieldChange('karikata_cd', e.target.value)}
+                      onKeyDown={handleNewRowKeyDown}
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm ${newRowErrors.karikata_cd ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1">
@@ -418,18 +492,26 @@ function JournalEntryContent() {
                   </td>
                   <td className="py-2 px-1">
                     <Input
-                      type="text"
+                      type="number"
                       placeholder="借方金額"
-                      className="h-8 text-sm text-right border-red-500"
+                      value={newRowData.karikata_value || ''}
+                      onChange={(e) => handleNewRowFieldChange('karikata_value', Number(e.target.value) || 0)}
+                      onKeyDown={handleNewRowKeyDown}
                       onFocus={() => setFocusedRowId('new')}
                       onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm text-right ${newRowErrors.karikata_value ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1">
                     <Input
                       type="text"
                       placeholder="科目コード"
-                      className="h-8 text-sm"
+                      value={newRowData.kasikata_cd}
+                      onChange={(e) => handleNewRowFieldChange('kasikata_cd', e.target.value)}
+                      onKeyDown={handleNewRowKeyDown}
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm ${newRowErrors.kasikata_cd ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1">
@@ -443,18 +525,26 @@ function JournalEntryContent() {
                   </td>
                   <td className="py-2 px-1">
                     <Input
-                      type="text"
+                      type="number"
                       placeholder="貸方金額"
-                      className="h-8 text-sm text-right"
+                      value={newRowData.kasikata_value || ''}
+                      onChange={(e) => handleNewRowFieldChange('kasikata_value', Number(e.target.value) || 0)}
+                      onKeyDown={handleNewRowKeyDown}
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm text-right ${newRowErrors.kasikata_value ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1">
                     <Input
                       type="text"
                       placeholder="摘要を入力"
-                      className="h-8 text-sm border-red-500"
+                      value={newRowData.note}
+                      onChange={(e) => handleNewRowFieldChange('note', e.target.value)}
+                      onKeyDown={handleNewRowKeyDown}
                       onFocus={() => setFocusedRowId('new')}
                       onBlur={() => setFocusedRowId(null)}
+                      className={`h-8 text-sm ${newRowErrors.note ? 'border-red-500' : ''}`}
                     />
                   </td>
                   <td className="py-2 px-1 text-center">
