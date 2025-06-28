@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 
-import { FileSpreadsheet, Trash2 } from 'lucide-react'
+import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,6 +59,17 @@ function JournalEntryContent() {
   const [deleteMode, setDeleteMode] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+
+  // フォーカス連動エラーサマリー用のモック状態
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null)
+  const [showErrorSummary] = useState(true) // モック表示用
+
+  // モックエラーデータ
+  const mockFocusedRowErrors = [
+    { field: '日付', message: '正しい形式（YYYYMMDD）で入力してください' },
+    { field: '借方金額', message: '数値を入力してください' },
+    { field: '摘要', message: '摘要は必須です' },
+  ]
 
   // 年度データを取得
   useEffect(() => {
@@ -328,18 +339,25 @@ function JournalEntryContent() {
 
       {/* 仕訳一覧エリア */}
       <Card>
-        <CardHeader>
-          <CardTitle>仕訳一覧</CardTitle>
-          <p className="text-sm text-gray-600">
-            {journalLoading
-              ? 'データを読み込み中...'
-              : `${journalList.length}件の仕訳が見つかりました`}
-          </p>
-          {journalError && (
-            <p className="text-sm text-red-600">エラー: {journalError}</p>
+        <CardContent className="pt-6">
+          {/* フォーカス連動エラーサマリー (モック) */}
+          {showErrorSummary && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <span className="font-medium text-red-800">
+                  新規行のエラー
+                </span>
+              </div>
+              <ul className="text-sm text-red-700 space-y-1">
+                {mockFocusedRowErrors.map((error, index) => (
+                  <li key={index}>
+                    • <span className="font-medium">{error.field}:</span> {error.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
-        </CardHeader>
-        <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <colgroup>
@@ -373,7 +391,9 @@ function JournalEntryContent() {
                     <Input
                       type="text"
                       placeholder="YYYYMMDD"
-                      className="h-8 text-sm"
+                      className="h-8 text-sm border-red-500"
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
                     />
                   </td>
                   <td className="py-2 px-1">
@@ -387,7 +407,9 @@ function JournalEntryContent() {
                     <Input
                       type="text"
                       placeholder="借方金額"
-                      className="h-8 text-sm text-right"
+                      className="h-8 text-sm text-right border-red-500"
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
                     />
                   </td>
                   <td className="py-2 px-1">
@@ -408,7 +430,9 @@ function JournalEntryContent() {
                     <Input
                       type="text"
                       placeholder="摘要を入力"
-                      className="h-8 text-sm"
+                      className="h-8 text-sm border-red-500"
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => setFocusedRowId(null)}
                     />
                   </td>
                   <td className="py-2 px-1 text-center">
