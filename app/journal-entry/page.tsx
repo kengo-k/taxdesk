@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 
 import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
 
+import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -75,6 +76,14 @@ function JournalEntryContent() {
     note: '',
     nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
   })
+
+  // 年度変更時に新規行データの年度も更新
+  useEffect(() => {
+    setNewRowData(prev => ({
+      ...prev,
+      nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+    }))
+  }, [searchForm.fiscalYear])
   const [newRowErrors, setNewRowErrors] = useState<Record<string, string>>({})
 
   // エラーサマリー表示用
@@ -82,6 +91,14 @@ function JournalEntryContent() {
   const focusedRowErrors = Object.entries(newRowErrors).map(([field, message]) => ({
     field: getFieldDisplayName(field),
     message,
+  }))
+
+  // 勘定科目リストをオートコンプリート用に変換
+  const accountOptions: AutocompleteOption[] = accountList.map(account => ({
+    value: account.id,
+    code: account.code,
+    label: account.name,
+    kana_name: account.kana_name,
   }))
 
   // getFieldDisplayName は common-validation から import済み
@@ -100,6 +117,11 @@ function JournalEntryContent() {
         return rest
       })
     }
+  }
+
+  // オートコンプリート選択ハンドラー
+  const handleAccountSelect = (field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
+    handleNewRowFieldChange(field, option.code || '')
   }
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
@@ -470,11 +492,12 @@ function JournalEntryContent() {
                     />
                   </td>
                   <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      placeholder="科目コード"
+                    <Autocomplete
                       value={newRowData.karikata_cd}
-                      onChange={(e) => handleNewRowFieldChange('karikata_cd', e.target.value)}
+                      placeholder="科目コード"
+                      options={accountOptions}
+                      onSelect={(option) => handleAccountSelect('karikata_cd', option)}
+                      onChange={(value) => handleNewRowFieldChange('karikata_cd', value)}
                       onKeyDown={handleNewRowKeyDown}
                       onFocus={() => setFocusedRowId('new')}
                       onBlur={() => setFocusedRowId(null)}
@@ -503,11 +526,12 @@ function JournalEntryContent() {
                     />
                   </td>
                   <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      placeholder="科目コード"
+                    <Autocomplete
                       value={newRowData.kasikata_cd}
-                      onChange={(e) => handleNewRowFieldChange('kasikata_cd', e.target.value)}
+                      placeholder="科目コード"
+                      options={accountOptions}
+                      onSelect={(option) => handleAccountSelect('kasikata_cd', option)}
+                      onChange={(value) => handleNewRowFieldChange('kasikata_cd', value)}
                       onKeyDown={handleNewRowKeyDown}
                       onFocus={() => setFocusedRowId('new')}
                       onBlur={() => setFocusedRowId(null)}
