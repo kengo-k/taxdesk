@@ -9,10 +9,14 @@ interface NewJournalRowProps {
   accountOptions: AutocompleteOption[]
   deleteMode: boolean
   onFieldChange: (field: string, value: string | number) => void
-  onAccountSelect: (field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => void
+  onAccountSelect: (
+    field: 'karikata_cd' | 'kasikata_cd',
+    option: AutocompleteOption,
+  ) => void
   onKeyDown: (event: React.KeyboardEvent) => void
   onFocus: () => void
   onBlur: () => void
+  getAccountName: (code: string) => string
 }
 
 export const NewJournalRow = memo(function NewJournalRow({
@@ -25,6 +29,7 @@ export const NewJournalRow = memo(function NewJournalRow({
   onKeyDown,
   onFocus,
   onBlur,
+  getAccountName,
 }: NewJournalRowProps) {
   return (
     <tr className="border-t bg-gray-50">
@@ -58,6 +63,7 @@ export const NewJournalRow = memo(function NewJournalRow({
       <td className="py-2 px-1">
         <Input
           type="text"
+          value={getAccountName(newRowData.karikata_cd)}
           placeholder=""
           className="h-8 text-sm bg-gray-50"
           readOnly
@@ -69,7 +75,9 @@ export const NewJournalRow = memo(function NewJournalRow({
           type="number"
           placeholder="借方金額"
           value={newRowData.karikata_value || ''}
-          onChange={(e) => onFieldChange('karikata_value', Number(e.target.value) || 0)}
+          onChange={(e) =>
+            onFieldChange('karikata_value', Number(e.target.value) || 0)
+          }
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -92,6 +100,7 @@ export const NewJournalRow = memo(function NewJournalRow({
       <td className="py-2 px-1">
         <Input
           type="text"
+          value={getAccountName(newRowData.kasikata_cd)}
           placeholder=""
           className="h-8 text-sm bg-gray-50"
           readOnly
@@ -103,7 +112,9 @@ export const NewJournalRow = memo(function NewJournalRow({
           type="number"
           placeholder="貸方金額"
           value={newRowData.kasikata_value || ''}
-          onChange={(e) => onFieldChange('kasikata_value', Number(e.target.value) || 0)}
+          onChange={(e) =>
+            onFieldChange('kasikata_value', Number(e.target.value) || 0)
+          }
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}

@@ -1,7 +1,11 @@
-import type React from "react"
-import { ReduxProvider } from "@/lib/redux/provider"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
+import type React from 'react'
+
+import { Header } from '@/components/header'
+import { Sidebar } from '@/components/sidebar'
+import { Toaster } from '@/components/ui/toaster'
+import { ReduxProvider } from '@/lib/redux/provider'
+
+import './globals.css'
 
 export default function RootLayout({
   children,
@@ -19,15 +23,13 @@ export default function RootLayout({
               <main className="flex-1">{children}</main>
             </div>
           </div>
+          <Toaster />
         </ReduxProvider>
       </body>
     </html>
   )
 }
 
-
-import './globals.css'
-
 export const metadata = {
-      generator: 'v0.dev'
-    };
+  generator: 'v0.dev',
+}

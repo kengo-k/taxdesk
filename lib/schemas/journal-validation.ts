@@ -1,8 +1,10 @@
 import { z } from 'zod'
+
 import {
-  dateSchema,
   accountCodeSchema,
+  dateSchema,
   noteSchema,
+  validateAccountCodeExists,
   validateDateField,
   validateSingleField,
 } from './common-validation'
@@ -59,7 +61,8 @@ export function validateJournalField(
       if (!value || value === '') {
         return { valid: false, message: '科目コードは必須です' }
       }
-      return validateSingleField(accountCodeSchema, value)
+      // 科目コード存在チェック（accountListがrowDataに含まれている場合）
+      return validateAccountCodeExists(value, rowData?.accountList)
     case 'karikata_value':
     case 'kasikata_value':
       if (!value || value <= 0) {
@@ -79,21 +82,45 @@ export function validateJournalRow(rowData: Record<string, any>): {
   errors: Record<string, string>
 } {
   try {
-    const result = journalRowSchema.safeParse(rowData)
-    if (result.success) {
-      return { valid: true, errors: {} }
+    const errors: Record<string, string> = {}
+
+    // 1. 個別フィールドバリデーション（年度範囲チェックを含む）
+    const fieldsToValidate = [
+      'date',
+      'karikata_cd',
+      'kasikata_cd',
+      'karikata_value',
+      'kasikata_value',
+      'note',
+    ]
+
+    for (const field of fieldsToValidate) {
+      const fieldValidation = validateJournalField(
+        field,
+        rowData[field],
+        rowData,
+      )
+      if (!fieldValidation.valid && fieldValidation.message) {
+        errors[field] = fieldValidation.message
+      }
     }
 
-    // エラーマップを構築
-    const errors: Record<string, string> = {}
-    result.error.errors.forEach((err) => {
-      const path = err.path.join('.')
-      if (path) {
-        errors[path] = err.message
-      }
-    })
+    // 2. Zodスキーマによる構造的バリデーション（借方貸方の一致など）
+    const result = journalRowSchema.safeParse(rowData)
+    if (!result.success) {
+      result.error.errors.forEach((err) => {
+        const path = err.path.join('.')
+        if (path && !errors[path]) {
+          // 個別バリデーションで既にエラーがある場合は上書きしない
+          errors[path] = err.message
+        }
+      })
+    }
 
-    return { valid: false, errors }
+    return {
+      valid: Object.keys(errors).length === 0,
+      errors,
+    }
   } catch (error) {
     console.error('バリデーション中にエラーが発生:', error)
     return {

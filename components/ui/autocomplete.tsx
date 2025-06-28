@@ -38,8 +38,10 @@ export function Autocomplete({
 }: AutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>([])
-  
+  const [filteredOptions, setFilteredOptions] = useState<AutocompleteOption[]>(
+    [],
+  )
+
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -49,10 +51,11 @@ export function Autocomplete({
     if (!value) {
       setFilteredOptions(options)
     } else {
-      const filtered = options.filter(option => 
-        option.code?.toLowerCase().includes(value.toLowerCase()) ||
-        option.label.toLowerCase().includes(value.toLowerCase()) ||
-        option.kana_name?.toLowerCase().includes(value.toLowerCase())
+      const filtered = options.filter(
+        (option) =>
+          option.code?.toLowerCase().includes(value.toLowerCase()) ||
+          option.label.toLowerCase().includes(value.toLowerCase()) ||
+          option.kana_name?.toLowerCase().includes(value.toLowerCase()),
       )
       setFilteredOptions(filtered)
     }
@@ -69,7 +72,10 @@ export function Autocomplete({
   const handleBlur = (event: React.FocusEvent) => {
     // containerRef内の要素にフォーカスが移動する場合は閉じない
     setTimeout(() => {
-      if (containerRef.current && !containerRef.current.contains(document.activeElement)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(document.activeElement)
+      ) {
         setIsOpen(false)
         setSelectedIndex(-1)
         onBlur?.()
@@ -91,14 +97,14 @@ export function Autocomplete({
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault()
-          setSelectedIndex(prev => 
-            prev < filteredOptions.length - 1 ? prev + 1 : 0
+          setSelectedIndex((prev) =>
+            prev < filteredOptions.length - 1 ? prev + 1 : 0,
           )
           break
         case 'ArrowUp':
           event.preventDefault()
-          setSelectedIndex(prev => 
-            prev > 0 ? prev - 1 : filteredOptions.length - 1
+          setSelectedIndex((prev) =>
+            prev > 0 ? prev - 1 : filteredOptions.length - 1,
           )
           break
         case 'Enter':
@@ -112,8 +118,13 @@ export function Autocomplete({
           break
         case 'Tab':
           if (selectedIndex >= 0 && selectedIndex < filteredOptions.length) {
+            // 選択されたアイテムがある場合は選択
             event.preventDefault()
             handleSelect(filteredOptions[selectedIndex])
+          } else if (filteredOptions.length === 1) {
+            // 絞り込み結果が1件のみの場合は自動選択
+            event.preventDefault()
+            handleSelect(filteredOptions[0])
           } else {
             setIsOpen(false)
           }
@@ -130,7 +141,13 @@ export function Autocomplete({
     }
 
     // その他のキーは親コンポーネントに伝播
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Enter' && event.key !== 'Tab' && event.key !== 'Escape') {
+    if (
+      event.key !== 'ArrowDown' &&
+      event.key !== 'ArrowUp' &&
+      event.key !== 'Enter' &&
+      event.key !== 'Tab' &&
+      event.key !== 'Escape'
+    ) {
       onKeyDown?.(event)
     }
   }
@@ -154,11 +171,13 @@ export function Autocomplete({
   // 選択されたアイテムをビューに表示
   useEffect(() => {
     if (selectedIndex >= 0 && listRef.current) {
-      const selectedElement = listRef.current.children[selectedIndex] as HTMLElement
+      const selectedElement = listRef.current.children[
+        selectedIndex
+      ] as HTMLElement
       if (selectedElement) {
         selectedElement.scrollIntoView({
           block: 'nearest',
-          behavior: 'smooth'
+          behavior: 'smooth',
         })
       }
     }
@@ -179,7 +198,7 @@ export function Autocomplete({
         disabled={disabled}
         autoComplete="off"
       />
-      
+
       {isOpen && filteredOptions.length > 0 && (
         <ul
           ref={listRef}
@@ -194,8 +213,8 @@ export function Autocomplete({
             <li
               key={option.value}
               className={`px-3 py-2 cursor-pointer text-sm border-b border-gray-100 last:border-b-0 ${
-                index === selectedIndex 
-                  ? 'bg-blue-50 text-blue-900' 
+                index === selectedIndex
+                  ? 'bg-blue-50 text-blue-900'
                   : 'hover:bg-gray-50'
               }`}
               onMouseDown={(e) => {
@@ -205,7 +224,9 @@ export function Autocomplete({
               onMouseEnter={() => setSelectedIndex(index)}
             >
               <div className="flex items-center gap-3 whitespace-nowrap">
-                <span className="font-mono font-medium text-blue-600 min-w-[3rem]">{option.code}</span>
+                <span className="font-mono font-medium text-blue-600 min-w-[3rem]">
+                  {option.code}
+                </span>
                 <span className="text-gray-800">{option.label}</span>
               </div>
             </li>

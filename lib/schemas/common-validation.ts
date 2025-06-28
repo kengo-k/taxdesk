@@ -91,6 +91,31 @@ export function validateSingleField(
   }
 }
 
+// 科目コード存在チェック関数（共通）
+export function validateAccountCodeExists(
+  code: string,
+  accountList?: Array<{ code: string; name: string }>,
+): { valid: boolean; message?: string } {
+  // 基本的な形式チェック
+  const basicValidation = validateSingleField(accountCodeSchema, code)
+  if (!basicValidation.valid) {
+    return basicValidation
+  }
+
+  // 科目リストが提供されている場合は存在チェック
+  if (accountList && accountList.length > 0) {
+    const exists = accountList.some((account) => account.code === code)
+    if (!exists) {
+      return {
+        valid: false,
+        message: `科目コード「${code}」は存在しません`,
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
 // フィールド名の表示用変換（共通）
 export const getFieldDisplayName = (field: string): string => {
   const fieldNames: Record<string, string> = {
