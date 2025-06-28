@@ -1,13 +1,19 @@
 'use client'
 
-import { memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Suspense,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
 
 import { AutocompleteOption } from '@/components/ui/autocomplete'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DataPagination } from '@/components/ui/pagination'
@@ -18,13 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { formatCurrency } from '@/lib/client/utils/formatting'
 import {
   fetchJournals,
   selectJournalList,
 } from '@/lib/redux/features/journalSlice'
-import { validateJournalField, validateJournalRow } from '@/lib/schemas/journal-validation'
-import { getFieldDisplayName } from '@/lib/schemas/common-validation'
 import {
   fetchAccountList,
   fetchFiscalYears,
@@ -33,6 +36,8 @@ import {
   selectSelectedFiscalYear,
 } from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { getFieldDisplayName } from '@/lib/schemas/common-validation'
+import { validateJournalRow } from '@/lib/schemas/journal-validation'
 
 import { ExistingJournalRow } from './components/existing-journal-row'
 import { NewJournalRow } from './components/new-journal-row'
@@ -44,12 +49,8 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   const { data: fiscalYears } = useAppSelector(selectFiscalYears)
   const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
   const { data: accountList } = useAppSelector(selectAccountList)
-  const {
-    list: journalList,
-    count: journalListCount,
-    loading: journalLoading,
-    error: journalError,
-  } = useAppSelector(selectJournalList)
+  const { list: journalList, count: journalListCount } =
+    useAppSelector(selectJournalList)
 
   const [searchForm, setSearchForm] = useState({
     fiscalYear: selectedFiscalYear || 'none',
@@ -68,7 +69,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // フォーカス連動エラーサマリー用の状態
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null)
-  
+
   // 新規行のバリデーション状態
   const [newRowData, setNewRowData] = useState({
     date: '',
@@ -82,61 +83,62 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // 年度変更時に新規行データの年度も更新
   useEffect(() => {
-    setNewRowData(prev => ({
+    setNewRowData((prev) => ({
       ...prev,
       nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
     }))
   }, [searchForm.fiscalYear])
   const [newRowErrors, setNewRowErrors] = useState<Record<string, string>>({})
 
-  // エラーサマリー表示用
-  const showErrorSummary = focusedRowId === 'new' && Object.keys(newRowErrors).length > 0
-  const focusedRowErrors = Object.entries(newRowErrors).map(([field, message]) => ({
-    field: getFieldDisplayName(field),
-    message,
-  }))
+  // エラーサマリー表示用（エラーがある限り常に表示）
+  const showErrorSummary = Object.keys(newRowErrors).length > 0
+  const focusedRowErrors = Object.entries(newRowErrors).map(
+    ([field, message]) => ({
+      field: getFieldDisplayName(field),
+      message,
+    }),
+  )
 
   // 勘定科目リストをオートコンプリート用に変換（メモ化）
   const accountOptions: AutocompleteOption[] = useMemo(
-    () => accountList.map(account => ({
-      value: account.id,
-      code: account.code,
-      label: account.name,
-      kana_name: account.kana_name,
-    })),
-    [accountList]
+    () =>
+      accountList.map((account) => ({
+        value: account.id,
+        code: account.code,
+        label: account.name,
+        kana_name: account.kana_name,
+      })),
+    [accountList],
   )
 
   // getFieldDisplayName は common-validation から import済み
 
   // 新規行フィールド変更ハンドラー（メモ化）
-  const handleNewRowFieldChange = useCallback((field: string, value: string | number) => {
-    setNewRowData(prev => ({
-      ...prev,
-      [field]: value,
-    }))
-    
-    // エラーをクリア
-    setNewRowErrors(prev => {
-      if (prev[field]) {
-        const { [field]: _, ...rest } = prev
-        return rest
-      }
-      return prev
-    })
-  }, [])
+  const handleNewRowFieldChange = useCallback(
+    (field: string, value: string | number) => {
+      setNewRowData((prev) => ({
+        ...prev,
+        [field]: value,
+      }))
+      // エラーのクリアは削除（Enterキー押下時のみクリア）
+    },
+    [],
+  )
 
   // オートコンプリート選択ハンドラー（メモ化）
-  const handleAccountSelect = useCallback((field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
-    handleNewRowFieldChange(field, option.code || '')
-  }, [handleNewRowFieldChange])
+  const handleAccountSelect = useCallback(
+    (field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
+      handleNewRowFieldChange(field, option.code || '')
+    },
+    [handleNewRowFieldChange],
+  )
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
 
   // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
   const handleNewRowSubmit = useCallback(() => {
     const rowValidation = validateJournalRow(newRowData)
-    
+
     if (!rowValidation.valid) {
       setNewRowErrors(rowValidation.errors)
       return
@@ -144,7 +146,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
     // バリデーション成功時の登録処理
     console.log('新規仕訳登録:', newRowData)
-    
+
     // 登録後、フィールドをクリア
     setNewRowData({
       date: '',
@@ -159,12 +161,15 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   }, [newRowData, searchForm.fiscalYear])
 
   // キーダウンハンドラー（メモ化）
-  const handleNewRowKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      handleNewRowSubmit()
-    }
-  }, [handleNewRowSubmit])
+  const handleNewRowKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        handleNewRowSubmit()
+      }
+    },
+    [handleNewRowSubmit],
+  )
 
   // フォーカス・ブラーハンドラー（メモ化）
   const handleNewRowFocus = useCallback(() => setFocusedRowId('new'), [])
@@ -444,14 +449,13 @@ const JournalEntryContent = memo(function JournalEntryContent() {
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="font-medium text-red-800">
-                  新規行のエラー
-                </span>
+                <span className="font-medium text-red-800">新規行のエラー</span>
               </div>
               <ul className="text-sm text-red-700 space-y-1">
                 {focusedRowErrors.map((error, index) => (
                   <li key={index}>
-                    • <span className="font-medium">{error.field}:</span> {error.message}
+                    • <span className="font-medium">{error.field}:</span>{' '}
+                    {error.message}
                   </li>
                 ))}
               </ul>
