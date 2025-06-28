@@ -363,8 +363,10 @@ function JournalEntryContent() {
               <colgroup>
                 {deleteMode && <col className="w-12" />}
                 <col className="w-44" />
+                <col className="w-24" />
                 <col className="w-32" />
                 <col className="w-28" />
+                <col className="w-24" />
                 <col className="w-32" />
                 <col className="w-28" />
                 <col className="w-auto" />
@@ -375,8 +377,10 @@ function JournalEntryContent() {
                   {deleteMode && <th className="pb-2 font-medium w-12"></th>}
                   <th className="pb-2 font-medium">日付</th>
                   <th className="pb-2 font-medium">借方科目</th>
+                  <th className="pb-2 font-medium">借方科目名</th>
                   <th className="pb-2 font-medium">借方金額</th>
                   <th className="pb-2 font-medium">貸方科目</th>
+                  <th className="pb-2 font-medium">貸方科目名</th>
                   <th className="pb-2 font-medium">貸方金額</th>
                   <th className="pb-2 font-medium">摘要</th>
                   <th className="pb-2 font-medium">確認</th>
@@ -406,6 +410,15 @@ function JournalEntryContent() {
                   <td className="py-2 px-1">
                     <Input
                       type="text"
+                      placeholder=""
+                      className="h-8 text-sm bg-gray-50"
+                      readOnly
+                      tabIndex={-1}
+                    />
+                  </td>
+                  <td className="py-2 px-1">
+                    <Input
+                      type="text"
                       placeholder="借方金額"
                       className="h-8 text-sm text-right border-red-500"
                       onFocus={() => setFocusedRowId('new')}
@@ -417,6 +430,15 @@ function JournalEntryContent() {
                       type="text"
                       placeholder="科目コード"
                       className="h-8 text-sm"
+                    />
+                  </td>
+                  <td className="py-2 px-1">
+                    <Input
+                      type="text"
+                      placeholder=""
+                      className="h-8 text-sm bg-gray-50"
+                      readOnly
+                      tabIndex={-1}
                     />
                   </td>
                   <td className="py-2 px-1">
@@ -466,6 +488,15 @@ function JournalEntryContent() {
                     <td className="py-2 px-1">
                       <Input
                         type="text"
+                        defaultValue=""
+                        className="h-8 text-sm bg-gray-50"
+                        readOnly
+                        tabIndex={-1}
+                      />
+                    </td>
+                    <td className="py-2 px-1">
+                      <Input
+                        type="text"
                         defaultValue={formatCurrency(entry.karikata_value)}
                         className="h-8 text-sm text-right font-mono"
                       />
@@ -475,6 +506,15 @@ function JournalEntryContent() {
                         type="text"
                         defaultValue={entry.kasikata_cd}
                         className="h-8 text-sm"
+                      />
+                    </td>
+                    <td className="py-2 px-1">
+                      <Input
+                        type="text"
+                        defaultValue=""
+                        className="h-8 text-sm bg-gray-50"
+                        readOnly
+                        tabIndex={-1}
                       />
                     </td>
                     <td className="py-2 px-1">
