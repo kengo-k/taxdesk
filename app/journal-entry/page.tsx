@@ -1,10 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
 
-import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
+import { AutocompleteOption } from '@/components/ui/autocomplete'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -34,7 +34,10 @@ import {
 } from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
-function JournalEntryContent() {
+import { ExistingJournalRow } from './components/existing-journal-row'
+import { NewJournalRow } from './components/new-journal-row'
+
+const JournalEntryContent = memo(function JournalEntryContent() {
   const dispatch = useAppDispatch()
 
   // Redux state
@@ -93,41 +96,45 @@ function JournalEntryContent() {
     message,
   }))
 
-  // 勘定科目リストをオートコンプリート用に変換
-  const accountOptions: AutocompleteOption[] = accountList.map(account => ({
-    value: account.id,
-    code: account.code,
-    label: account.name,
-    kana_name: account.kana_name,
-  }))
+  // 勘定科目リストをオートコンプリート用に変換（メモ化）
+  const accountOptions: AutocompleteOption[] = useMemo(
+    () => accountList.map(account => ({
+      value: account.id,
+      code: account.code,
+      label: account.name,
+      kana_name: account.kana_name,
+    })),
+    [accountList]
+  )
 
   // getFieldDisplayName は common-validation から import済み
 
-  // 新規行フィールド変更ハンドラー
-  const handleNewRowFieldChange = (field: string, value: string | number) => {
+  // 新規行フィールド変更ハンドラー（メモ化）
+  const handleNewRowFieldChange = useCallback((field: string, value: string | number) => {
     setNewRowData(prev => ({
       ...prev,
       [field]: value,
     }))
     
     // エラーをクリア
-    if (newRowErrors[field]) {
-      setNewRowErrors(prev => {
+    setNewRowErrors(prev => {
+      if (prev[field]) {
         const { [field]: _, ...rest } = prev
         return rest
-      })
-    }
-  }
+      }
+      return prev
+    })
+  }, [])
 
-  // オートコンプリート選択ハンドラー
-  const handleAccountSelect = (field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
+  // オートコンプリート選択ハンドラー（メモ化）
+  const handleAccountSelect = useCallback((field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
     handleNewRowFieldChange(field, option.code || '')
-  }
+  }, [handleNewRowFieldChange])
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
 
-  // Enterキー押下時の全体バリデーション＆登録処理
-  const handleNewRowSubmit = () => {
+  // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
+  const handleNewRowSubmit = useCallback(() => {
     const rowValidation = validateJournalRow(newRowData)
     
     if (!rowValidation.valid) {
@@ -149,15 +156,19 @@ function JournalEntryContent() {
       nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
     })
     setNewRowErrors({})
-  }
+  }, [newRowData, searchForm.fiscalYear])
 
-  // キーダウンハンドラー
-  const handleNewRowKeyDown = (event: React.KeyboardEvent) => {
+  // キーダウンハンドラー（メモ化）
+  const handleNewRowKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault()
       handleNewRowSubmit()
     }
-  }
+  }, [handleNewRowSubmit])
+
+  // フォーカス・ブラーハンドラー（メモ化）
+  const handleNewRowFocus = useCallback(() => setFocusedRowId('new'), [])
+  const handleNewRowBlur = useCallback(() => setFocusedRowId(null), [])
 
   // 年度データを取得
   useEffect(() => {
@@ -476,183 +487,24 @@ function JournalEntryContent() {
               </thead>
               <tbody>
                 {/* 新規入力行 */}
-                <tr className="border-t bg-gray-50">
-                  {deleteMode && <td className="py-2 px-1 text-center"></td>}
-                  <td className="py-2 px-1 relative">
-                    <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
-                    <Input
-                      type="text"
-                      placeholder="YYYYMMDD"
-                      value={newRowData.date}
-                      onChange={(e) => handleNewRowFieldChange('date', e.target.value)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm ${newRowErrors.date ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Autocomplete
-                      value={newRowData.karikata_cd}
-                      placeholder="科目コード"
-                      options={accountOptions}
-                      onSelect={(option) => handleAccountSelect('karikata_cd', option)}
-                      onChange={(value) => handleNewRowFieldChange('karikata_cd', value)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm ${newRowErrors.karikata_cd ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      placeholder=""
-                      className="h-8 text-sm bg-gray-50"
-                      readOnly
-                      tabIndex={-1}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Input
-                      type="number"
-                      placeholder="借方金額"
-                      value={newRowData.karikata_value || ''}
-                      onChange={(e) => handleNewRowFieldChange('karikata_value', Number(e.target.value) || 0)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm text-right ${newRowErrors.karikata_value ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Autocomplete
-                      value={newRowData.kasikata_cd}
-                      placeholder="科目コード"
-                      options={accountOptions}
-                      onSelect={(option) => handleAccountSelect('kasikata_cd', option)}
-                      onChange={(value) => handleNewRowFieldChange('kasikata_cd', value)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm ${newRowErrors.kasikata_cd ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      placeholder=""
-                      className="h-8 text-sm bg-gray-50"
-                      readOnly
-                      tabIndex={-1}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Input
-                      type="number"
-                      placeholder="貸方金額"
-                      value={newRowData.kasikata_value || ''}
-                      onChange={(e) => handleNewRowFieldChange('kasikata_value', Number(e.target.value) || 0)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm text-right ${newRowErrors.kasikata_value ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1">
-                    <Input
-                      type="text"
-                      placeholder="摘要を入力"
-                      value={newRowData.note}
-                      onChange={(e) => handleNewRowFieldChange('note', e.target.value)}
-                      onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId('new')}
-                      onBlur={() => setFocusedRowId(null)}
-                      className={`h-8 text-sm ${newRowErrors.note ? 'border-red-500' : ''}`}
-                    />
-                  </td>
-                  <td className="py-2 px-1 text-center">
-                    {/* 新規行のため確認チェックボックスなし */}
-                  </td>
-                </tr>
+                <NewJournalRow
+                  newRowData={newRowData}
+                  newRowErrors={newRowErrors}
+                  accountOptions={accountOptions}
+                  deleteMode={deleteMode}
+                  onFieldChange={handleNewRowFieldChange}
+                  onAccountSelect={handleAccountSelect}
+                  onKeyDown={handleNewRowKeyDown}
+                  onFocus={handleNewRowFocus}
+                  onBlur={handleNewRowBlur}
+                />
                 {journalList.map((entry, index) => (
-                  <tr
+                  <ExistingJournalRow
                     key={entry.id}
-                    className={`border-t ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
-                  >
-                    {deleteMode && (
-                      <td className="py-2 px-1 text-center">
-                        <Checkbox className="h-4 w-4" />
-                      </td>
-                    )}
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={entry.date}
-                        className="h-8 text-sm"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={entry.karikata_cd}
-                        className="h-8 text-sm"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue=""
-                        className="h-8 text-sm bg-gray-50"
-                        readOnly
-                        tabIndex={-1}
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={formatCurrency(entry.karikata_value)}
-                        className="h-8 text-sm text-right font-mono"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={entry.kasikata_cd}
-                        className="h-8 text-sm"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue=""
-                        className="h-8 text-sm bg-gray-50"
-                        readOnly
-                        tabIndex={-1}
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={formatCurrency(entry.kasikata_value)}
-                        className="h-8 text-sm text-right font-mono"
-                      />
-                    </td>
-                    <td className="py-2 px-1">
-                      <Input
-                        type="text"
-                        defaultValue={entry.note || ''}
-                        className="h-8 text-sm"
-                      />
-                    </td>
-                    <td className="py-2 px-1 text-center">
-                      <Checkbox
-                        className="h-4 w-4"
-                        checked={entry.checked === '1'}
-                        disabled
-                      />
-                    </td>
-                  </tr>
+                    entry={entry}
+                    index={index}
+                    deleteMode={deleteMode}
+                  />
                 ))}
               </tbody>
             </table>
@@ -671,7 +523,7 @@ function JournalEntryContent() {
       </Card>
     </div>
   )
-}
+})
 
 export default function JournalEntryPage() {
   return (
