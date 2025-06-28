@@ -86,6 +86,26 @@ const JournalEntryContent = memo(function JournalEntryContent() {
       nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
     }))
   }, [searchForm.fiscalYear])
+
+  // 月変更時に新規行の日付にYYYYMMを自動設定
+  useEffect(() => {
+    if (searchForm.fiscalYear !== 'none' && searchForm.month !== 'none') {
+      const fiscalYear = parseInt(searchForm.fiscalYear)
+      const month = parseInt(searchForm.month)
+
+      // 年度の計算（4月以降は当年、1-3月は翌年）
+      const calendarYear = month >= 4 ? fiscalYear : fiscalYear + 1
+
+      // YYYYMM形式で設定（6桁のみ）
+      const monthStr = month.toString().padStart(2, '0')
+      const dateValue = `${calendarYear}${monthStr}`
+
+      setNewRowData((prev) => ({
+        ...prev,
+        date: prev.date.startsWith(dateValue) ? prev.date : dateValue,
+      }))
+    }
+  }, [searchForm.fiscalYear, searchForm.month])
   const [newRowErrors, setNewRowErrors] = useState<Record<string, string>>({})
 
   // エラーサマリー表示用（エラーがある限り常に表示）
@@ -138,10 +158,11 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
   const handleNewRowSubmit = useCallback(() => {
-    // accountListを含めたバリデーション用データを作成
+    // accountListと月情報を含めたバリデーション用データを作成
     const validationData = {
       ...newRowData,
       accountList: accountList,
+      month: searchForm.month,
     }
 
     const rowValidation = validateJournalRow(validationData)
@@ -172,7 +193,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
       nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
     })
     setNewRowErrors({})
-  }, [newRowData, searchForm.fiscalYear, accountList])
+  }, [newRowData, searchForm.fiscalYear, searchForm.month, accountList])
 
   // キーダウンハンドラー（メモ化）
   const handleNewRowKeyDown = useCallback(
@@ -331,6 +352,30 @@ const JournalEntryContent = memo(function JournalEntryContent() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div>
+                <Label htmlFor="month" className="text-sm">
+                  月
+                </Label>
+                <Select
+                  value={searchForm.month}
+                  onValueChange={(value) =>
+                    setSearchForm({ ...searchForm, month: value })
+                  }
+                  disabled={!isSearchValid}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="月を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem key={month.id} value={month.id}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="account" className="text-sm">
                   勘定科目
                 </Label>
@@ -371,30 +416,6 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="month" className="text-sm">
-                  月
-                </Label>
-                <Select
-                  value={searchForm.month}
-                  onValueChange={(value) =>
-                    setSearchForm({ ...searchForm, month: value })
-                  }
-                  disabled={!isSearchValid}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="月を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {months.map((month) => (
-                      <SelectItem key={month.id} value={month.id}>
-                        {month.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
               <div>
@@ -534,12 +555,12 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                 <table className="w-full border-collapse">
                   <colgroup>
                     {deleteMode && <col className="w-12" />}
-                    <col className="w-44" />
-                    <col className="w-24" />
                     <col className="w-32" />
                     <col className="w-28" />
-                    <col className="w-24" />
-                    <col className="w-32" />
+                    <col className="w-36" />
+                    <col className="w-28" />
+                    <col className="w-28" />
+                    <col className="w-36" />
                     <col className="w-28" />
                     <col className="w-auto" />
                     <col className="w-16" />

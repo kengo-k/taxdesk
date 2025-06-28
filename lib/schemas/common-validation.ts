@@ -48,6 +48,30 @@ export const validateDateWithinFiscalYear = (date: string, nendo: string) => {
   return inputDate >= fiscalYearStart && inputDate <= fiscalYearEnd
 }
 
+// 月内の日付かどうかをチェックする関数
+export const validateDateWithinMonth = (
+  date: string,
+  nendo: string,
+  month: string,
+) => {
+  // 基本チェック
+  if (!date || !nendo || !month || month === 'none') return true
+  if (!/^\d{4}$/.test(nendo) || !/^\d{1,2}$/.test(month)) return true
+
+  const fiscalYear = parseInt(nendo)
+  const targetMonth = parseInt(month)
+
+  // 入力された日付を解析
+  const year = parseInt(date.substring(0, 4))
+  const inputMonth = parseInt(date.substring(4, 6))
+
+  // 年度の計算（4月以降は当年、1-3月は翌年）
+  const expectedYear = targetMonth >= 4 ? fiscalYear : fiscalYear + 1
+
+  // 年と月が一致するかチェック
+  return year === expectedYear && inputMonth === targetMonth
+}
+
 // 日付のフィールドバリデーション（共通）
 export function validateDateField(
   value: string,
@@ -69,6 +93,25 @@ export function validateDateField(
       return {
         valid: false,
         message: `日付は${rowData.nendo}年度（${rowData.nendo}年4月1日〜${parseInt(rowData.nendo) + 1}年3月31日）の範囲内である必要があります`,
+      }
+    }
+  }
+
+  // 月情報がある場合は、その月内かチェック
+  if (rowData?.nendo && rowData?.month && rowData.month !== 'none') {
+    const isWithinMonth = validateDateWithinMonth(
+      value,
+      rowData.nendo,
+      rowData.month,
+    )
+    if (!isWithinMonth) {
+      const fiscalYear = parseInt(rowData.nendo)
+      const targetMonth = parseInt(rowData.month)
+      const expectedYear = targetMonth >= 4 ? fiscalYear : fiscalYear + 1
+
+      return {
+        valid: false,
+        message: `日付は${expectedYear}年${targetMonth}月の範囲内である必要があります`,
       }
     }
   }
