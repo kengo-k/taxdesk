@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react'
 
+import { useRouter, useSearchParams } from 'next/navigation'
+
 import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
 
 import { AutocompleteOption } from '@/components/ui/autocomplete'
@@ -45,6 +47,8 @@ import { NewJournalRow } from './components/new-journal-row'
 
 const JournalEntryContent = memo(function JournalEntryContent() {
   const dispatch = useAppDispatch()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Redux state
   const { data: fiscalYears } = useAppSelector(selectFiscalYears)
@@ -53,8 +57,12 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   const { list: journalList, count: journalListCount } =
     useAppSelector(selectJournalList)
 
+  // URLパラメータから初期年度を取得
+  const urlFiscalYear = searchParams.get('fiscal_year')
+  const initialFiscalYear = urlFiscalYear || selectedFiscalYear || 'none'
+
   const [searchForm, setSearchForm] = useState({
-    fiscalYear: selectedFiscalYear || 'none',
+    fiscalYear: initialFiscalYear,
     month: 'none',
     account: 'none',
     side: 'none',
@@ -79,13 +87,23 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
   })
 
-  // 年度変更時に新規行データの年度も更新
+  // 年度変更時にURLパラメータを更新し、新規行データの年度も更新
   useEffect(() => {
+    // URLパラメータを更新
+    const params = new URLSearchParams(searchParams.toString())
+    if (searchForm.fiscalYear !== 'none') {
+      params.set('fiscal_year', searchForm.fiscalYear)
+    } else {
+      params.delete('fiscal_year')
+    }
+    router.replace(`/journal-entry?${params.toString()}`, { scroll: false })
+
+    // 新規行データの年度を更新
     setNewRowData((prev) => ({
       ...prev,
       nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
     }))
-  }, [searchForm.fiscalYear])
+  }, [searchForm.fiscalYear, router, searchParams])
 
   // 月変更時に新規行の日付にYYYYMMを自動設定
   useEffect(() => {

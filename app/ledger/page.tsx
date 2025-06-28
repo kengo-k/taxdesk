@@ -65,7 +65,7 @@ export default function LedgerPage() {
 
   // URLパラメータから初期値を取得
   const searchParams = useSearchParams()
-  const nendoParam = searchParams.get('nendo')
+  const nendoParam = searchParams.get('fiscal_year')
   const codeParam = searchParams.get('code')
   const monthParam = searchParams.get('month')
   const checkedParam = searchParams.get('checked')
@@ -172,7 +172,7 @@ export default function LedgerPage() {
   const updateUrlParams = () => {
     const params = new URLSearchParams()
     if (fiscalYear) {
-      params.set('nendo', fiscalYear)
+      params.set('fiscal_year', fiscalYear)
     }
     if (account) {
       params.set('code', account)
