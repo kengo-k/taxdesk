@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 
+import journalReducer from '@/lib/redux/features/journalSlice'
 import ledgerReducer from '@/lib/redux/features/ledgerSlice'
 import masterReducer from '@/lib/redux/features/masterSlice'
 import payrollReducer from '@/lib/redux/features/payrollSlice'
@@ -10,6 +11,7 @@ export const makeStore = () => {
     reducer: {
       master: masterReducer,
       ledger: ledgerReducer,
+      journal: journalReducer,
       report: reportReducer,
       payroll: payrollReducer,
     },

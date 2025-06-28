@@ -1,15 +1,15 @@
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 
-import { FileSpreadsheet, Search, Calendar, Yen, Trash2 } from 'lucide-react'
+import { FileSpreadsheet, Trash2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DataPagination } from '@/components/ui/pagination'
 import {
   Select,
   SelectContent,
@@ -17,60 +17,36 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { formatCurrency } from '@/lib/client/utils/formatting'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-
-// モックデータ
-const mockJournalEntries = [
-  {
-    id: 1,
-    date: '2024-03-15',
-    voucherNo: 'V-001',
-    debitAccount: '現金',
-    debitAmount: 100000,
-    creditAccount: '売上高',
-    creditAmount: 100000,
-    description: '商品売上',
-  },
-  {
-    id: 2,
-    date: '2024-03-14',
-    voucherNo: 'V-002',
-    debitAccount: '仕入',
-    debitAmount: 50000,
-    creditAccount: '買掛金',
-    creditAmount: 50000,
-    description: '商品仕入',
-  },
-  {
-    id: 3,
-    date: '2024-03-13',
-    voucherNo: 'V-003',
-    debitAccount: '旅費交通費',
-    debitAmount: 15000,
-    creditAccount: '現金',
-    creditAmount: 15000,
-    description: '出張交通費',
-  },
-]
-
-const mockAccounts = [
-  '現金', '普通預金', '売掛金', '買掛金', '仕入', '売上高', 
-  '旅費交通費', '通信費', '消耗品費', '減価償却費'
-]
+  fetchJournals,
+  selectJournalList,
+} from '@/lib/redux/features/journalSlice'
+import {
+  fetchAccountList,
+  fetchFiscalYears,
+  selectAccountList,
+  selectFiscalYears,
+  selectSelectedFiscalYear,
+} from '@/lib/redux/features/masterSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 function JournalEntryContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  
+  const dispatch = useAppDispatch()
+
+  // Redux state
+  const { data: fiscalYears } = useAppSelector(selectFiscalYears)
+  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
+  const { data: accountList } = useAppSelector(selectAccountList)
+  const {
+    list: journalList,
+    count: journalListCount,
+    loading: journalLoading,
+    error: journalError,
+  } = useAppSelector(selectJournalList)
+
   const [searchForm, setSearchForm] = useState({
-    fiscalYear: 'none',
+    fiscalYear: selectedFiscalYear || 'none',
     month: 'none',
     account: 'none',
     side: 'none',
@@ -81,13 +57,68 @@ function JournalEntryContent() {
   })
 
   const [deleteMode, setDeleteMode] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
-  // モック年度データ（実際は Redux から取得）
-  const mockFiscalYears = [
-    { id: '2024', label: '2024年度' },
-    { id: '2023', label: '2023年度' },
-    { id: '2022', label: '2022年度' },
-  ]
+  // 年度データを取得
+  useEffect(() => {
+    dispatch(fetchFiscalYears())
+  }, [dispatch])
+
+  // 年度が変更された時に勘定科目一覧を取得
+  useEffect(() => {
+    if (searchForm.fiscalYear && searchForm.fiscalYear !== 'none') {
+      dispatch(fetchAccountList(searchForm.fiscalYear))
+    }
+  }, [dispatch, searchForm.fiscalYear])
+
+  // 検索フォームが変更されたら仕訳データを取得
+  useEffect(() => {
+    if (searchForm.fiscalYear && searchForm.fiscalYear !== 'none') {
+      dispatch(
+        fetchJournals({
+          fiscal_year: searchForm.fiscalYear,
+          account: searchForm.account === 'none' ? null : searchForm.account,
+          month: searchForm.month === 'none' ? null : searchForm.month,
+          accountSide:
+            searchForm.side === 'none'
+              ? null
+              : searchForm.side === 'debit'
+                ? 'karikata'
+                : searchForm.side === 'credit'
+                  ? 'kasikata'
+                  : null,
+          note: searchForm.description || null,
+          amount: searchForm.amount || null,
+          amountCondition:
+            searchForm.amountCondition === 'none'
+              ? null
+              : searchForm.amountCondition,
+          checked:
+            searchForm.checked === 'none'
+              ? null
+              : searchForm.checked === 'unchecked'
+                ? '0'
+                : searchForm.checked === 'checked'
+                  ? '1'
+                  : null,
+          page: currentPage,
+          pageSize: pageSize,
+        }),
+      )
+    }
+  }, [dispatch, searchForm, currentPage, pageSize])
+
+  // ページ変更ハンドラー
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  // ページサイズ変更ハンドラー
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size)
+    setCurrentPage(1) // ページサイズ変更時は1ページ目に戻る
+  }
 
   // 月データ
   const months = [
@@ -106,10 +137,6 @@ function JournalEntryContent() {
     { id: '3', label: '3月' },
   ]
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ja-JP').format(amount)
-  }
-
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6">
@@ -119,14 +146,21 @@ function JournalEntryContent() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">年度：</span>
-          <Select value={searchForm.fiscalYear} onValueChange={(value) => setSearchForm({...searchForm, fiscalYear: value})}>
+          <Select
+            value={searchForm.fiscalYear}
+            onValueChange={(value) =>
+              setSearchForm({ ...searchForm, fiscalYear: value })
+            }
+          >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="年度を選択" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">未設定</SelectItem>
-              {mockFiscalYears.map(year => (
-                <SelectItem key={year.id} value={year.id}>{year.id}年度</SelectItem>
+              {fiscalYears.map((year) => (
+                <SelectItem key={year.id} value={year.id}>
+                  {year.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -139,20 +173,34 @@ function JournalEntryContent() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <div>
-                <Label htmlFor="account" className="text-sm">勘定科目</Label>
+                <Label htmlFor="account" className="text-sm">
+                  勘定科目
+                </Label>
                 <div className="flex gap-0">
-                  <Select value={searchForm.account} onValueChange={(value) => setSearchForm({...searchForm, account: value})}>
+                  <Select
+                    value={searchForm.account}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, account: value })
+                    }
+                  >
                     <SelectTrigger className="h-9 rounded-r-none border-r-0 flex-1">
                       <SelectValue placeholder="科目を選択" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">未設定</SelectItem>
-                      {mockAccounts.map(account => (
-                        <SelectItem key={account} value={account}>{account}</SelectItem>
+                      {accountList.map((account) => (
+                        <SelectItem key={account.id} value={account.code}>
+                          {account.code}: {account.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={searchForm.side} onValueChange={(value) => setSearchForm({...searchForm, side: value})}>
+                  <Select
+                    value={searchForm.side}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, side: value })
+                    }
+                  >
                     <SelectTrigger className="h-9 w-24 rounded-l-none">
                       <SelectValue placeholder="選択" />
                     </SelectTrigger>
@@ -166,21 +214,32 @@ function JournalEntryContent() {
               </div>
 
               <div>
-                <Label htmlFor="month" className="text-sm">月</Label>
-                <Select value={searchForm.month} onValueChange={(value) => setSearchForm({...searchForm, month: value})}>
+                <Label htmlFor="month" className="text-sm">
+                  月
+                </Label>
+                <Select
+                  value={searchForm.month}
+                  onValueChange={(value) =>
+                    setSearchForm({ ...searchForm, month: value })
+                  }
+                >
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="月を選択" />
                   </SelectTrigger>
                   <SelectContent>
-                    {months.map(month => (
-                      <SelectItem key={month.id} value={month.id}>{month.label}</SelectItem>
+                    {months.map((month) => (
+                      <SelectItem key={month.id} value={month.id}>
+                        {month.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="amount" className="text-sm">金額</Label>
+                <Label htmlFor="amount" className="text-sm">
+                  金額
+                </Label>
                 <div className="flex gap-0">
                   <Input
                     id="amount"
@@ -188,9 +247,16 @@ function JournalEntryContent() {
                     placeholder=""
                     className="h-9 rounded-r-none border-r-0 flex-1"
                     value={searchForm.amount}
-                    onChange={(e) => setSearchForm({...searchForm, amount: e.target.value})}
+                    onChange={(e) =>
+                      setSearchForm({ ...searchForm, amount: e.target.value })
+                    }
                   />
-                  <Select value={searchForm.amountCondition} onValueChange={(value) => setSearchForm({...searchForm, amountCondition: value})}>
+                  <Select
+                    value={searchForm.amountCondition}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, amountCondition: value })
+                    }
+                  >
                     <SelectTrigger className="h-9 w-24 rounded-l-none">
                       <SelectValue placeholder="" />
                     </SelectTrigger>
@@ -204,19 +270,33 @@ function JournalEntryContent() {
               </div>
 
               <div>
-                <Label htmlFor="description" className="text-sm">摘要</Label>
+                <Label htmlFor="description" className="text-sm">
+                  摘要
+                </Label>
                 <Input
                   id="description"
                   placeholder="摘要で検索"
                   className="h-9"
                   value={searchForm.description}
-                  onChange={(e) => setSearchForm({...searchForm, description: e.target.value})}
+                  onChange={(e) =>
+                    setSearchForm({
+                      ...searchForm,
+                      description: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <div>
-                <Label htmlFor="checked" className="text-sm">確認状態</Label>
-                <Select value={searchForm.checked} onValueChange={(value) => setSearchForm({...searchForm, checked: value})}>
+                <Label htmlFor="checked" className="text-sm">
+                  確認状態
+                </Label>
+                <Select
+                  value={searchForm.checked}
+                  onValueChange={(value) =>
+                    setSearchForm({ ...searchForm, checked: value })
+                  }
+                >
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="選択" />
                   </SelectTrigger>
@@ -233,8 +313,8 @@ function JournalEntryContent() {
               <Button variant="outline" className="h-9">
                 クリア
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-9 border-red-500 text-red-500 hover:bg-red-50"
                 onClick={() => setDeleteMode(!deleteMode)}
               >
@@ -251,8 +331,13 @@ function JournalEntryContent() {
         <CardHeader>
           <CardTitle>仕訳一覧</CardTitle>
           <p className="text-sm text-gray-600">
-            {mockJournalEntries.length}件の仕訳が見つかりました
+            {journalLoading
+              ? 'データを読み込み中...'
+              : `${journalList.length}件の仕訳が見つかりました`}
           </p>
+          {journalError && (
+            <p className="text-sm text-red-600">エラー: {journalError}</p>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -330,8 +415,11 @@ function JournalEntryContent() {
                     {/* 新規行のため確認チェックボックスなし */}
                   </td>
                 </tr>
-                {mockJournalEntries.map((entry, index) => (
-                  <tr key={entry.id} className={`border-t ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                {journalList.map((entry, index) => (
+                  <tr
+                    key={entry.id}
+                    className={`border-t ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
+                  >
                     {deleteMode && (
                       <td className="py-2 px-1 text-center">
                         <Checkbox className="h-4 w-4" />
@@ -340,47 +428,51 @@ function JournalEntryContent() {
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={entry.date.replace(/-/g, '')}
+                        defaultValue={entry.date}
                         className="h-8 text-sm"
                       />
                     </td>
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={entry.debitAccount}
+                        defaultValue={entry.karikata_cd}
                         className="h-8 text-sm"
                       />
                     </td>
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={formatCurrency(entry.debitAmount)}
-                        className="h-8 text-sm text-right"
+                        defaultValue={formatCurrency(entry.karikata_value)}
+                        className="h-8 text-sm text-right font-mono"
                       />
                     </td>
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={entry.creditAccount}
+                        defaultValue={entry.kasikata_cd}
                         className="h-8 text-sm"
                       />
                     </td>
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={formatCurrency(entry.creditAmount)}
-                        className="h-8 text-sm text-right"
+                        defaultValue={formatCurrency(entry.kasikata_value)}
+                        className="h-8 text-sm text-right font-mono"
                       />
                     </td>
                     <td className="py-2 px-1">
                       <Input
                         type="text"
-                        defaultValue={entry.description}
+                        defaultValue={entry.note || ''}
                         className="h-8 text-sm"
                       />
                     </td>
                     <td className="py-2 px-1 text-center">
-                      <Checkbox className="h-4 w-4" />
+                      <Checkbox
+                        className="h-4 w-4"
+                        checked={entry.checked === '1'}
+                        disabled
+                      />
                     </td>
                   </tr>
                 ))}
@@ -389,15 +481,14 @@ function JournalEntryContent() {
           </div>
 
           {/* ページネーション */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-600">
-              1-3 / 3件
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled>前へ</Button>
-              <Button variant="outline" size="sm" disabled>次へ</Button>
-            </div>
-          </div>
+          <DataPagination
+            totalItems={journalListCount}
+            totalPages={Math.ceil(journalListCount / pageSize) || 1}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </CardContent>
       </Card>
     </div>
@@ -406,7 +497,15 @@ function JournalEntryContent() {
 
 export default function JournalEntryPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-600">データを読み込み中...</div>
+          </div>
+        </div>
+      }
+    >
       <JournalEntryContent />
     </Suspense>
   )

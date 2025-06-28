@@ -10,9 +10,9 @@ import { AlertCircle, ArrowLeft } from 'lucide-react'
 
 import { DeleteConfirmDialog } from '@/app/ledger/components/delete-confirm-dialog'
 import { LedgerSearchForm } from '@/app/ledger/components/ledger-search-form'
-import { Pagination } from '@/app/ledger/components/pagination'
 import { TransactionTable } from '@/app/ledger/components/transaction-table'
 import { Card, CardContent } from '@/components/ui/card'
+import { DataPagination } from '@/components/ui/pagination'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { toast } from '@/components/ui/use-toast'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
@@ -621,7 +621,7 @@ export default function LedgerPage() {
                     />
 
                     {/* ページネーション */}
-                    <Pagination
+                    <DataPagination
                       totalItems={ledgerListCount}
                       totalPages={Math.ceil(ledgerListCount / pageSize)}
                       currentPage={currentPage}

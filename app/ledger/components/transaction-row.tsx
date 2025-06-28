@@ -2,7 +2,6 @@ import { memo } from 'react'
 
 import { AlertCircle } from 'lucide-react'
 
-import { formatCurrency } from '@/app/ledger/components/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
@@ -11,6 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
+import { formatCurrency } from '@/lib/client/utils/formatting'
 
 interface TransactionRowProps {
   transaction: LedgerListItem
