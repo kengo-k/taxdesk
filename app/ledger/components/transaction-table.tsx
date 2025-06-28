@@ -17,7 +17,11 @@ import { toast } from '@/components/ui/use-toast'
 import { CreateLedgerRequest } from '@/lib/backend/services/ledger/create-ledger'
 import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
 import { UpdateLedgerRequest } from '@/lib/backend/services/ledger/update-ledger'
-import { formatCurrency } from '@/lib/client/utils/formatting'
+import {
+  formatCurrency,
+  getDayOfWeekKanji,
+  isWeekend,
+} from '@/lib/client/utils/formatting'
 import { updateLedgerChecked } from '@/lib/redux/features/ledgerSlice'
 import { useAppDispatch } from '@/lib/redux/hooks'
 import { validateField, validateRow } from '@/lib/schemas/ledger-validation'
@@ -36,71 +40,11 @@ interface TransactionTableProps {
   isCurrentFiscalYear: boolean // 現在の年度かどうか
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (transaction: UpdateLedgerRequest) => void
-  onBlur: (id: string, field: 'date' | 'debit' | 'credit') => void
   onCreateTransaction: (transaction: CreateLedgerRequest) => void
 }
 
 // 編集中のトランザクションデータの型
 type EditableTransaction = Record<string, any>
-
-// 日付文字列（YYYYMMDD）から曜日の漢字を取得する関数
-const getDayOfWeekKanji = (dateStr: string): string => {
-  // 日付が正しいフォーマットでない場合は空文字を返す
-  if (!dateStr || !/^\d{8}$/.test(dateStr)) return ''
-
-  try {
-    const year = parseInt(dateStr.substring(0, 4))
-    const month = parseInt(dateStr.substring(4, 6)) - 1 // Dateオブジェクトでは月は0から始まる
-    const day = parseInt(dateStr.substring(6, 8))
-
-    const date = new Date(year, month, day)
-
-    // 日付が有効かチェック
-    if (
-      date.getFullYear() !== year ||
-      date.getMonth() !== month ||
-      date.getDate() !== day
-    ) {
-      return ''
-    }
-
-    const dayOfWeek = date.getDay()
-    const kanjiDays = ['日', '月', '火', '水', '木', '金', '土']
-
-    return kanjiDays[dayOfWeek]
-  } catch (error) {
-    return ''
-  }
-}
-
-// 日付が土日かどうかを判定する関数
-const isWeekend = (dateStr: string): boolean => {
-  // 日付が正しいフォーマットでない場合はfalseを返す
-  if (!dateStr || !/^\d{8}$/.test(dateStr)) return false
-
-  try {
-    const year = parseInt(dateStr.substring(0, 4))
-    const month = parseInt(dateStr.substring(4, 6)) - 1 // Dateオブジェクトでは月は0から始まる
-    const day = parseInt(dateStr.substring(6, 8))
-
-    const date = new Date(year, month, day)
-
-    // 日付が有効かチェック
-    if (
-      date.getFullYear() !== year ||
-      date.getMonth() !== month ||
-      date.getDate() !== day
-    ) {
-      return false
-    }
-
-    const dayOfWeek = date.getDay()
-    // 0: 日曜日, 6: 土曜日
-    return dayOfWeek === 0 || dayOfWeek === 6
-  } catch (error) {
-    return false
-  }
-}
 
 export function TransactionTable({
   ledger_cd,
@@ -114,7 +58,6 @@ export function TransactionTable({
   isCurrentFiscalYear,
   onToggleRowSelection,
   onUpdateTransaction,
-  onBlur,
   onCreateTransaction,
 }: TransactionTableProps) {
   // Reduxディスパッチを取得
@@ -652,7 +595,7 @@ export function TransactionTable({
       .then(() => {
         // 成功時の処理（必要に応じて）
       })
-      .catch((error) => {
+      .catch(() => {
         // エラー時は元の状態に戻す
         handleFieldChange(id, 'checked', checked ? '0' : '1')
         toast({
@@ -1007,8 +950,6 @@ export function TransactionTable({
                     registerInputRef={registerInputRef}
                     onToggleRowSelection={onToggleRowSelection}
                     onCheckedChange={handleCheckedChange}
-                    getDayOfWeekKanji={getDayOfWeekKanji}
-                    isWeekend={isWeekend}
                   />
                 )
               })

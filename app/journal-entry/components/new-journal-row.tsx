@@ -2,6 +2,7 @@ import { memo } from 'react'
 
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
 import { Input } from '@/components/ui/input'
+import { getDayOfWeekKanji, isWeekend } from '@/lib/client/utils/formatting'
 
 interface NewJournalRowProps {
   newRowData: any
@@ -32,20 +33,41 @@ export const NewJournalRow = memo(function NewJournalRow({
   getAccountName,
 }: NewJournalRowProps) {
   return (
-    <tr className="border-t bg-gray-50">
+    <tr
+      className={`border-t ${
+        isWeekend(newRowData.date || '')
+          ? getDayOfWeekKanji(newRowData.date || '') === '土'
+            ? 'bg-blue-50' // 土曜日は青色系
+            : 'bg-red-50' // 日曜日は赤色系
+          : 'bg-gray-50'
+      }`}
+    >
       {deleteMode && <td className="py-2 px-1 text-center"></td>}
       <td className="py-2 px-1 relative">
         <div className="absolute -left-2 top-0 bottom-0 w-1 bg-blue-400"></div>
-        <Input
-          type="text"
-          placeholder="YYYYMMDD"
-          value={newRowData.date}
-          onChange={(e) => onFieldChange('date', e.target.value)}
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          className={`h-8 text-sm ${newRowErrors.date ? 'border-red-500' : ''}`}
-        />
+        <div className="flex gap-1">
+          <div className="flex-1 relative">
+            <Input
+              type="text"
+              placeholder="YYYYMMDD"
+              value={newRowData.date}
+              onChange={(e) => onFieldChange('date', e.target.value)}
+              onKeyDown={onKeyDown}
+              onFocus={onFocus}
+              onBlur={onBlur}
+              className={`h-8 text-sm ${newRowErrors.date ? 'border-red-500' : ''}`}
+            />
+          </div>
+          <div className="w-12">
+            <Input
+              type="text"
+              value={getDayOfWeekKanji(newRowData.date || '')}
+              readOnly
+              tabIndex={-1}
+              className="h-8 text-sm text-center bg-gray-50"
+            />
+          </div>
+        </div>
       </td>
       <td className="py-2 px-1">
         <Autocomplete

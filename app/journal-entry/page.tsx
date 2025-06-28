@@ -555,7 +555,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                 <table className="w-full border-collapse">
                   <colgroup>
                     {deleteMode && <col className="w-12" />}
-                    <col className="w-32" />
+                    <col className="w-44" />
                     <col className="w-28" />
                     <col className="w-36" />
                     <col className="w-28" />

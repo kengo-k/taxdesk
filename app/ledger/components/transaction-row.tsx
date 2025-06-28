@@ -10,7 +10,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { LedgerListItem } from '@/lib/backend/services/ledger/list-ledgers'
-import { formatCurrency } from '@/lib/client/utils/formatting'
+import {
+  formatCurrency,
+  getDayOfWeekKanji,
+  isWeekend,
+} from '@/lib/client/utils/formatting'
 
 interface TransactionRowProps {
   transaction: LedgerListItem
@@ -30,8 +34,6 @@ interface TransactionRowProps {
   ) => void
   onToggleRowSelection: (id: string) => void
   onCheckedChange: (id: string, checked: boolean) => void
-  getDayOfWeekKanji: (dateStr: string) => string
-  isWeekend: (dateStr: string) => boolean
 }
 
 // カスタム比較関数を定義
@@ -102,8 +104,6 @@ export const TransactionRow = memo(function TransactionRow({
   registerInputRef,
   onToggleRowSelection,
   onCheckedChange,
-  getDayOfWeekKanji,
-  isWeekend,
 }: TransactionRowProps) {
   const id = transaction.journal_id.toString()
 

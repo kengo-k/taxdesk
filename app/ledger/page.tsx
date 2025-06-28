@@ -326,11 +326,6 @@ export default function LedgerPage() {
       })
   }
 
-  // フォーカスが外れた時のハンドラー
-  const handleBlur = (id: string, field: 'date' | 'debit' | 'credit') => {
-    //dispatch(setShowTooltip({ id, field }))
-  }
-
   // CSVダウンロード処理
   const handleDownloadCSV = () => {
     // CSVヘッダー
@@ -616,7 +611,6 @@ export default function LedgerPage() {
                       }
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
-                      onBlur={handleBlur}
                       onCreateTransaction={handleCreateTransaction}
                     />
 

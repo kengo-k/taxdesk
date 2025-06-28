@@ -2,7 +2,11 @@ import { memo } from 'react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { formatCurrency } from '@/lib/client/utils/formatting'
+import {
+  formatCurrency,
+  getDayOfWeekKanji,
+  isWeekend,
+} from '@/lib/client/utils/formatting'
 
 interface ExistingJournalRowProps {
   entry: any
@@ -18,7 +22,15 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   return (
     <tr
       key={entry.id}
-      className={`border-t ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}
+      className={`border-t ${
+        isWeekend(entry.date || '')
+          ? getDayOfWeekKanji(entry.date || '') === '土'
+            ? 'bg-blue-50' // 土曜日は青色系
+            : 'bg-red-50' // 日曜日は赤色系
+          : index % 2 === 0
+            ? 'bg-white'
+            : 'bg-gray-25'
+      }`}
     >
       {deleteMode && (
         <td className="py-2 px-1 text-center">
@@ -26,11 +38,24 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
         </td>
       )}
       <td className="py-2 px-1">
-        <Input
-          type="text"
-          defaultValue={entry.date}
-          className="h-8 text-sm"
-        />
+        <div className="flex gap-1">
+          <div className="flex-1">
+            <Input
+              type="text"
+              defaultValue={entry.date}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="w-12">
+            <Input
+              type="text"
+              value={getDayOfWeekKanji(entry.date || '')}
+              readOnly
+              tabIndex={-1}
+              className="h-8 text-sm text-center bg-gray-50"
+            />
+          </div>
+        </div>
       </td>
       <td className="py-2 px-1">
         <Input
