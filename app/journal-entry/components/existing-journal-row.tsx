@@ -1,5 +1,6 @@
 import { memo } from 'react'
 
+import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
@@ -12,12 +13,22 @@ interface ExistingJournalRowProps {
   entry: any
   index: number
   deleteMode: boolean
+  accountOptions: AutocompleteOption[]
+  onAccountSelect: (
+    entryId: string,
+    field: 'karikata_cd' | 'kasikata_cd',
+    option: AutocompleteOption,
+  ) => void
+  getAccountName: (code: string) => string
 }
 
 export const ExistingJournalRow = memo(function ExistingJournalRow({
   entry,
   index,
   deleteMode,
+  accountOptions,
+  onAccountSelect,
+  getAccountName,
 }: ExistingJournalRowProps) {
   return (
     <tr
@@ -58,16 +69,19 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
         </div>
       </td>
       <td className="py-2 px-1">
-        <Input
-          type="text"
-          defaultValue={entry.karikata_cd}
+        <Autocomplete
+          value={entry.karikata_cd}
+          placeholder="科目コード"
+          options={accountOptions}
+          onSelect={(option) => onAccountSelect(entry.id, 'karikata_cd', option)}
+          onChange={() => {}}
           className="h-8 text-sm"
         />
       </td>
       <td className="py-2 px-1">
         <Input
           type="text"
-          defaultValue=""
+          value={getAccountName(entry.karikata_cd)}
           className="h-8 text-sm bg-gray-50"
           readOnly
           tabIndex={-1}
@@ -81,16 +95,19 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
         />
       </td>
       <td className="py-2 px-1">
-        <Input
-          type="text"
-          defaultValue={entry.kasikata_cd}
+        <Autocomplete
+          value={entry.kasikata_cd}
+          placeholder="科目コード"
+          options={accountOptions}
+          onSelect={(option) => onAccountSelect(entry.id, 'kasikata_cd', option)}
+          onChange={() => {}}
           className="h-8 text-sm"
         />
       </td>
       <td className="py-2 px-1">
         <Input
           type="text"
-          defaultValue=""
+          value={getAccountName(entry.kasikata_cd)}
           className="h-8 text-sm bg-gray-50"
           readOnly
           tabIndex={-1}

@@ -172,6 +172,16 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     [handleNewRowFieldChange],
   )
 
+  // 既存行の科目選択ハンドラー（メモ化）
+  const handleExistingAccountSelect = useCallback(
+    (entryId: string, field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
+      // 既存行の更新処理（現在は暫定でconsoleログ）
+      console.log('既存行科目更新:', entryId, field, option)
+      // TODO: 実際の更新処理を実装
+    },
+    [],
+  )
+
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
 
   // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
@@ -619,6 +629,9 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                         entry={entry}
                         index={index}
                         deleteMode={deleteMode}
+                        accountOptions={accountOptions}
+                        onAccountSelect={handleExistingAccountSelect}
+                        getAccountName={getAccountName}
                       />
                     ))}
                   </tbody>
