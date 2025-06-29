@@ -91,6 +91,15 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
   })
 
+  // 既存行の編集状態管理
+  const [existingRowData, setExistingRowData] = useState<Record<string, any>>(
+    {},
+  )
+  const [existingRowErrors, setExistingRowErrors] = useState<
+    Record<string, Record<string, string>>
+  >({})
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null)
+
   // 年度変更時にURLパラメータを更新し、新規行データの年度も更新
   useEffect(() => {
     // URLパラメータを更新
@@ -176,31 +185,109 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     [handleNewRowFieldChange],
   )
 
-  // 既存行の科目選択ハンドラー（メモ化） - 値の更新のみ
+  // 既存行のフィールド変更ハンドラー（メモ化）
+  const handleExistingFieldChange = useCallback(
+    (entryId: string, field: string, value: string | number) => {
+      setExistingRowData((prev) => ({
+        ...prev,
+        [entryId]: {
+          ...prev[entryId],
+          [field]: value,
+        },
+      }))
+    },
+    [],
+  )
+
+  // 既存行の科目選択ハンドラー（メモ化）
   const handleExistingAccountSelect = useCallback(
     (
       entryId: string,
       field: 'karikata_cd' | 'kasikata_cd',
       option: AutocompleteOption,
     ) => {
-      // 科目選択時は値の更新のみ行う（更新はしない）
-      // 実際の更新はENTERキーで行う
+      // 科目選択時は一時データに保存（実際の更新はENTERキーで行う）
+      const fieldName = field === 'karikata_cd' ? 'karikata_cd' : 'kasikata_cd'
+      handleExistingFieldChange(entryId, fieldName, option.code || '')
     },
-    [],
+    [handleExistingFieldChange],
   )
 
-  // 既存行のフィールド変更ハンドラー（メモ化）
-  const handleExistingFieldUpdate = useCallback(
-    async (entryId: string, field: string, value: string | number) => {
+  // 既存行のバリデーション処理
+  const validateExistingRow = useCallback(
+    (entryId: string, rowData: any) => {
+      const validationData = {
+        ...rowData,
+        accountList: accountList,
+        month: searchForm.month,
+      }
+
+      const rowValidation = validateJournalRow(validationData)
+
+      if (!rowValidation.valid) {
+        // 該当行のエラーを設定
+        setExistingRowErrors((prev) => ({
+          ...prev,
+          [entryId]: rowValidation.errors,
+        }))
+        return false
+      } else {
+        // 該当行のエラーをクリア
+        setExistingRowErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors[entryId]
+          return newErrors
+        })
+        return true
+      }
+    },
+    [accountList, searchForm.month],
+  )
+
+  // 既存行の行全体更新ハンドラー（メモ化）
+  const handleExistingRowSubmit = useCallback(
+    async (entryId: string) => {
+      console.log('handleExistingRowSubmit called:', entryId)
+
+      // 現在の行データを取得
+      const currentEntry = journalList.find((entry) => entry.id === entryId)
+      if (!currentEntry) return
+
+      // 変更データと現在データをマージ
+      const changedData = existingRowData[entryId] || {}
+      const updatedData = {
+        nendo: searchForm.fiscalYear,
+        date: changedData.date ?? currentEntry.date,
+        karikata_cd: changedData.karikata_cd ?? currentEntry.karikata_cd,
+        karikata_value:
+          changedData.karikata_value ?? currentEntry.karikata_value,
+        kasikata_cd: changedData.kasikata_cd ?? currentEntry.kasikata_cd,
+        kasikata_value:
+          changedData.kasikata_value ?? currentEntry.kasikata_value,
+        note: changedData.note ?? (currentEntry.note || ''),
+      }
+
+      console.log('updatedData:', updatedData)
+
+      // バリデーションを実行
+      if (!validateExistingRow(entryId, updatedData)) {
+        console.log('バリデーションエラーがあります')
+        return // バリデーションエラーがある場合は更新しない
+      }
+
       try {
         const updateData = {
           id: entryId,
           nendo: searchForm.fiscalYear,
-          ...(field === 'date' && { date: value as string }),
-          ...(field === 'debitAmount' && { debitAmount: value as number }),
-          ...(field === 'creditAmount' && { creditAmount: value as number }),
-          ...(field === 'description' && { description: value as string }),
+          date: updatedData.date,
+          debitAccount: updatedData.karikata_cd,
+          debitAmount: updatedData.karikata_value,
+          creditAccount: updatedData.kasikata_cd,
+          creditAmount: updatedData.kasikata_value,
+          description: updatedData.note,
         }
+
+        console.log('final updateData:', updateData)
 
         const result = await dispatch(updateJournal(updateData))
 
@@ -209,6 +296,18 @@ const JournalEntryContent = memo(function JournalEntryContent() {
             title: '仕訳更新完了',
             description: '仕訳データが正常に更新されました',
             variant: 'default',
+          })
+
+          // 該当行のエラーと一時データをクリア
+          setExistingRowErrors((prev) => {
+            const newErrors = { ...prev }
+            delete newErrors[entryId]
+            return newErrors
+          })
+          setExistingRowData((prev) => {
+            const newData = { ...prev }
+            delete newData[entryId]
+            return newData
           })
 
           // 仕訳一覧を再取得
@@ -251,8 +350,42 @@ const JournalEntryContent = memo(function JournalEntryContent() {
         })
       }
     },
-    [searchForm, dispatch, currentPage, pageSize],
+    [
+      searchForm,
+      dispatch,
+      currentPage,
+      pageSize,
+      journalList,
+      validateExistingRow,
+      existingRowData,
+    ],
   )
+
+  // 既存行のフォーカス管理
+  const handleExistingRowFocus = useCallback((entryId: string) => {
+    setFocusedRowId(entryId)
+  }, [])
+
+  const handleExistingRowBlur = useCallback((entryId: string) => {
+    // 同じ行内の別フィールドに移動する可能性があるので、より長い遅延を設定
+    setTimeout(() => {
+      setFocusedRowId((current) => {
+        // フォーカスが同じ行にまだある場合はクリアしない
+        if (current === entryId) {
+          // さらにチェック: 現在フォーカスされている要素が同じ行内かどうか
+          const activeElement = document.activeElement
+          if (
+            activeElement &&
+            activeElement.closest(`[data-entry-id="${entryId}"]`)
+          ) {
+            return current // フォーカスは同じ行内にあるのでクリアしない
+          }
+          return null // フォーカスが行外に移ったのでクリア
+        }
+        return current
+      })
+    }, 200)
+  }, [])
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
 
@@ -856,10 +989,15 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                         deleteMode={deleteMode}
                         accountOptions={accountOptions}
                         onAccountSelect={handleExistingAccountSelect}
-                        onFieldUpdate={handleExistingFieldUpdate}
+                        onFieldChange={handleExistingFieldChange}
+                        onSubmit={handleExistingRowSubmit}
+                        fieldData={existingRowData[entry.id] || {}}
                         getAccountName={getAccountName}
                         isSelected={selectedIds.includes(entry.id)}
                         onCheckboxChange={handleCheckboxChange}
+                        onFocus={handleExistingRowFocus}
+                        onBlur={handleExistingRowBlur}
+                        errors={existingRowErrors[entry.id] || {}}
                       />
                     ))}
                   </tbody>
