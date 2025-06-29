@@ -237,13 +237,13 @@ const JournalEntryContent = memo(function JournalEntryContent() {
         if (searchForm.fiscalYear !== 'none') {
           dispatch(fetchJournals({
             fiscal_year: searchForm.fiscalYear,
-            account: searchForm.account,
-            month: searchForm.month,
-            accountSide: searchForm.side,
-            note: searchForm.description,
-            amount: searchForm.amount,
-            amountCondition: searchForm.amountCondition,
-            checked: searchForm.checked,
+            account: searchForm.account !== 'none' ? searchForm.account : null,
+            month: searchForm.month !== 'none' ? searchForm.month : null,
+            accountSide: searchForm.side !== 'none' ? searchForm.side : null,
+            note: searchForm.description || null,
+            amount: searchForm.amount || null,
+            amountCondition: searchForm.amountCondition !== 'none' ? searchForm.amountCondition : null,
+            checked: searchForm.checked !== 'none' ? searchForm.checked : null,
             page: currentPage,
             pageSize: pageSize,
           }))
