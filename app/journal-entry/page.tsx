@@ -176,72 +176,17 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     [handleNewRowFieldChange],
   )
 
-  // 既存行の科目選択ハンドラー（メモ化）
+  // 既存行の科目選択ハンドラー（メモ化） - 値の更新のみ
   const handleExistingAccountSelect = useCallback(
-    async (
+    (
       entryId: string,
       field: 'karikata_cd' | 'kasikata_cd',
       option: AutocompleteOption,
     ) => {
-      try {
-        const updateData = {
-          id: entryId,
-          nendo: searchForm.fiscalYear,
-          ...(field === 'karikata_cd'
-            ? { debitAccount: option.code }
-            : { creditAccount: option.code }),
-        }
-
-        const result = await dispatch(updateJournal(updateData))
-
-        if (updateJournal.fulfilled.match(result)) {
-          toast({
-            title: '科目更新完了',
-            description: `${field === 'karikata_cd' ? '借方' : '貸方'}科目を${option.code}に更新しました`,
-            variant: 'default',
-          })
-
-          // 仕訳一覧を再取得
-          if (searchForm.fiscalYear !== 'none') {
-            dispatch(
-              fetchJournals({
-                fiscal_year: searchForm.fiscalYear,
-                account:
-                  searchForm.account !== 'none' ? searchForm.account : null,
-                month: searchForm.month !== 'none' ? searchForm.month : null,
-                accountSide:
-                  searchForm.side !== 'none' ? searchForm.side : null,
-                note: searchForm.description || null,
-                amount: searchForm.amount || null,
-                amountCondition:
-                  searchForm.amountCondition !== 'none'
-                    ? searchForm.amountCondition
-                    : null,
-                checked:
-                  searchForm.checked !== 'none' ? searchForm.checked : null,
-                page: currentPage,
-                pageSize: pageSize,
-              }),
-            )
-          }
-        } else {
-          const errorMessage = result.payload as string
-          toast({
-            title: '科目更新エラー',
-            description: errorMessage,
-            variant: 'destructive',
-          })
-        }
-      } catch (error) {
-        console.error('科目更新エラー:', error)
-        toast({
-          title: '科目更新エラー',
-          description: '科目更新中に予期しないエラーが発生しました',
-          variant: 'destructive',
-        })
-      }
+      // 科目選択時は値の更新のみ行う（更新はしない）
+      // 実際の更新はENTERキーで行う
     },
-    [searchForm, dispatch, currentPage, pageSize],
+    [],
   )
 
   // 既存行のフィールド変更ハンドラー（メモ化）
