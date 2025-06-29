@@ -58,11 +58,27 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   // フィールドにエラーがあるかチェック
   const hasFieldError = (fieldName: string) => !!errors[fieldName]
 
-  // フィールドのクラス名を取得（エラー状態を考慮）
-  const getFieldClassName = (fieldName: string, baseClass: string) => {
+  // フィールドが変更されているかチェック（未保存かどうか）
+  const isFieldUnsaved = (fieldName: string, originalValue: any) => {
+    const currentValue = fieldData[fieldName]
+    return currentValue !== undefined && currentValue !== originalValue
+  }
+
+  // フィールドのクラス名を取得（エラー状態・未保存状態を考慮）
+  const getFieldClassName = (
+    fieldName: string,
+    baseClass: string,
+    originalValue?: any,
+  ) => {
     const classes = [baseClass]
     if (hasFieldError(fieldName)) {
       classes.push('border-red-500')
+    }
+    if (
+      originalValue !== undefined &&
+      isFieldUnsaved(fieldName, originalValue)
+    ) {
+      classes.push('bg-yellow-50')
     }
     return classes.join(' ')
   }
@@ -93,11 +109,11 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       )}
       <td className="py-2 px-1">
         <div className="flex gap-1">
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <Input
               type="text"
               value={getFieldValue('date', entry.date)}
-              className={getFieldClassName('date', 'h-8 text-sm')}
+              className={getFieldClassName('date', 'h-8 text-sm', entry.date)}
               onChange={(e) => {
                 onFieldChange(entry.id, 'date', e.target.value)
               }}
@@ -110,6 +126,11 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
                 }
               }}
             />
+            {isFieldUnsaved('date', entry.date) && (
+              <span className="absolute -top-3 left-0 text-red-500 text-sm font-bold">
+                *
+              </span>
+            )}
           </div>
           <div className="w-12">
             <Input
@@ -122,7 +143,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           </div>
         </div>
       </td>
-      <td className="py-2 px-1">
+      <td className="py-2 px-1 relative">
         <Autocomplete
           value={getFieldValue('karikata_cd', entry.karikata_cd)}
           placeholder="科目コード"
@@ -141,8 +162,17 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           }}
           onFocus={() => onFocus?.(entry.id)}
           onBlur={() => onBlur?.(entry.id)}
-          className={getFieldClassName('karikata_cd', 'h-8 text-sm')}
+          className={getFieldClassName(
+            'karikata_cd',
+            'h-8 text-sm',
+            entry.karikata_cd,
+          )}
         />
+        {isFieldUnsaved('karikata_cd', entry.karikata_cd) && (
+          <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
+            *
+          </span>
+        )}
       </td>
       <td className="py-2 px-1">
         <Input
@@ -153,7 +183,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           tabIndex={-1}
         />
       </td>
-      <td className="py-2 px-1">
+      <td className="py-2 px-1 relative">
         <Input
           type="text"
           value={formatCurrency(
@@ -162,6 +192,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           className={getFieldClassName(
             'karikata_value',
             'h-8 text-sm text-right font-mono',
+            entry.karikata_value,
           )}
           onChange={(e) => {
             const newValue = parseInt(e.target.value.replace(/[,\s]/g, ''), 10)
@@ -178,8 +209,13 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             }
           }}
         />
+        {isFieldUnsaved('karikata_value', entry.karikata_value) && (
+          <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
+            *
+          </span>
+        )}
       </td>
-      <td className="py-2 px-1">
+      <td className="py-2 px-1 relative">
         <Autocomplete
           value={getFieldValue('kasikata_cd', entry.kasikata_cd)}
           placeholder="科目コード"
@@ -198,8 +234,17 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           }}
           onFocus={() => onFocus?.(entry.id)}
           onBlur={() => onBlur?.(entry.id)}
-          className={getFieldClassName('kasikata_cd', 'h-8 text-sm')}
+          className={getFieldClassName(
+            'kasikata_cd',
+            'h-8 text-sm',
+            entry.kasikata_cd,
+          )}
         />
+        {isFieldUnsaved('kasikata_cd', entry.kasikata_cd) && (
+          <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
+            *
+          </span>
+        )}
       </td>
       <td className="py-2 px-1">
         <Input
@@ -210,7 +255,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           tabIndex={-1}
         />
       </td>
-      <td className="py-2 px-1">
+      <td className="py-2 px-1 relative">
         <Input
           type="text"
           value={formatCurrency(
@@ -219,6 +264,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           className={getFieldClassName(
             'kasikata_value',
             'h-8 text-sm text-right font-mono',
+            entry.kasikata_value,
           )}
           onChange={(e) => {
             const newValue = parseInt(e.target.value.replace(/[,\s]/g, ''), 10)
@@ -235,12 +281,17 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             }
           }}
         />
+        {isFieldUnsaved('kasikata_value', entry.kasikata_value) && (
+          <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
+            *
+          </span>
+        )}
       </td>
-      <td className="py-2 px-1">
+      <td className="py-2 px-1 relative">
         <Input
           type="text"
           value={getFieldValue('note', entry.note || '')}
-          className={getFieldClassName('note', 'h-8 text-sm')}
+          className={getFieldClassName('note', 'h-8 text-sm', entry.note || '')}
           onChange={(e) => {
             onFieldChange(entry.id, 'note', e.target.value)
           }}
@@ -253,6 +304,11 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             }
           }}
         />
+        {isFieldUnsaved('note', entry.note || '') && (
+          <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
+            *
+          </span>
+        )}
       </td>
       <td className="py-2 px-1 text-center">
         <Checkbox
