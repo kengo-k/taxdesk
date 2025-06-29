@@ -112,6 +112,30 @@ function getLatestMigration() {
 }
 
 /**
+ * Gets the current migration name only
+ * @returns {string} - Current migration name
+ */
+function getCurrentMigrationName() {
+  try {
+    const query =
+      'SELECT migration_name FROM _prisma_migrations ORDER BY finished_at DESC LIMIT 1'
+    const result = executeQuery(query)
+
+    if (!result || result.trim() === '') {
+      console.log('No migrations found in database')
+      return 'none'
+    }
+
+    const migrationName = result.trim()
+    console.log('Current migration:', migrationName)
+    return migrationName
+  } catch (error) {
+    console.error('Error getting current migration name:', error.message)
+    return 'error'
+  }
+}
+
+/**
  * Exports a table to CSV using psql's COPY command
  * @param {string} tableName - Name of the table to export
  * @param {string} outputPath - Path to output CSV file
@@ -675,6 +699,7 @@ module.exports = {
   // Utility functions
   getTables,
   getLatestMigration,
+  getCurrentMigrationName,
   getPsqlConnectionString,
   executeQuery,
 
