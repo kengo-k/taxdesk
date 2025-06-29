@@ -19,7 +19,14 @@ interface ExistingJournalRowProps {
     field: 'karikata_cd' | 'kasikata_cd',
     option: AutocompleteOption,
   ) => void
+  onFieldUpdate: (
+    entryId: string,
+    field: string,
+    value: string | number,
+  ) => void
   getAccountName: (code: string) => string
+  isSelected?: boolean
+  onCheckboxChange?: (entryId: string, checked: boolean) => void
 }
 
 export const ExistingJournalRow = memo(function ExistingJournalRow({
@@ -28,7 +35,10 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   deleteMode,
   accountOptions,
   onAccountSelect,
+  onFieldUpdate,
   getAccountName,
+  isSelected = false,
+  onCheckboxChange,
 }: ExistingJournalRowProps) {
   return (
     <tr
@@ -45,7 +55,13 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
     >
       {deleteMode && (
         <td className="py-2 px-1 text-center">
-          <Checkbox className="h-4 w-4" />
+          <Checkbox
+            className="h-4 w-4"
+            checked={isSelected}
+            onCheckedChange={(checked) =>
+              onCheckboxChange?.(entry.id, !!checked)
+            }
+          />
         </td>
       )}
       <td className="py-2 px-1">
@@ -55,6 +71,14 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
               type="text"
               defaultValue={entry.date}
               className="h-8 text-sm"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (e.currentTarget.value !== entry.date) {
+                    onFieldUpdate(entry.id, 'date', e.currentTarget.value)
+                  }
+                }
+              }}
             />
           </div>
           <div className="w-12">
@@ -73,7 +97,9 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           value={entry.karikata_cd}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) => onAccountSelect(entry.id, 'karikata_cd', option)}
+          onSelect={(option) =>
+            onAccountSelect(entry.id, 'karikata_cd', option)
+          }
           onChange={() => {}}
           className="h-8 text-sm"
         />
@@ -92,6 +118,18 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           type="text"
           defaultValue={formatCurrency(entry.karikata_value)}
           className="h-8 text-sm text-right font-mono"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              const newValue = parseInt(
+                e.currentTarget.value.replace(/[,\s]/g, ''),
+                10,
+              )
+              if (!isNaN(newValue) && newValue !== entry.karikata_value) {
+                onFieldUpdate(entry.id, 'debitAmount', newValue)
+              }
+            }
+          }}
         />
       </td>
       <td className="py-2 px-1">
@@ -99,7 +137,9 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           value={entry.kasikata_cd}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) => onAccountSelect(entry.id, 'kasikata_cd', option)}
+          onSelect={(option) =>
+            onAccountSelect(entry.id, 'kasikata_cd', option)
+          }
           onChange={() => {}}
           className="h-8 text-sm"
         />
@@ -118,6 +158,18 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           type="text"
           defaultValue={formatCurrency(entry.kasikata_value)}
           className="h-8 text-sm text-right font-mono"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              const newValue = parseInt(
+                e.currentTarget.value.replace(/[,\s]/g, ''),
+                10,
+              )
+              if (!isNaN(newValue) && newValue !== entry.kasikata_value) {
+                onFieldUpdate(entry.id, 'creditAmount', newValue)
+              }
+            }
+          }}
         />
       </td>
       <td className="py-2 px-1">
@@ -125,6 +177,14 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           type="text"
           defaultValue={entry.note || ''}
           className="h-8 text-sm"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (e.currentTarget.value !== (entry.note || '')) {
+                onFieldUpdate(entry.id, 'description', e.currentTarget.value)
+              }
+            }
+          }}
         />
       </td>
       <td className="py-2 px-1 text-center">

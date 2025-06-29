@@ -29,8 +29,10 @@ import {
 import { toast } from '@/components/ui/use-toast'
 import {
   createJournal,
+  deleteJournals,
   fetchJournals,
   selectJournalList,
+  updateJournal,
 } from '@/lib/redux/features/journalSlice'
 import {
   fetchAccountList,
@@ -74,6 +76,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   })
 
   const [deleteMode, setDeleteMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
@@ -175,12 +178,135 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // 既存行の科目選択ハンドラー（メモ化）
   const handleExistingAccountSelect = useCallback(
-    (entryId: string, field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
-      // 既存行の更新処理（現在は暫定でconsoleログ）
-      console.log('既存行科目更新:', entryId, field, option)
-      // TODO: 実際の更新処理を実装
+    async (
+      entryId: string,
+      field: 'karikata_cd' | 'kasikata_cd',
+      option: AutocompleteOption,
+    ) => {
+      try {
+        const updateData = {
+          id: entryId,
+          nendo: searchForm.fiscalYear,
+          ...(field === 'karikata_cd'
+            ? { debitAccount: option.code }
+            : { creditAccount: option.code }),
+        }
+
+        const result = await dispatch(updateJournal(updateData))
+
+        if (updateJournal.fulfilled.match(result)) {
+          toast({
+            title: '科目更新完了',
+            description: `${field === 'karikata_cd' ? '借方' : '貸方'}科目を${option.code}に更新しました`,
+            variant: 'default',
+          })
+
+          // 仕訳一覧を再取得
+          if (searchForm.fiscalYear !== 'none') {
+            dispatch(
+              fetchJournals({
+                fiscal_year: searchForm.fiscalYear,
+                account:
+                  searchForm.account !== 'none' ? searchForm.account : null,
+                month: searchForm.month !== 'none' ? searchForm.month : null,
+                accountSide:
+                  searchForm.side !== 'none' ? searchForm.side : null,
+                note: searchForm.description || null,
+                amount: searchForm.amount || null,
+                amountCondition:
+                  searchForm.amountCondition !== 'none'
+                    ? searchForm.amountCondition
+                    : null,
+                checked:
+                  searchForm.checked !== 'none' ? searchForm.checked : null,
+                page: currentPage,
+                pageSize: pageSize,
+              }),
+            )
+          }
+        } else {
+          const errorMessage = result.payload as string
+          toast({
+            title: '科目更新エラー',
+            description: errorMessage,
+            variant: 'destructive',
+          })
+        }
+      } catch (error) {
+        console.error('科目更新エラー:', error)
+        toast({
+          title: '科目更新エラー',
+          description: '科目更新中に予期しないエラーが発生しました',
+          variant: 'destructive',
+        })
+      }
     },
-    [],
+    [searchForm, dispatch, currentPage, pageSize],
+  )
+
+  // 既存行のフィールド変更ハンドラー（メモ化）
+  const handleExistingFieldUpdate = useCallback(
+    async (entryId: string, field: string, value: string | number) => {
+      try {
+        const updateData = {
+          id: entryId,
+          nendo: searchForm.fiscalYear,
+          ...(field === 'date' && { date: value as string }),
+          ...(field === 'debitAmount' && { debitAmount: value as number }),
+          ...(field === 'creditAmount' && { creditAmount: value as number }),
+          ...(field === 'description' && { description: value as string }),
+        }
+
+        const result = await dispatch(updateJournal(updateData))
+
+        if (updateJournal.fulfilled.match(result)) {
+          toast({
+            title: '仕訳更新完了',
+            description: '仕訳データが正常に更新されました',
+            variant: 'default',
+          })
+
+          // 仕訳一覧を再取得
+          if (searchForm.fiscalYear !== 'none') {
+            dispatch(
+              fetchJournals({
+                fiscal_year: searchForm.fiscalYear,
+                account:
+                  searchForm.account !== 'none' ? searchForm.account : null,
+                month: searchForm.month !== 'none' ? searchForm.month : null,
+                accountSide:
+                  searchForm.side !== 'none' ? searchForm.side : null,
+                note: searchForm.description || null,
+                amount: searchForm.amount || null,
+                amountCondition:
+                  searchForm.amountCondition !== 'none'
+                    ? searchForm.amountCondition
+                    : null,
+                checked:
+                  searchForm.checked !== 'none' ? searchForm.checked : null,
+                page: currentPage,
+                pageSize: pageSize,
+              }),
+            )
+          }
+        } else {
+          const errorMessage = result.payload as string
+          toast({
+            title: '仕訳更新エラー',
+            description: errorMessage,
+            variant: 'destructive',
+          })
+        }
+      } catch (error) {
+        console.error('仕訳更新エラー:', error)
+        toast({
+          title: '仕訳更新エラー',
+          description: '仕訳更新中に予期しないエラーが発生しました',
+          variant: 'destructive',
+        })
+      }
+    },
+    [searchForm, dispatch, currentPage, pageSize],
   )
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
@@ -203,15 +329,17 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
     // Reduxアクション経由で仕訳登録
     try {
-      const result = await dispatch(createJournal({
-        nendo: newRowData.nendo,
-        date: newRowData.date,
-        debitAccount: newRowData.karikata_cd,
-        debitAmount: newRowData.karikata_value,
-        creditAccount: newRowData.kasikata_cd,
-        creditAmount: newRowData.kasikata_value,
-        description: newRowData.note || '',
-      }))
+      const result = await dispatch(
+        createJournal({
+          nendo: newRowData.nendo,
+          date: newRowData.date,
+          debitAccount: newRowData.karikata_cd,
+          debitAmount: newRowData.karikata_value,
+          creditAccount: newRowData.kasikata_cd,
+          creditAmount: newRowData.kasikata_value,
+          description: newRowData.note || '',
+        }),
+      )
 
       if (createJournal.fulfilled.match(result)) {
         // 成功時の処理
@@ -235,18 +363,25 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
         // 仕訳一覧を再取得
         if (searchForm.fiscalYear !== 'none') {
-          dispatch(fetchJournals({
-            fiscal_year: searchForm.fiscalYear,
-            account: searchForm.account !== 'none' ? searchForm.account : null,
-            month: searchForm.month !== 'none' ? searchForm.month : null,
-            accountSide: searchForm.side !== 'none' ? searchForm.side : null,
-            note: searchForm.description || null,
-            amount: searchForm.amount || null,
-            amountCondition: searchForm.amountCondition !== 'none' ? searchForm.amountCondition : null,
-            checked: searchForm.checked !== 'none' ? searchForm.checked : null,
-            page: currentPage,
-            pageSize: pageSize,
-          }))
+          dispatch(
+            fetchJournals({
+              fiscal_year: searchForm.fiscalYear,
+              account:
+                searchForm.account !== 'none' ? searchForm.account : null,
+              month: searchForm.month !== 'none' ? searchForm.month : null,
+              accountSide: searchForm.side !== 'none' ? searchForm.side : null,
+              note: searchForm.description || null,
+              amount: searchForm.amount || null,
+              amountCondition:
+                searchForm.amountCondition !== 'none'
+                  ? searchForm.amountCondition
+                  : null,
+              checked:
+                searchForm.checked !== 'none' ? searchForm.checked : null,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
         }
       } else {
         // エラー時の処理
@@ -281,6 +416,96 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   // フォーカス・ブラーハンドラー（メモ化）
   const handleNewRowFocus = useCallback(() => {}, [])
   const handleNewRowBlur = useCallback(() => {}, [])
+
+  // 削除対象の選択管理
+  const handleCheckboxChange = useCallback(
+    (entryId: string, checked: boolean) => {
+      setSelectedIds((prev) => {
+        if (checked) {
+          return [...prev, entryId]
+        } else {
+          return prev.filter((id) => id !== entryId)
+        }
+      })
+    },
+    [],
+  )
+
+  // 削除実行
+  const handleDelete = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast({
+        title: '削除対象なし',
+        description: '削除する仕訳を選択してください',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      const result = await dispatch(
+        deleteJournals({
+          fiscal_year: searchForm.fiscalYear,
+          ids: selectedIds.map((id) => parseInt(id, 10)),
+        }),
+      )
+
+      if (deleteJournals.fulfilled.match(result)) {
+        toast({
+          title: '削除完了',
+          description: `${selectedIds.length}件の仕訳を削除しました`,
+          variant: 'default',
+        })
+
+        // 削除後は選択状態をクリア
+        setSelectedIds([])
+        setDeleteMode(false)
+
+        // 仕訳一覧を再取得
+        if (searchForm.fiscalYear !== 'none') {
+          dispatch(
+            fetchJournals({
+              fiscal_year: searchForm.fiscalYear,
+              account:
+                searchForm.account !== 'none' ? searchForm.account : null,
+              month: searchForm.month !== 'none' ? searchForm.month : null,
+              accountSide: searchForm.side !== 'none' ? searchForm.side : null,
+              note: searchForm.description || null,
+              amount: searchForm.amount || null,
+              amountCondition:
+                searchForm.amountCondition !== 'none'
+                  ? searchForm.amountCondition
+                  : null,
+              checked:
+                searchForm.checked !== 'none' ? searchForm.checked : null,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
+        }
+      } else {
+        const errorMessage = result.payload as string
+        toast({
+          title: '削除エラー',
+          description: errorMessage,
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('削除エラー:', error)
+      toast({
+        title: '削除エラー',
+        description: '削除中に予期しないエラーが発生しました',
+        variant: 'destructive',
+      })
+    }
+  }, [selectedIds, searchForm, dispatch, currentPage, pageSize])
+
+  // 削除モード切り替え時に選択状態をクリア
+  const handleDeleteModeToggle = useCallback(() => {
+    setDeleteMode((prev) => !prev)
+    setSelectedIds([])
+  }, [])
 
   // 科目コードから科目名を取得する関数（メモ化）
   const getAccountName = useCallback(
@@ -574,12 +799,23 @@ const JournalEntryContent = memo(function JournalEntryContent() {
               <Button
                 variant="outline"
                 className="h-9 border-red-500 text-red-500 hover:bg-red-50"
-                onClick={() => setDeleteMode(!deleteMode)}
+                onClick={handleDeleteModeToggle}
                 disabled={!isSearchValid}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 削除モード
               </Button>
+              {deleteMode && (
+                <Button
+                  variant="destructive"
+                  className="h-9"
+                  onClick={handleDelete}
+                  disabled={selectedIds.length === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  選択項目を削除 ({selectedIds.length})
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
@@ -675,7 +911,10 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                         deleteMode={deleteMode}
                         accountOptions={accountOptions}
                         onAccountSelect={handleExistingAccountSelect}
+                        onFieldUpdate={handleExistingFieldUpdate}
                         getAccountName={getAccountName}
+                        isSelected={selectedIds.includes(entry.id)}
+                        onCheckboxChange={handleCheckboxChange}
                       />
                     ))}
                   </tbody>

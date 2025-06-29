@@ -1,7 +1,9 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 
 import { CreateJournalRequest } from '@/lib/backend/services/journal/create-journal'
+import { DeleteJournalsRequest } from '@/lib/backend/services/journal/delete-journals'
 import { JournalListItem } from '@/lib/backend/services/journal/list-journals'
+import { UpdateJournalRequest } from '@/lib/backend/services/journal/update-journal'
 import type { RootState } from '@/lib/redux/store'
 
 export interface JournalSearchParams {
@@ -125,6 +127,81 @@ export const createJournal = createAsyncThunk<
   },
 )
 
+export const updateJournal = createAsyncThunk<
+  { success: boolean; message: string },
+  UpdateJournalRequest
+>(
+  'journal/updateJournal',
+  async (request: UpdateJournalRequest, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${request.nendo}/journal/${request.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            date: request.date,
+            karikata_cd: request.debitAccount,
+            karikata_value: request.debitAmount,
+            kasikata_cd: request.creditAccount,
+            kasikata_value: request.creditAmount,
+            note: request.description,
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || '仕訳更新に失敗しました')
+      }
+
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '仕訳データの更新中にエラーが発生しました',
+      )
+    }
+  },
+)
+
+export const deleteJournals = createAsyncThunk<
+  { success: boolean; deletedCount: number; message: string },
+  DeleteJournalsRequest
+>(
+  'journal/deleteJournals',
+  async (request: DeleteJournalsRequest, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${request.fiscal_year}/journal`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ids: request.ids }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || '仕訳削除に失敗しました')
+      }
+
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '仕訳データの削除中にエラーが発生しました',
+      )
+    }
+  },
+)
+
 export const journalSlice = createSlice({
   name: 'journal',
   initialState,
@@ -157,6 +234,28 @@ export const journalSlice = createSlice({
         state.journalListLoading = false
       })
       .addCase(createJournal.rejected, (state, action) => {
+        state.journalListLoading = false
+        state.journalListError = action.payload as string
+      })
+      .addCase(updateJournal.pending, (state) => {
+        state.journalListLoading = true
+        state.journalListError = null
+      })
+      .addCase(updateJournal.fulfilled, (state) => {
+        state.journalListLoading = false
+      })
+      .addCase(updateJournal.rejected, (state, action) => {
+        state.journalListLoading = false
+        state.journalListError = action.payload as string
+      })
+      .addCase(deleteJournals.pending, (state) => {
+        state.journalListLoading = true
+        state.journalListError = null
+      })
+      .addCase(deleteJournals.fulfilled, (state) => {
+        state.journalListLoading = false
+      })
+      .addCase(deleteJournals.rejected, (state, action) => {
         state.journalListLoading = false
         state.journalListError = action.payload as string
       })
