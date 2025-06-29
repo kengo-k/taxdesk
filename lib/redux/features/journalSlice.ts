@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSelector, createSlice } from '@reduxjs/toolkit'
 
+import { CreateJournalRequest } from '@/lib/backend/services/journal/create-journal'
 import { JournalListItem } from '@/lib/backend/services/journal/list-journals'
 import type { RootState } from '@/lib/redux/store'
 
@@ -83,6 +84,47 @@ export const fetchJournals = createAsyncThunk<
   },
 )
 
+export const createJournal = createAsyncThunk<
+  { success: boolean; message: string },
+  CreateJournalRequest
+>(
+  'journal/createJournal',
+  async (journal: CreateJournalRequest, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${journal.nendo}/journal`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            date: journal.date,
+            karikata_cd: journal.debitAccount,
+            karikata_value: journal.debitAmount,
+            kasikata_cd: journal.creditAccount,
+            kasikata_value: journal.creditAmount,
+            note: journal.description,
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || '仕訳登録に失敗しました')
+      }
+
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error
+          ? error.message
+          : '仕訳データの作成中にエラーが発生しました',
+      )
+    }
+  },
+)
+
 export const journalSlice = createSlice({
   name: 'journal',
   initialState,
@@ -104,6 +146,17 @@ export const journalSlice = createSlice({
         state.journalListCount = action.payload.data.all_count
       })
       .addCase(fetchJournals.rejected, (state, action) => {
+        state.journalListLoading = false
+        state.journalListError = action.payload as string
+      })
+      .addCase(createJournal.pending, (state) => {
+        state.journalListLoading = true
+        state.journalListError = null
+      })
+      .addCase(createJournal.fulfilled, (state) => {
+        state.journalListLoading = false
+      })
+      .addCase(createJournal.rejected, (state, action) => {
         state.journalListLoading = false
         state.journalListError = action.payload as string
       })

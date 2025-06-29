@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from '@/components/ui/use-toast'
 import {
+  createJournal,
   fetchJournals,
   selectJournalList,
 } from '@/lib/redux/features/journalSlice'
@@ -185,7 +186,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
 
   // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
-  const handleNewRowSubmit = useCallback(() => {
+  const handleNewRowSubmit = useCallback(async () => {
     // accountListと月情報を含めたバリデーション用データを作成
     const validationData = {
       ...newRowData,
@@ -200,28 +201,71 @@ const JournalEntryContent = memo(function JournalEntryContent() {
       return
     }
 
-    // バリデーション成功時の暫定処理
-    console.log('新規仕訳登録:', newRowData)
+    // Reduxアクション経由で仕訳登録
+    try {
+      const result = await dispatch(createJournal({
+        nendo: newRowData.nendo,
+        date: newRowData.date,
+        debitAccount: newRowData.karikata_cd,
+        debitAmount: newRowData.karikata_value,
+        creditAccount: newRowData.kasikata_cd,
+        creditAmount: newRowData.kasikata_value,
+        description: newRowData.note || '',
+      }))
 
-    // 成功ダイアログを表示
-    toast({
-      title: '仕訳登録完了',
-      description: `日付: ${newRowData.date}\n借方: ${newRowData.karikata_cd} (${newRowData.karikata_value}円)\n貸方: ${newRowData.kasikata_cd} (${newRowData.kasikata_value}円)\n摘要: ${newRowData.note || '(なし)'}\n\n※実際の登録処理は未実装です`,
-      variant: 'default',
-    })
+      if (createJournal.fulfilled.match(result)) {
+        // 成功時の処理
+        toast({
+          title: '仕訳登録完了',
+          description: `日付: ${newRowData.date}\n借方: ${newRowData.karikata_cd} (${newRowData.karikata_value}円)\n貸方: ${newRowData.kasikata_cd} (${newRowData.kasikata_value}円)\n摘要: ${newRowData.note || '(なし)'}`,
+          variant: 'default',
+        })
 
-    // 登録後、フィールドをクリア
-    setNewRowData({
-      date: '',
-      karikata_cd: '',
-      kasikata_cd: '',
-      karikata_value: 0,
-      kasikata_value: 0,
-      note: '',
-      nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
-    })
-    setNewRowErrors({})
-  }, [newRowData, searchForm.fiscalYear, searchForm.month, accountList])
+        // 登録後、フィールドをクリア
+        setNewRowData({
+          date: '',
+          karikata_cd: '',
+          kasikata_cd: '',
+          karikata_value: 0,
+          kasikata_value: 0,
+          note: '',
+          nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+        })
+        setNewRowErrors({})
+
+        // 仕訳一覧を再取得
+        if (searchForm.fiscalYear !== 'none') {
+          dispatch(fetchJournals({
+            fiscal_year: searchForm.fiscalYear,
+            account: searchForm.account,
+            month: searchForm.month,
+            accountSide: searchForm.side,
+            note: searchForm.description,
+            amount: searchForm.amount,
+            amountCondition: searchForm.amountCondition,
+            checked: searchForm.checked,
+            page: currentPage,
+            pageSize: pageSize,
+          }))
+        }
+      } else {
+        // エラー時の処理
+        const errorMessage = result.payload as string
+        toast({
+          title: '仕訳登録エラー',
+          description: errorMessage,
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('仕訳登録エラー:', error)
+      toast({
+        title: '仕訳登録エラー',
+        description: '仕訳登録中に予期しないエラーが発生しました',
+        variant: 'destructive',
+      })
+    }
+  }, [newRowData, searchForm, accountList, dispatch, currentPage, pageSize])
 
   // キーダウンハンドラー（メモ化）
   const handleNewRowKeyDown = useCallback(
