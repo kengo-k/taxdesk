@@ -34,6 +34,7 @@ export const NewJournalRow = memo(function NewJournalRow({
 }: NewJournalRowProps) {
   return (
     <tr
+      data-entry-id="new"
       className={`border-t ${
         isWeekend(newRowData.date || '')
           ? getDayOfWeekKanji(newRowData.date || '') === '土'

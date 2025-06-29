@@ -137,16 +137,29 @@ const JournalEntryContent = memo(function JournalEntryContent() {
       }))
     }
   }, [searchForm.fiscalYear, searchForm.month])
-  const [newRowErrors, setNewRowErrors] = useState<Record<string, string>>({})
+  // エラーサマリー表示用（フォーカス中の行のエラーを表示）
+  const currentRowErrors = useMemo(() => {
+    // フォーカス中の行にエラーがある場合はそのエラーを表示
+    if (focusedRowId && existingRowErrors[focusedRowId] && Object.keys(existingRowErrors[focusedRowId]).length > 0) {
+      return Object.entries(existingRowErrors[focusedRowId]).map(([field, message]) => ({
+        field: getFieldDisplayName(field),
+        message,
+      }))
+    }
+    
+    // フォーカス中の行にエラーがない場合は詳細を空にする
+    return []
+  }, [focusedRowId, existingRowErrors])
 
-  // エラーサマリー表示用（エラーがある限り常に表示）
-  const showErrorSummary = Object.keys(newRowErrors).length > 0
-  const focusedRowErrors = Object.entries(newRowErrors).map(
-    ([field, message]) => ({
-      field: getFieldDisplayName(field),
-      message,
-    }),
-  )
+  // エラーがある行が存在するかチェック（タイトル表示用）
+  const hasAnyErrors = useMemo(() => {
+    return Object.keys(existingRowErrors).some(id => Object.keys(existingRowErrors[id]).length > 0)
+  }, [existingRowErrors])
+
+  const showErrorSummary = hasAnyErrors // エラーがある限りタイトルは表示
+  const focusedRowErrors = currentRowErrors // 詳細はフォーカス中の行のエラーのみ
+
+  // エラー状態の統一管理により、新規行と既存行で一貫したエラー表示を実現
 
   // 勘定科目リストをオートコンプリート用に変換（メモ化）
   const accountOptions: AutocompleteOption[] = useMemo(
@@ -226,6 +239,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
       if (!rowValidation.valid) {
         // 該当行のエラーを設定
+        console.log('バリデーションエラー設定:', entryId, rowValidation.errors)
         setExistingRowErrors((prev) => ({
           ...prev,
           [entryId]: rowValidation.errors,
@@ -233,6 +247,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
         return false
       } else {
         // 該当行のエラーをクリア
+        console.log('バリデーションエラークリア:', entryId)
         setExistingRowErrors((prev) => {
           const newErrors = { ...prev }
           delete newErrors[entryId]
@@ -363,28 +378,22 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // 既存行のフォーカス管理
   const handleExistingRowFocus = useCallback((entryId: string) => {
+    console.log('フォーカス設定:', entryId)
     setFocusedRowId(entryId)
   }, [])
 
   const handleExistingRowBlur = useCallback((entryId: string) => {
-    // 同じ行内の別フィールドに移動する可能性があるので、より長い遅延を設定
+    console.log('ブラーイベント:', entryId)
+    // 短い遅延で、本当に行外に移ったかチェック
     setTimeout(() => {
-      setFocusedRowId((current) => {
-        // フォーカスが同じ行にまだある場合はクリアしない
-        if (current === entryId) {
-          // さらにチェック: 現在フォーカスされている要素が同じ行内かどうか
-          const activeElement = document.activeElement
-          if (
-            activeElement &&
-            activeElement.closest(`[data-entry-id="${entryId}"]`)
-          ) {
-            return current // フォーカスは同じ行内にあるのでクリアしない
-          }
-          return null // フォーカスが行外に移ったのでクリア
-        }
-        return current
-      })
-    }, 200)
+      const activeElement = document.activeElement
+      // テーブル外（検索エリアなど）にフォーカスが移った場合はクリア
+      if (!activeElement || !activeElement.closest('table')) {
+        console.log('テーブル外にフォーカス移動、フォーカスをクリア')
+        setFocusedRowId(null)
+      }
+      // 他の行にフォーカスが移った場合は、その行のonFocusで自動的に切り替わる
+    }, 50) // 短い遅延（50ms）
   }, [])
 
   // 個別バリデーションは削除（Enterキーのみでバリデーション）
@@ -401,7 +410,11 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     const rowValidation = validateJournalRow(validationData)
 
     if (!rowValidation.valid) {
-      setNewRowErrors(rowValidation.errors)
+      // 新規行のエラーを統一された形式で設定
+      setExistingRowErrors(prev => ({
+        ...prev,
+        "new": rowValidation.errors
+      }))
       return
     }
 
@@ -437,7 +450,12 @@ const JournalEntryContent = memo(function JournalEntryContent() {
           note: '',
           nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
         })
-        setNewRowErrors({})
+        // 新規行のエラーをクリア
+        setExistingRowErrors(prev => {
+          const newErrors = { ...prev }
+          delete newErrors["new"]
+          return newErrors
+        })
 
         // 仕訳一覧を再取得
         if (searchForm.fiscalYear !== 'none') {
@@ -491,9 +509,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     [handleNewRowSubmit],
   )
 
-  // フォーカス・ブラーハンドラー（メモ化）
-  const handleNewRowFocus = useCallback(() => {}, [])
-  const handleNewRowBlur = useCallback(() => {}, [])
+  // 新規行のフォーカス管理は統一されたhandleExistingRowBlurを使用
 
   // 削除対象の選択管理
   const handleCheckboxChange = useCallback(
@@ -924,17 +940,19 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="h-4 w-4 text-red-600" />
                     <span className="font-medium text-red-800">
-                      新規行のエラー
+                      入力エラーがあります
                     </span>
                   </div>
-                  <ul className="text-sm text-red-700 space-y-1">
-                    {focusedRowErrors.map((error, index) => (
-                      <li key={index}>
-                        • <span className="font-medium">{error.field}:</span>{' '}
-                        {error.message}
-                      </li>
-                    ))}
-                  </ul>
+                  {focusedRowErrors.length > 0 && (
+                    <ul className="text-sm text-red-700 space-y-1">
+                      {focusedRowErrors.map((error, index) => (
+                        <li key={index}>
+                          • <span className="font-medium">{error.field}:</span>{' '}
+                          {error.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
               <div className="overflow-x-auto">
@@ -971,14 +989,14 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                     {/* 新規入力行 */}
                     <NewJournalRow
                       newRowData={newRowData}
-                      newRowErrors={newRowErrors}
+                      newRowErrors={existingRowErrors["new"] || {}}
                       accountOptions={accountOptions}
                       deleteMode={deleteMode}
                       onFieldChange={handleNewRowFieldChange}
                       onAccountSelect={handleAccountSelect}
                       onKeyDown={handleNewRowKeyDown}
-                      onFocus={handleNewRowFocus}
-                      onBlur={handleNewRowBlur}
+                      onFocus={() => setFocusedRowId("new")}
+                      onBlur={() => handleExistingRowBlur("new")}
                       getAccountName={getAccountName}
                     />
                     {journalList.map((entry, index) => (
