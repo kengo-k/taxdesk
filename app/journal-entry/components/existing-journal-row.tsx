@@ -1,4 +1,6 @@
-import { memo } from 'react'
+import { memo, useEffect, useState } from 'react'
+
+import { useDebouncedCallback } from 'use-debounce'
 
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -54,6 +56,78 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   const getFieldValue = (fieldName: string, originalValue: any) => {
     return fieldData[fieldName] ?? originalValue
   }
+
+  // ローカルstate
+  const [localDate, setLocalDate] = useState(
+    getFieldValue('date', entry.date) || '',
+  )
+  const [localKarikataCode, setLocalKarikataCode] = useState(
+    getFieldValue('karikata_cd', entry.karikata_cd) || '',
+  )
+  const [localKasikataCode, setLocalKasikataCode] = useState(
+    getFieldValue('kasikata_cd', entry.kasikata_cd) || '',
+  )
+  const [localKarikataValue, setLocalKarikataValue] = useState(
+    formatCurrency(getFieldValue('karikata_value', entry.karikata_value)),
+  )
+  const [localKasikataValue, setLocalKasikataValue] = useState(
+    formatCurrency(getFieldValue('kasikata_value', entry.kasikata_value)),
+  )
+  const [localNote, setLocalNote] = useState(
+    getFieldValue('note', entry.note || '') || '',
+  )
+
+  // propsの値が変更されたときにローカルstateを同期
+  useEffect(() => {
+    setLocalDate(getFieldValue('date', entry.date) || '')
+  }, [fieldData.date, entry.date])
+
+  useEffect(() => {
+    setLocalKarikataCode(getFieldValue('karikata_cd', entry.karikata_cd) || '')
+  }, [fieldData.karikata_cd, entry.karikata_cd])
+
+  useEffect(() => {
+    setLocalKasikataCode(getFieldValue('kasikata_cd', entry.kasikata_cd) || '')
+  }, [fieldData.kasikata_cd, entry.kasikata_cd])
+
+  useEffect(() => {
+    const value = getFieldValue('karikata_value', entry.karikata_value)
+    setLocalKarikataValue(formatCurrency(value))
+  }, [fieldData.karikata_value, entry.karikata_value])
+
+  useEffect(() => {
+    const value = getFieldValue('kasikata_value', entry.kasikata_value)
+    setLocalKasikataValue(formatCurrency(value))
+  }, [fieldData.kasikata_value, entry.kasikata_value])
+
+  useEffect(() => {
+    setLocalNote(getFieldValue('note', entry.note || '') || '')
+  }, [fieldData.note, entry.note])
+
+  // debounceされたコールバック（300ms）
+  const debouncedDateChange = useDebouncedCallback((value: string) => {
+    onFieldChange(entry.id, 'date', value)
+  }, 300)
+
+  const debouncedKarikataCodeChange = useDebouncedCallback((value: string) => {
+    onFieldChange(entry.id, 'karikata_cd', value)
+  }, 300)
+
+  const debouncedKasikataCodeChange = useDebouncedCallback((value: string) => {
+    onFieldChange(entry.id, 'kasikata_cd', value)
+  }, 300)
+
+  const debouncedKarikataValueChange = useDebouncedCallback((value: number) => {
+    onFieldChange(entry.id, 'karikata_value', value)
+  }, 300)
+
+  const debouncedKasikataValueChange = useDebouncedCallback((value: number) => {
+    onFieldChange(entry.id, 'kasikata_value', value)
+  }, 300)
+
+  const debouncedNoteChange = useDebouncedCallback((value: string) => {
+    onFieldChange(entry.id, 'note', value)
+  }, 300)
 
   // フィールドにエラーがあるかチェック
   const hasFieldError = (fieldName: string) => !!errors[fieldName]
@@ -112,10 +186,12 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           <div className="flex-1 relative">
             <Input
               type="text"
-              value={getFieldValue('date', entry.date)}
+              value={localDate}
               className={getFieldClassName('date', 'h-8 text-sm', entry.date)}
               onChange={(e) => {
-                onFieldChange(entry.id, 'date', e.target.value)
+                const value = e.target.value
+                setLocalDate(value)
+                debouncedDateChange(value)
               }}
               onFocus={() => onFocus?.(entry.id)}
               onBlur={() => onBlur?.(entry.id)}
@@ -145,14 +221,16 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       </td>
       <td className="py-2 px-1 relative">
         <Autocomplete
-          value={getFieldValue('karikata_cd', entry.karikata_cd)}
+          value={localKarikataCode}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) =>
+          onSelect={(option) => {
+            setLocalKarikataCode(option.code || '')
             onAccountSelect(entry.id, 'karikata_cd', option)
-          }
+          }}
           onChange={(value) => {
-            onFieldChange(entry.id, 'karikata_cd', value)
+            setLocalKarikataCode(value)
+            debouncedKarikataCodeChange(value)
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -186,18 +264,18 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       <td className="py-2 px-1 relative">
         <Input
           type="text"
-          value={formatCurrency(
-            getFieldValue('karikata_value', entry.karikata_value),
-          )}
+          value={localKarikataValue}
           className={getFieldClassName(
             'karikata_value',
             'h-8 text-sm text-right font-mono',
             entry.karikata_value,
           )}
           onChange={(e) => {
-            const newValue = parseInt(e.target.value.replace(/[,\s]/g, ''), 10)
+            const value = e.target.value
+            setLocalKarikataValue(value)
+            const newValue = parseInt(value.replace(/[,\s]/g, ''), 10)
             if (!isNaN(newValue)) {
-              onFieldChange(entry.id, 'karikata_value', newValue)
+              debouncedKarikataValueChange(newValue)
             }
           }}
           onFocus={() => onFocus?.(entry.id)}
@@ -217,14 +295,16 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       </td>
       <td className="py-2 px-1 relative">
         <Autocomplete
-          value={getFieldValue('kasikata_cd', entry.kasikata_cd)}
+          value={localKasikataCode}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) =>
+          onSelect={(option) => {
+            setLocalKasikataCode(option.code || '')
             onAccountSelect(entry.id, 'kasikata_cd', option)
-          }
+          }}
           onChange={(value) => {
-            onFieldChange(entry.id, 'kasikata_cd', value)
+            setLocalKasikataCode(value)
+            debouncedKasikataCodeChange(value)
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -258,18 +338,18 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       <td className="py-2 px-1 relative">
         <Input
           type="text"
-          value={formatCurrency(
-            getFieldValue('kasikata_value', entry.kasikata_value),
-          )}
+          value={localKasikataValue}
           className={getFieldClassName(
             'kasikata_value',
             'h-8 text-sm text-right font-mono',
             entry.kasikata_value,
           )}
           onChange={(e) => {
-            const newValue = parseInt(e.target.value.replace(/[,\s]/g, ''), 10)
+            const value = e.target.value
+            setLocalKasikataValue(value)
+            const newValue = parseInt(value.replace(/[,\s]/g, ''), 10)
             if (!isNaN(newValue)) {
-              onFieldChange(entry.id, 'kasikata_value', newValue)
+              debouncedKasikataValueChange(newValue)
             }
           }}
           onFocus={() => onFocus?.(entry.id)}
@@ -290,10 +370,12 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       <td className="py-2 px-1 relative">
         <Input
           type="text"
-          value={getFieldValue('note', entry.note || '')}
+          value={localNote}
           className={getFieldClassName('note', 'h-8 text-sm', entry.note || '')}
           onChange={(e) => {
-            onFieldChange(entry.id, 'note', e.target.value)
+            const value = e.target.value
+            setLocalNote(value)
+            debouncedNoteChange(value)
           }}
           onFocus={() => onFocus?.(entry.id)}
           onBlur={() => onBlur?.(entry.id)}
