@@ -140,20 +140,28 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   // エラーサマリー表示用（フォーカス中の行のエラーを表示）
   const currentRowErrors = useMemo(() => {
     // フォーカス中の行にエラーがある場合はそのエラーを表示
-    if (focusedRowId && existingRowErrors[focusedRowId] && Object.keys(existingRowErrors[focusedRowId]).length > 0) {
-      return Object.entries(existingRowErrors[focusedRowId]).map(([field, message]) => ({
-        field: getFieldDisplayName(field),
-        message,
-      }))
+    if (
+      focusedRowId &&
+      existingRowErrors[focusedRowId] &&
+      Object.keys(existingRowErrors[focusedRowId]).length > 0
+    ) {
+      return Object.entries(existingRowErrors[focusedRowId]).map(
+        ([field, message]) => ({
+          field: getFieldDisplayName(field),
+          message,
+        }),
+      )
     }
-    
+
     // フォーカス中の行にエラーがない場合は詳細を空にする
     return []
   }, [focusedRowId, existingRowErrors])
 
   // エラーがある行が存在するかチェック（タイトル表示用）
   const hasAnyErrors = useMemo(() => {
-    return Object.keys(existingRowErrors).some(id => Object.keys(existingRowErrors[id]).length > 0)
+    return Object.keys(existingRowErrors).some(
+      (id) => Object.keys(existingRowErrors[id]).length > 0,
+    )
   }, [existingRowErrors])
 
   const showErrorSummary = hasAnyErrors // エラーがある限りタイトルは表示
@@ -378,12 +386,10 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
   // 既存行のフォーカス管理
   const handleExistingRowFocus = useCallback((entryId: string) => {
-    console.log('フォーカス設定:', entryId)
     setFocusedRowId(entryId)
   }, [])
 
   const handleExistingRowBlur = useCallback((entryId: string) => {
-    console.log('ブラーイベント:', entryId)
     // 短い遅延で、本当に行外に移ったかチェック
     setTimeout(() => {
       const activeElement = document.activeElement
@@ -411,9 +417,9 @@ const JournalEntryContent = memo(function JournalEntryContent() {
 
     if (!rowValidation.valid) {
       // 新規行のエラーを統一された形式で設定
-      setExistingRowErrors(prev => ({
+      setExistingRowErrors((prev) => ({
         ...prev,
-        "new": rowValidation.errors
+        new: rowValidation.errors,
       }))
       return
     }
@@ -451,9 +457,9 @@ const JournalEntryContent = memo(function JournalEntryContent() {
           nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
         })
         // 新規行のエラーをクリア
-        setExistingRowErrors(prev => {
+        setExistingRowErrors((prev) => {
           const newErrors = { ...prev }
-          delete newErrors["new"]
+          delete newErrors['new']
           return newErrors
         })
 
@@ -989,14 +995,14 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                     {/* 新規入力行 */}
                     <NewJournalRow
                       newRowData={newRowData}
-                      newRowErrors={existingRowErrors["new"] || {}}
+                      newRowErrors={existingRowErrors['new'] || {}}
                       accountOptions={accountOptions}
                       deleteMode={deleteMode}
                       onFieldChange={handleNewRowFieldChange}
                       onAccountSelect={handleAccountSelect}
                       onKeyDown={handleNewRowKeyDown}
-                      onFocus={() => setFocusedRowId("new")}
-                      onBlur={() => handleExistingRowBlur("new")}
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => handleExistingRowBlur('new')}
                       getAccountName={getAccountName}
                     />
                     {journalList.map((entry, index) => (

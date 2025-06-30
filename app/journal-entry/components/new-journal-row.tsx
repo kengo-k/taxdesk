@@ -1,4 +1,5 @@
-import { memo, useState, useEffect } from 'react'
+import { memo, useEffect, useState } from 'react'
+
 import { useDebouncedCallback } from 'use-debounce'
 
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
@@ -33,20 +34,71 @@ export const NewJournalRow = memo(function NewJournalRow({
   onBlur,
   getAccountName,
 }: NewJournalRowProps) {
+  // ローカルstate
   const [localDate, setLocalDate] = useState(newRowData.date || '')
+  const [localKarikataCode, setLocalKarikataCode] = useState(
+    newRowData.karikata_cd || '',
+  )
+  const [localKasikataCode, setLocalKasikataCode] = useState(
+    newRowData.kasikata_cd || '',
+  )
+  const [localKarikataValue, setLocalKarikataValue] = useState(
+    newRowData.karikata_value || '',
+  )
+  const [localKasikataValue, setLocalKasikataValue] = useState(
+    newRowData.kasikata_value || '',
+  )
+  const [localNote, setLocalNote] = useState(newRowData.note || '')
 
   // propsの値が変更されたときにローカルstateを同期
   useEffect(() => {
     setLocalDate(newRowData.date || '')
   }, [newRowData.date])
 
+  useEffect(() => {
+    setLocalKarikataCode(newRowData.karikata_cd || '')
+  }, [newRowData.karikata_cd])
+
+  useEffect(() => {
+    setLocalKasikataCode(newRowData.kasikata_cd || '')
+  }, [newRowData.kasikata_cd])
+
+  useEffect(() => {
+    setLocalKarikataValue(newRowData.karikata_value || '')
+  }, [newRowData.karikata_value])
+
+  useEffect(() => {
+    setLocalKasikataValue(newRowData.kasikata_value || '')
+  }, [newRowData.kasikata_value])
+
+  useEffect(() => {
+    setLocalNote(newRowData.note || '')
+  }, [newRowData.note])
+
   // debounceされたコールバック（300ms）
-  const debouncedOnFieldChange = useDebouncedCallback(
-    (value: string) => {
-      onFieldChange('date', value)
-    },
-    300
-  )
+  const debouncedDateChange = useDebouncedCallback((value: string) => {
+    onFieldChange('date', value)
+  }, 300)
+
+  const debouncedKarikataCodeChange = useDebouncedCallback((value: string) => {
+    onFieldChange('karikata_cd', value)
+  }, 300)
+
+  const debouncedKasikataCodeChange = useDebouncedCallback((value: string) => {
+    onFieldChange('kasikata_cd', value)
+  }, 300)
+
+  const debouncedKarikataValueChange = useDebouncedCallback((value: number) => {
+    onFieldChange('karikata_value', value)
+  }, 300)
+
+  const debouncedKasikataValueChange = useDebouncedCallback((value: number) => {
+    onFieldChange('kasikata_value', value)
+  }, 300)
+
+  const debouncedNoteChange = useDebouncedCallback((value: string) => {
+    onFieldChange('note', value)
+  }, 300)
   return (
     <tr
       data-entry-id="new"
@@ -70,7 +122,7 @@ export const NewJournalRow = memo(function NewJournalRow({
               onChange={(e) => {
                 const value = e.target.value
                 setLocalDate(value)
-                debouncedOnFieldChange(value)
+                debouncedDateChange(value)
               }}
               onKeyDown={onKeyDown}
               onFocus={onFocus}
@@ -91,11 +143,17 @@ export const NewJournalRow = memo(function NewJournalRow({
       </td>
       <td className="py-2 px-1">
         <Autocomplete
-          value={newRowData.karikata_cd}
+          value={localKarikataCode}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) => onAccountSelect('karikata_cd', option)}
-          onChange={(value) => onFieldChange('karikata_cd', value)}
+          onSelect={(option) => {
+            setLocalKarikataCode(option.code || '')
+            onAccountSelect('karikata_cd', option)
+          }}
+          onChange={(value) => {
+            setLocalKarikataCode(value)
+            debouncedKarikataCodeChange(value)
+          }}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -116,10 +174,12 @@ export const NewJournalRow = memo(function NewJournalRow({
         <Input
           type="number"
           placeholder="借方金額"
-          value={newRowData.karikata_value || ''}
-          onChange={(e) =>
-            onFieldChange('karikata_value', Number(e.target.value) || 0)
-          }
+          value={localKarikataValue}
+          onChange={(e) => {
+            const value = e.target.value
+            setLocalKarikataValue(value)
+            debouncedKarikataValueChange(Number(value) || 0)
+          }}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -128,11 +188,17 @@ export const NewJournalRow = memo(function NewJournalRow({
       </td>
       <td className="py-2 px-1">
         <Autocomplete
-          value={newRowData.kasikata_cd}
+          value={localKasikataCode}
           placeholder="科目コード"
           options={accountOptions}
-          onSelect={(option) => onAccountSelect('kasikata_cd', option)}
-          onChange={(value) => onFieldChange('kasikata_cd', value)}
+          onSelect={(option) => {
+            setLocalKasikataCode(option.code || '')
+            onAccountSelect('kasikata_cd', option)
+          }}
+          onChange={(value) => {
+            setLocalKasikataCode(value)
+            debouncedKasikataCodeChange(value)
+          }}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -153,10 +219,12 @@ export const NewJournalRow = memo(function NewJournalRow({
         <Input
           type="number"
           placeholder="貸方金額"
-          value={newRowData.kasikata_value || ''}
-          onChange={(e) =>
-            onFieldChange('kasikata_value', Number(e.target.value) || 0)
-          }
+          value={localKasikataValue}
+          onChange={(e) => {
+            const value = e.target.value
+            setLocalKasikataValue(value)
+            debouncedKasikataValueChange(Number(value) || 0)
+          }}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
@@ -167,8 +235,12 @@ export const NewJournalRow = memo(function NewJournalRow({
         <Input
           type="text"
           placeholder="摘要を入力"
-          value={newRowData.note}
-          onChange={(e) => onFieldChange('note', e.target.value)}
+          value={localNote}
+          onChange={(e) => {
+            const value = e.target.value
+            setLocalNote(value)
+            debouncedNoteChange(value)
+          }}
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
