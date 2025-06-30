@@ -1,4 +1,5 @@
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 
 import { Autocomplete, AutocompleteOption } from '@/components/ui/autocomplete'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,20 @@ export const NewJournalRow = memo(function NewJournalRow({
   onBlur,
   getAccountName,
 }: NewJournalRowProps) {
+  const [localDate, setLocalDate] = useState(newRowData.date || '')
+
+  // propsの値が変更されたときにローカルstateを同期
+  useEffect(() => {
+    setLocalDate(newRowData.date || '')
+  }, [newRowData.date])
+
+  // debounceされたコールバック（300ms）
+  const debouncedOnFieldChange = useDebouncedCallback(
+    (value: string) => {
+      onFieldChange('date', value)
+    },
+    300
+  )
   return (
     <tr
       data-entry-id="new"
@@ -51,8 +66,12 @@ export const NewJournalRow = memo(function NewJournalRow({
             <Input
               type="text"
               placeholder="YYYYMMDD"
-              value={newRowData.date}
-              onChange={(e) => onFieldChange('date', e.target.value)}
+              value={localDate}
+              onChange={(e) => {
+                const value = e.target.value
+                setLocalDate(value)
+                debouncedOnFieldChange(value)
+              }}
               onKeyDown={onKeyDown}
               onFocus={onFocus}
               onBlur={onBlur}
