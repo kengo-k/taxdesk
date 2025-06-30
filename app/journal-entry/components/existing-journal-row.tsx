@@ -31,6 +31,7 @@ interface ExistingJournalRowProps {
   getAccountName: (code: string) => string
   isSelected?: boolean
   onCheckboxChange?: (entryId: string, checked: boolean) => void
+  onJournalCheckedChange?: (entryId: string, checked: boolean) => Promise<void>
   onFocus?: (entryId: string) => void
   onBlur?: (entryId: string) => void
   errors?: Record<string, string>
@@ -48,6 +49,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   getAccountName,
   isSelected = false,
   onCheckboxChange,
+  onJournalCheckedChange,
   onFocus,
   onBlur,
   errors = {},
@@ -76,6 +78,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   const [localNote, setLocalNote] = useState(
     getFieldValue('note', entry.note || '') || '',
   )
+  const [localChecked, setLocalChecked] = useState(entry.checked === '1')
 
   // propsの値が変更されたときにローカルstateを同期
   useEffect(() => {
@@ -103,6 +106,10 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   useEffect(() => {
     setLocalNote(getFieldValue('note', entry.note || '') || '')
   }, [fieldData.note, entry.note])
+
+  useEffect(() => {
+    setLocalChecked(entry.checked === '1')
+  }, [entry.checked])
 
   // debounceされたコールバック（300ms）
   const debouncedDateChange = useDebouncedCallback((value: string) => {
@@ -168,7 +175,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           : index % 2 === 0
             ? 'bg-white'
             : 'bg-gray-25'
-      }`}
+      } ${localChecked ? 'opacity-70' : ''}`}
     >
       {deleteMode && (
         <td className="py-2 px-1 text-center">
@@ -178,6 +185,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             onCheckedChange={(checked) =>
               onCheckboxChange?.(entry.id, !!checked)
             }
+            disabled={localChecked}
           />
         </td>
       )}
@@ -201,6 +209,8 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
                   onSubmit(entry.id)
                 }
               }}
+              disabled={localChecked}
+              readOnly={localChecked}
             />
             {isFieldUnsaved('date', entry.date) && (
               <span className="absolute -top-3 left-0 text-red-500 text-sm font-bold">
@@ -225,12 +235,16 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           placeholder="科目コード"
           options={accountOptions}
           onSelect={(option) => {
-            setLocalKarikataCode(option.code || '')
-            onAccountSelect(entry.id, 'karikata_cd', option)
+            if (!localChecked) {
+              setLocalKarikataCode(option.code || '')
+              onAccountSelect(entry.id, 'karikata_cd', option)
+            }
           }}
           onChange={(value) => {
-            setLocalKarikataCode(value)
-            debouncedKarikataCodeChange(value)
+            if (!localChecked) {
+              setLocalKarikataCode(value)
+              debouncedKarikataCodeChange(value)
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -245,6 +259,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             'h-8 text-sm',
             entry.karikata_cd,
           )}
+          disabled={localChecked}
         />
         {isFieldUnsaved('karikata_cd', entry.karikata_cd) && (
           <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
@@ -286,6 +301,8 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
               onSubmit(entry.id)
             }
           }}
+          disabled={localChecked}
+          readOnly={localChecked}
         />
         {isFieldUnsaved('karikata_value', entry.karikata_value) && (
           <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
@@ -299,12 +316,16 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
           placeholder="科目コード"
           options={accountOptions}
           onSelect={(option) => {
-            setLocalKasikataCode(option.code || '')
-            onAccountSelect(entry.id, 'kasikata_cd', option)
+            if (!localChecked) {
+              setLocalKasikataCode(option.code || '')
+              onAccountSelect(entry.id, 'kasikata_cd', option)
+            }
           }}
           onChange={(value) => {
-            setLocalKasikataCode(value)
-            debouncedKasikataCodeChange(value)
+            if (!localChecked) {
+              setLocalKasikataCode(value)
+              debouncedKasikataCodeChange(value)
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
@@ -319,6 +340,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             'h-8 text-sm',
             entry.kasikata_cd,
           )}
+          disabled={localChecked}
         />
         {isFieldUnsaved('kasikata_cd', entry.kasikata_cd) && (
           <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
@@ -360,6 +382,8 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
               onSubmit(entry.id)
             }
           }}
+          disabled={localChecked}
+          readOnly={localChecked}
         />
         {isFieldUnsaved('kasikata_value', entry.kasikata_value) && (
           <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
@@ -385,6 +409,8 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
               onSubmit(entry.id)
             }
           }}
+          disabled={localChecked}
+          readOnly={localChecked}
         />
         {isFieldUnsaved('note', entry.note || '') && (
           <span className="absolute -top-1 left-1 text-red-500 text-sm font-bold">
@@ -395,8 +421,18 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
       <td className="py-2 px-1 text-center">
         <Checkbox
           className="h-4 w-4"
-          checked={entry.checked === '1'}
-          disabled
+          checked={localChecked}
+          onCheckedChange={async (checked: boolean) => {
+            const previousChecked = localChecked
+            setLocalChecked(checked)
+            try {
+              await onJournalCheckedChange?.(entry.id, checked)
+            } catch (error) {
+              // エラー時は元の状態に戻す
+              setLocalChecked(previousChecked)
+            }
+          }}
+          aria-label={`取引 ${entry.id} の確認`}
         />
       </td>
     </tr>

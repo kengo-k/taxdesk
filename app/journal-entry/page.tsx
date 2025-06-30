@@ -34,6 +34,7 @@ import {
   selectJournalList,
   updateJournal,
 } from '@/lib/redux/features/journalSlice'
+import { updateLedgerChecked } from '@/lib/redux/features/ledgerSlice'
 import {
   fetchAccountList,
   fetchFiscalYears,
@@ -531,6 +532,43 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     [],
   )
 
+  // 確認チェックボックスの変更処理
+  const handleJournalCheckedChange = useCallback(
+    async (entryId: string, checked: boolean) => {
+      try {
+        const result = await dispatch(
+          updateLedgerChecked({
+            id: parseInt(entryId, 10),
+            fiscal_year: searchForm.fiscalYear,
+            checked: checked ? '1' : '0',
+          }),
+        )
+
+        if (updateLedgerChecked.fulfilled.match(result)) {
+          toast({
+            title: '更新完了',
+            description: checked
+              ? '仕訳を確認済みにしました'
+              : '仕訳の確認を取り消しました',
+            variant: 'default',
+          })
+        } else {
+          // API失敗時はチェックボックスを元に戻すため、エラーを投げる
+          throw new Error('API update failed')
+        }
+      } catch (error) {
+        toast({
+          title: 'エラー',
+          description: '確認状態の更新に失敗しました',
+          variant: 'destructive',
+        })
+        // エラーを再度投げて、子コンポーネントでロールバック処理を実行
+        throw error
+      }
+    },
+    [dispatch, searchForm.fiscalYear],
+  )
+
   // 削除実行
   const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
@@ -1019,6 +1057,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                         getAccountName={getAccountName}
                         isSelected={selectedIds.includes(entry.id)}
                         onCheckboxChange={handleCheckboxChange}
+                        onJournalCheckedChange={handleJournalCheckedChange}
                         onFocus={handleExistingRowFocus}
                         onBlur={handleExistingRowBlur}
                         errors={existingRowErrors[entry.id] || {}}
