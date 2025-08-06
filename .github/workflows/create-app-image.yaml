@@ -1,0 +1,19 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [release]
+    tags: ['*']
+  workflow_dispatch:
+
+jobs:
+  create-app-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test smart-docker-build action
+        uses: kengo-k/smart-docker-build@v0.9
+        with:
+          token: ${{ secrets.GHCR_TOKEN }}
