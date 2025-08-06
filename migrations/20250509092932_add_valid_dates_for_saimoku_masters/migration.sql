@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "saimoku_masters" ADD COLUMN     "valid_from" VARCHAR(8) NOT NULL DEFAULT '20000101',
+ADD COLUMN     "valid_to" VARCHAR(8) NOT NULL DEFAULT '99991231';

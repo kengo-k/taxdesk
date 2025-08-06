@@ -29,6 +29,44 @@ Follow these steps to set up the project after cloning the repository from Git.
 
    This command generates the Prisma client, which provides a type-safe API for database interactions. It ensures the client reflects the current database structure, enabling efficient and safe database operations in your application.
 
+## Test Environment Setup
+
+1. The `.env` file already contains test database settings:
+
+   ```
+   # テスト用データベース設定
+   POSTGRES_DB_TEST=account_test
+
+   # Database URL for test connection
+   DATABASE_URL_FOR_TEST=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB_TEST}
+   ```
+
+2. Create a test database:
+
+   ```bash
+   npm run test:db:create
+   ```
+
+   または直接SQLを実行:
+
+   ```sql
+   CREATE DATABASE account_test;
+   ```
+
+3. Run migrations on the test database:
+
+   ```bash
+   npm run test:db:migrate
+   ```
+
+4. Run tests:
+
+   ```bash
+   npm test
+   ```
+
+   The test framework will automatically use the test database specified by `DATABASE_URL_FOR_TEST` environment variable.
+
 ## How to Apply Changes to the Database
 
 1. Modify the schema.prisma file and describe the changes you want to apply.
@@ -48,3 +86,204 @@ Follow these steps to set up the project after cloning the repository from Git.
    3. The Prisma client is regenerated to reflect the new schema changes.
 
    Note: This command should only be used in development environments. For production environments, it is recommended to use `migrate:deploy`.
+
+## Database Backup Tool
+
+The project includes a database backup tool that exports database tables to CSV format and uploads them to an AWS S3 bucket.
+
+### Prerequisites
+
+Before using the backup tool, set the following environment variables:
+
+```
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=ap-northeast-1
+AWS_ENDPOINT=https://s3.ap-northeast-1.amazonaws.com
+BACKUP_BUCKETS=your_bucket_name
+BACKUP_TARGET_ENV=dev
+```
+
+### Usage
+
+The backup tool is available as an npm script:
+
+1. **Create a backup with a comment**:
+
+   ```bash
+   npm run backup:dev -- --create "Your backup comment"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -c "Your backup comment"
+   ```
+
+2. **List recent backups**:
+
+   ```bash
+   npm run backup:dev -- --list
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -l
+   ```
+
+   The list command displays:
+
+   - Backup timestamp
+   - Latest applied Prisma migration name
+   - Backup comment
+
+3. **Download table CSV files**:
+
+   ```bash
+   npm run backup:dev -- --download "pattern"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run backup:dev -- -d "pattern"
+   ```
+
+   The download command:
+
+   - Uses the latest backup as the source
+   - Supports wildcard patterns (e.g., `*masters` for all master tables)
+   - Downloads matching CSVs to the current directory
+   - Useful for creating test fixtures or reviewing backup data
+
+   Examples:
+
+   ```bash
+   npm run backup:dev -- -d "*"               # Download all tables
+   npm run backup:dev -- -d "*masters"        # Download all master tables
+   npm run backup:dev -- -d "journals"        # Download only the journals table
+   ```
+
+   > **Important**: Always enclose pattern strings in quotes to prevent shell expansion of wildcards.
+   > Using `npm run backup:dev -- -d *masters` without quotes will cause the shell to expand the pattern
+   > before it reaches the script, leading to unexpected behavior.
+
+4. **Get help**:
+
+   ```bash
+   npm run backup:dev -- --help
+   ```
+
+### Backup Structure
+
+The backups are stored in S3 with the following structure:
+
+```
+s3://your_bucket_name/environment_name/timestamp/
+```
+
+Each backup includes:
+
+- CSV files for each database table
+- A metadata.json file with backup information, including your comment
+
+The backup tool automatically removes query parameters from the database connection string to ensure compatibility with the psql command.
+
+## Database Restore Tool
+
+The project includes a complementary database restore tool that enables you to restore data from a previously created backup or local CSV files.
+
+### Prerequisites
+
+For S3 backup restore:
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_REGION
+- AWS_ENDPOINT
+- BACKUP_BUCKETS
+- BACKUP_TARGET_ENV
+
+For local CSV restore:
+
+- DATABASE_URL
+
+### Usage
+
+The restore tool is available as an npm script:
+
+1. **Restore from S3 backup by timestamp**:
+
+   ```bash
+   npm run restore:dev -- --restore "20250509135352"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run restore:dev -- -r "20250509135352"
+   ```
+
+2. **Restore from local CSV files**:
+
+   ```bash
+   npm run restore:dev -- --local "seed"
+   ```
+
+   or using the short option:
+
+   ```bash
+   npm run restore:dev -- -l "seed"
+   ```
+
+   The local restore command:
+
+   - Looks for CSV files in the specified directory
+   - Uses the filename (without .csv extension) as the table name
+   - Requires CSV files to have a header row
+   - Truncates each target table before importing data
+
+   Example directory structure:
+
+   ```
+   seed/
+     ├── users.csv
+     ├── accounts.csv
+     ├── transactions.csv
+     └── ...
+   ```
+
+3. **Get help**:
+
+   ```bash
+   npm run restore:dev -- --help
+   ```
+
+### Restore Process
+
+#### S3 Backup Restore
+
+The S3 restore process performs the following steps:
+
+1. Verifies that the specified backup timestamp exists in S3
+2. Checks that the current database migration matches the backup's migration
+   - This prevents restoring data to an incompatible schema version
+3. Downloads all CSV files from the backup
+4. Truncates each target table and imports the corresponding CSV data
+5. Cleans up temporary files
+
+**Note**: The S3 restore operation will fail if the current database schema version (latest migration) does not match the backup's migration version.
+
+#### Local CSV Restore
+
+The local CSV restore process:
+
+1. Verifies that the specified directory exists and contains CSV files
+2. For each CSV file:
+   - Extracts the table name from the filename
+   - Truncates the target table
+   - Imports the CSV data using psql's COPY command
+3. Provides detailed progress information during the restore
+
+**Note**: The local restore does not perform migration version checks, so ensure your CSV files match the current database schema.

@@ -14,7 +14,8 @@
     "^@/store",
     "^@/models",
     "^@/containers",
-    "^@/"
+    "^@/",
+    "^./"
   ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true

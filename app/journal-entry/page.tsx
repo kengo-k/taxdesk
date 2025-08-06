@@ -1,0 +1,1101 @@
+'use client'
+
+import {
+  Suspense,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
+import { useRouter, useSearchParams } from 'next/navigation'
+
+import { AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react'
+
+import { AutocompleteOption } from '@/components/ui/autocomplete'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { DataPagination } from '@/components/ui/pagination'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { toast } from '@/components/ui/use-toast'
+import {
+  createJournal,
+  deleteJournals,
+  fetchJournals,
+  selectJournalList,
+  updateJournal,
+} from '@/lib/redux/features/journalSlice'
+import { updateLedgerChecked } from '@/lib/redux/features/ledgerSlice'
+import {
+  fetchAccountList,
+  fetchFiscalYears,
+  selectAccountList,
+  selectFiscalYears,
+  selectSelectedFiscalYear,
+} from '@/lib/redux/features/masterSlice'
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { getFieldDisplayName } from '@/lib/schemas/common-validation'
+import { validateJournalRow } from '@/lib/schemas/journal-validation'
+
+import { ExistingJournalRow } from './components/existing-journal-row'
+import { NewJournalRow } from './components/new-journal-row'
+
+const JournalEntryContent = memo(function JournalEntryContent() {
+  const dispatch = useAppDispatch()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Redux state
+  const { data: fiscalYears } = useAppSelector(selectFiscalYears)
+  const selectedFiscalYear = useAppSelector(selectSelectedFiscalYear)
+  const { data: accountList } = useAppSelector(selectAccountList)
+  const { list: journalList, count: journalListCount } =
+    useAppSelector(selectJournalList)
+
+  // URLパラメータから初期年度を取得
+  const urlFiscalYear = searchParams.get('fiscal_year')
+  const initialFiscalYear = urlFiscalYear || selectedFiscalYear || 'none'
+
+  const [searchForm, setSearchForm] = useState({
+    fiscalYear: initialFiscalYear,
+    month: 'none',
+    account: 'none',
+    side: 'none',
+    description: '',
+    amount: '',
+    amountCondition: 'none',
+    checked: 'none',
+  })
+
+  const [deleteMode, setDeleteMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+
+  // 新規行のバリデーション状態
+  const [newRowData, setNewRowData] = useState({
+    date: '',
+    karikata_cd: '',
+    kasikata_cd: '',
+    karikata_value: 0,
+    kasikata_value: 0,
+    note: '',
+    nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+  })
+
+  // 既存行の編集状態管理
+  const [existingRowData, setExistingRowData] = useState<Record<string, any>>(
+    {},
+  )
+  const [existingRowErrors, setExistingRowErrors] = useState<
+    Record<string, Record<string, string>>
+  >({})
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null)
+
+  // 年度変更時にURLパラメータを更新し、新規行データの年度も更新
+  useEffect(() => {
+    // URLパラメータを更新
+    const params = new URLSearchParams(searchParams.toString())
+    if (searchForm.fiscalYear !== 'none') {
+      params.set('fiscal_year', searchForm.fiscalYear)
+    } else {
+      params.delete('fiscal_year')
+    }
+    router.replace(`/journal-entry?${params.toString()}`, { scroll: false })
+
+    // 新規行データの年度を更新
+    setNewRowData((prev) => ({
+      ...prev,
+      nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+    }))
+  }, [searchForm.fiscalYear, router, searchParams])
+
+  // 月変更時に新規行の日付にYYYYMMを自動設定
+  useEffect(() => {
+    if (searchForm.fiscalYear !== 'none' && searchForm.month !== 'none') {
+      const fiscalYear = parseInt(searchForm.fiscalYear)
+      const month = parseInt(searchForm.month)
+
+      // 年度の計算（4月以降は当年、1-3月は翌年）
+      const calendarYear = month >= 4 ? fiscalYear : fiscalYear + 1
+
+      // YYYYMM形式で設定（6桁のみ）
+      const monthStr = month.toString().padStart(2, '0')
+      const dateValue = `${calendarYear}${monthStr}`
+
+      setNewRowData((prev) => ({
+        ...prev,
+        date: prev.date.startsWith(dateValue) ? prev.date : dateValue,
+      }))
+    }
+  }, [searchForm.fiscalYear, searchForm.month])
+  // エラーサマリー表示用（フォーカス中の行のエラーを表示）
+  const currentRowErrors = useMemo(() => {
+    // フォーカス中の行にエラーがある場合はそのエラーを表示
+    if (
+      focusedRowId &&
+      existingRowErrors[focusedRowId] &&
+      Object.keys(existingRowErrors[focusedRowId]).length > 0
+    ) {
+      return Object.entries(existingRowErrors[focusedRowId]).map(
+        ([field, message]) => ({
+          field: getFieldDisplayName(field),
+          message,
+        }),
+      )
+    }
+
+    // フォーカス中の行にエラーがない場合は詳細を空にする
+    return []
+  }, [focusedRowId, existingRowErrors])
+
+  // エラーがある行が存在するかチェック（タイトル表示用）
+  const hasAnyErrors = useMemo(() => {
+    return Object.keys(existingRowErrors).some(
+      (id) => Object.keys(existingRowErrors[id]).length > 0,
+    )
+  }, [existingRowErrors])
+
+  const showErrorSummary = hasAnyErrors // エラーがある限りタイトルは表示
+  const focusedRowErrors = currentRowErrors // 詳細はフォーカス中の行のエラーのみ
+
+  // エラー状態の統一管理により、新規行と既存行で一貫したエラー表示を実現
+
+  // 勘定科目リストをオートコンプリート用に変換（メモ化）
+  const accountOptions: AutocompleteOption[] = useMemo(
+    () =>
+      accountList.map((account) => ({
+        value: account.id,
+        code: account.code,
+        label: account.name,
+        kana_name: account.kana_name,
+      })),
+    [accountList],
+  )
+
+  // 検索条件の有効性チェック
+  const isSearchValid = searchForm.fiscalYear !== 'none'
+
+  // getFieldDisplayName は common-validation から import済み
+
+  // 新規行フィールド変更ハンドラー（メモ化）
+  const handleNewRowFieldChange = useCallback(
+    (field: string, value: string | number) => {
+      setNewRowData((prev) => ({
+        ...prev,
+        [field]: value,
+      }))
+      // エラーのクリアは削除（Enterキー押下時のみクリア）
+    },
+    [],
+  )
+
+  // オートコンプリート選択ハンドラー（メモ化）
+  const handleAccountSelect = useCallback(
+    (field: 'karikata_cd' | 'kasikata_cd', option: AutocompleteOption) => {
+      handleNewRowFieldChange(field, option.code || '')
+    },
+    [handleNewRowFieldChange],
+  )
+
+  // 既存行のフィールド変更ハンドラー（メモ化）
+  const handleExistingFieldChange = useCallback(
+    (entryId: string, field: string, value: string | number) => {
+      setExistingRowData((prev) => ({
+        ...prev,
+        [entryId]: {
+          ...prev[entryId],
+          [field]: value,
+        },
+      }))
+    },
+    [],
+  )
+
+  // 既存行の科目選択ハンドラー（メモ化）
+  const handleExistingAccountSelect = useCallback(
+    (
+      entryId: string,
+      field: 'karikata_cd' | 'kasikata_cd',
+      option: AutocompleteOption,
+    ) => {
+      // 科目選択時は一時データに保存（実際の更新はENTERキーで行う）
+      const fieldName = field === 'karikata_cd' ? 'karikata_cd' : 'kasikata_cd'
+      handleExistingFieldChange(entryId, fieldName, option.code || '')
+    },
+    [handleExistingFieldChange],
+  )
+
+  // 既存行のバリデーション処理
+  const validateExistingRow = useCallback(
+    (entryId: string, rowData: any) => {
+      const validationData = {
+        ...rowData,
+        accountList: accountList,
+        month: searchForm.month,
+      }
+
+      const rowValidation = validateJournalRow(validationData)
+
+      if (!rowValidation.valid) {
+        // 該当行のエラーを設定
+        console.log('バリデーションエラー設定:', entryId, rowValidation.errors)
+        setExistingRowErrors((prev) => ({
+          ...prev,
+          [entryId]: rowValidation.errors,
+        }))
+        return false
+      } else {
+        // 該当行のエラーをクリア
+        console.log('バリデーションエラークリア:', entryId)
+        setExistingRowErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors[entryId]
+          return newErrors
+        })
+        return true
+      }
+    },
+    [accountList, searchForm.month],
+  )
+
+  // 既存行の行全体更新ハンドラー（メモ化）
+  const handleExistingRowSubmit = useCallback(
+    async (entryId: string) => {
+      console.log('handleExistingRowSubmit called:', entryId)
+
+      // 現在の行データを取得
+      const currentEntry = journalList.find((entry) => entry.id === entryId)
+      if (!currentEntry) return
+
+      // 変更データと現在データをマージ
+      const changedData = existingRowData[entryId] || {}
+      const updatedData = {
+        nendo: searchForm.fiscalYear,
+        date: changedData.date ?? currentEntry.date,
+        karikata_cd: changedData.karikata_cd ?? currentEntry.karikata_cd,
+        karikata_value:
+          changedData.karikata_value ?? currentEntry.karikata_value,
+        kasikata_cd: changedData.kasikata_cd ?? currentEntry.kasikata_cd,
+        kasikata_value:
+          changedData.kasikata_value ?? currentEntry.kasikata_value,
+        note: changedData.note ?? (currentEntry.note || ''),
+      }
+
+      console.log('updatedData:', updatedData)
+
+      // バリデーションを実行
+      if (!validateExistingRow(entryId, updatedData)) {
+        console.log('バリデーションエラーがあります')
+        return // バリデーションエラーがある場合は更新しない
+      }
+
+      try {
+        const updateData = {
+          id: entryId,
+          nendo: searchForm.fiscalYear,
+          date: updatedData.date,
+          debitAccount: updatedData.karikata_cd,
+          debitAmount: updatedData.karikata_value,
+          creditAccount: updatedData.kasikata_cd,
+          creditAmount: updatedData.kasikata_value,
+          description: updatedData.note,
+        }
+
+        console.log('final updateData:', updateData)
+
+        const result = await dispatch(updateJournal(updateData))
+
+        if (updateJournal.fulfilled.match(result)) {
+          toast({
+            title: '仕訳更新完了',
+            description: '仕訳データが正常に更新されました',
+            variant: 'default',
+          })
+
+          // 該当行のエラーと一時データをクリア
+          setExistingRowErrors((prev) => {
+            const newErrors = { ...prev }
+            delete newErrors[entryId]
+            return newErrors
+          })
+          setExistingRowData((prev) => {
+            const newData = { ...prev }
+            delete newData[entryId]
+            return newData
+          })
+
+          // 仕訳一覧を再取得
+          if (searchForm.fiscalYear !== 'none') {
+            dispatch(
+              fetchJournals({
+                fiscal_year: searchForm.fiscalYear,
+                account:
+                  searchForm.account !== 'none' ? searchForm.account : null,
+                month: searchForm.month !== 'none' ? searchForm.month : null,
+                accountSide:
+                  searchForm.side !== 'none' ? searchForm.side : null,
+                note: searchForm.description || null,
+                amount: searchForm.amount || null,
+                amountCondition:
+                  searchForm.amountCondition !== 'none'
+                    ? searchForm.amountCondition
+                    : null,
+                checked:
+                  searchForm.checked !== 'none' ? searchForm.checked : null,
+                page: currentPage,
+                pageSize: pageSize,
+              }),
+            )
+          }
+        } else {
+          const errorMessage = result.payload as string
+          toast({
+            title: '仕訳更新エラー',
+            description: errorMessage,
+            variant: 'destructive',
+          })
+        }
+      } catch (error) {
+        console.error('仕訳更新エラー:', error)
+        toast({
+          title: '仕訳更新エラー',
+          description: '仕訳更新中に予期しないエラーが発生しました',
+          variant: 'destructive',
+        })
+      }
+    },
+    [
+      searchForm,
+      dispatch,
+      currentPage,
+      pageSize,
+      journalList,
+      validateExistingRow,
+      existingRowData,
+    ],
+  )
+
+  // 既存行のフォーカス管理
+  const handleExistingRowFocus = useCallback((entryId: string) => {
+    setFocusedRowId(entryId)
+  }, [])
+
+  const handleExistingRowBlur = useCallback((entryId: string) => {
+    // 短い遅延で、本当に行外に移ったかチェック
+    setTimeout(() => {
+      const activeElement = document.activeElement
+      // テーブル外（検索エリアなど）にフォーカスが移った場合はクリア
+      if (!activeElement || !activeElement.closest('table')) {
+        console.log('テーブル外にフォーカス移動、フォーカスをクリア')
+        setFocusedRowId(null)
+      }
+      // 他の行にフォーカスが移った場合は、その行のonFocusで自動的に切り替わる
+    }, 50) // 短い遅延（50ms）
+  }, [])
+
+  // 個別バリデーションは削除（Enterキーのみでバリデーション）
+
+  // Enterキー押下時の全体バリデーション＆登録処理（メモ化）
+  const handleNewRowSubmit = useCallback(async () => {
+    // accountListと月情報を含めたバリデーション用データを作成
+    const validationData = {
+      ...newRowData,
+      accountList: accountList,
+      month: searchForm.month,
+    }
+
+    const rowValidation = validateJournalRow(validationData)
+
+    if (!rowValidation.valid) {
+      // 新規行のエラーを統一された形式で設定
+      setExistingRowErrors((prev) => ({
+        ...prev,
+        new: rowValidation.errors,
+      }))
+      return
+    }
+
+    // Reduxアクション経由で仕訳登録
+    try {
+      const result = await dispatch(
+        createJournal({
+          nendo: newRowData.nendo,
+          date: newRowData.date,
+          debitAccount: newRowData.karikata_cd,
+          debitAmount: newRowData.karikata_value,
+          creditAccount: newRowData.kasikata_cd,
+          creditAmount: newRowData.kasikata_value,
+          description: newRowData.note || '',
+        }),
+      )
+
+      if (createJournal.fulfilled.match(result)) {
+        // 成功時の処理
+        toast({
+          title: '仕訳登録完了',
+          description: `日付: ${newRowData.date}\n借方: ${newRowData.karikata_cd} (${newRowData.karikata_value}円)\n貸方: ${newRowData.kasikata_cd} (${newRowData.kasikata_value}円)\n摘要: ${newRowData.note || '(なし)'}`,
+          variant: 'default',
+        })
+
+        // 登録後、フィールドをクリア
+        setNewRowData({
+          date: '',
+          karikata_cd: '',
+          kasikata_cd: '',
+          karikata_value: 0,
+          kasikata_value: 0,
+          note: '',
+          nendo: searchForm.fiscalYear !== 'none' ? searchForm.fiscalYear : '',
+        })
+        // 新規行のエラーをクリア
+        setExistingRowErrors((prev) => {
+          const newErrors = { ...prev }
+          delete newErrors['new']
+          return newErrors
+        })
+
+        // 仕訳一覧を再取得
+        if (searchForm.fiscalYear !== 'none') {
+          dispatch(
+            fetchJournals({
+              fiscal_year: searchForm.fiscalYear,
+              account:
+                searchForm.account !== 'none' ? searchForm.account : null,
+              month: searchForm.month !== 'none' ? searchForm.month : null,
+              accountSide: searchForm.side !== 'none' ? searchForm.side : null,
+              note: searchForm.description || null,
+              amount: searchForm.amount || null,
+              amountCondition:
+                searchForm.amountCondition !== 'none'
+                  ? searchForm.amountCondition
+                  : null,
+              checked:
+                searchForm.checked !== 'none' ? searchForm.checked : null,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
+        }
+      } else {
+        // エラー時の処理
+        const errorMessage = result.payload as string
+        toast({
+          title: '仕訳登録エラー',
+          description: errorMessage,
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('仕訳登録エラー:', error)
+      toast({
+        title: '仕訳登録エラー',
+        description: '仕訳登録中に予期しないエラーが発生しました',
+        variant: 'destructive',
+      })
+    }
+  }, [newRowData, searchForm, accountList, dispatch, currentPage, pageSize])
+
+  // キーダウンハンドラー（メモ化）
+  const handleNewRowKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        handleNewRowSubmit()
+      }
+    },
+    [handleNewRowSubmit],
+  )
+
+  // 新規行のフォーカス管理は統一されたhandleExistingRowBlurを使用
+
+  // 削除対象の選択管理
+  const handleCheckboxChange = useCallback(
+    (entryId: string, checked: boolean) => {
+      setSelectedIds((prev) => {
+        if (checked) {
+          return [...prev, entryId]
+        } else {
+          return prev.filter((id) => id !== entryId)
+        }
+      })
+    },
+    [],
+  )
+
+  // 確認チェックボックスの変更処理
+  const handleJournalCheckedChange = useCallback(
+    async (entryId: string, checked: boolean) => {
+      try {
+        const result = await dispatch(
+          updateLedgerChecked({
+            id: parseInt(entryId, 10),
+            fiscal_year: searchForm.fiscalYear,
+            checked: checked ? '1' : '0',
+          }),
+        )
+
+        if (updateLedgerChecked.fulfilled.match(result)) {
+          toast({
+            title: '更新完了',
+            description: checked
+              ? '仕訳を確認済みにしました'
+              : '仕訳の確認を取り消しました',
+            variant: 'default',
+          })
+        } else {
+          // API失敗時はチェックボックスを元に戻すため、エラーを投げる
+          throw new Error('API update failed')
+        }
+      } catch (error) {
+        toast({
+          title: 'エラー',
+          description: '確認状態の更新に失敗しました',
+          variant: 'destructive',
+        })
+        // エラーを再度投げて、子コンポーネントでロールバック処理を実行
+        throw error
+      }
+    },
+    [dispatch, searchForm.fiscalYear],
+  )
+
+  // 削除実行
+  const handleDelete = useCallback(async () => {
+    if (selectedIds.length === 0) {
+      toast({
+        title: '削除対象なし',
+        description: '削除する仕訳を選択してください',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      const result = await dispatch(
+        deleteJournals({
+          fiscal_year: searchForm.fiscalYear,
+          ids: selectedIds.map((id) => parseInt(id, 10)),
+        }),
+      )
+
+      if (deleteJournals.fulfilled.match(result)) {
+        toast({
+          title: '削除完了',
+          description: `${selectedIds.length}件の仕訳を削除しました`,
+          variant: 'default',
+        })
+
+        // 削除後は選択状態をクリア
+        setSelectedIds([])
+        setDeleteMode(false)
+
+        // 仕訳一覧を再取得
+        if (searchForm.fiscalYear !== 'none') {
+          dispatch(
+            fetchJournals({
+              fiscal_year: searchForm.fiscalYear,
+              account:
+                searchForm.account !== 'none' ? searchForm.account : null,
+              month: searchForm.month !== 'none' ? searchForm.month : null,
+              accountSide: searchForm.side !== 'none' ? searchForm.side : null,
+              note: searchForm.description || null,
+              amount: searchForm.amount || null,
+              amountCondition:
+                searchForm.amountCondition !== 'none'
+                  ? searchForm.amountCondition
+                  : null,
+              checked:
+                searchForm.checked !== 'none' ? searchForm.checked : null,
+              page: currentPage,
+              pageSize: pageSize,
+            }),
+          )
+        }
+      } else {
+        const errorMessage = result.payload as string
+        toast({
+          title: '削除エラー',
+          description: errorMessage,
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('削除エラー:', error)
+      toast({
+        title: '削除エラー',
+        description: '削除中に予期しないエラーが発生しました',
+        variant: 'destructive',
+      })
+    }
+  }, [selectedIds, searchForm, dispatch, currentPage, pageSize])
+
+  // 削除モード切り替え時に選択状態をクリア
+  const handleDeleteModeToggle = useCallback(() => {
+    setDeleteMode((prev) => !prev)
+    setSelectedIds([])
+  }, [])
+
+  // 科目コードから科目名を取得する関数（メモ化）
+  const getAccountName = useCallback(
+    (code: string) => {
+      if (!code) return ''
+      const account = accountList.find((acc) => acc.code === code)
+      return account ? account.name : ''
+    },
+    [accountList],
+  )
+
+  // 年度データを取得
+  useEffect(() => {
+    dispatch(fetchFiscalYears())
+  }, [dispatch])
+
+  // 年度が変更された時に勘定科目一覧を取得
+  useEffect(() => {
+    if (searchForm.fiscalYear && searchForm.fiscalYear !== 'none') {
+      dispatch(fetchAccountList(searchForm.fiscalYear))
+    }
+  }, [dispatch, searchForm.fiscalYear])
+
+  // 年度未設定時の処理
+  useEffect(() => {
+    if (!isSearchValid) {
+      // 年度未設定時は他の検索条件をクリア
+      setSearchForm((prev) => ({
+        ...prev,
+        month: 'none',
+        account: 'none',
+        side: 'none',
+        description: '',
+        amount: '',
+        amountCondition: 'none',
+        checked: 'none',
+      }))
+      setCurrentPage(1)
+      return
+    }
+  }, [isSearchValid])
+
+  // 検索フォームが変更されたら仕訳データを取得
+  useEffect(() => {
+    if (isSearchValid) {
+      dispatch(
+        fetchJournals({
+          fiscal_year: searchForm.fiscalYear,
+          account: searchForm.account === 'none' ? null : searchForm.account,
+          month: searchForm.month === 'none' ? null : searchForm.month,
+          accountSide:
+            searchForm.side === 'none'
+              ? null
+              : searchForm.side === 'debit'
+                ? 'karikata'
+                : searchForm.side === 'credit'
+                  ? 'kasikata'
+                  : null,
+          note: searchForm.description || null,
+          amount: searchForm.amount || null,
+          amountCondition:
+            searchForm.amountCondition === 'none'
+              ? null
+              : searchForm.amountCondition,
+          checked:
+            searchForm.checked === 'none'
+              ? null
+              : searchForm.checked === 'unchecked'
+                ? '0'
+                : searchForm.checked === 'checked'
+                  ? '1'
+                  : null,
+          page: currentPage,
+          pageSize: pageSize,
+        }),
+      )
+    }
+  }, [dispatch, searchForm, currentPage, pageSize, isSearchValid])
+
+  // ページ変更ハンドラー
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  // ページサイズ変更ハンドラー
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size)
+    setCurrentPage(1) // ページサイズ変更時は1ページ目に戻る
+  }
+
+  // 月データ
+  const months = [
+    { id: 'none', label: '未設定' },
+    { id: '4', label: '4月' },
+    { id: '5', label: '5月' },
+    { id: '6', label: '6月' },
+    { id: '7', label: '7月' },
+    { id: '8', label: '8月' },
+    { id: '9', label: '9月' },
+    { id: '10', label: '10月' },
+    { id: '11', label: '11月' },
+    { id: '12', label: '12月' },
+    { id: '1', label: '1月' },
+    { id: '2', label: '2月' },
+    { id: '3', label: '3月' },
+  ]
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="h-6 w-6" />
+          <h1 className="text-2xl font-bold">仕訳帳入力</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">年度：</span>
+          <Select
+            value={searchForm.fiscalYear}
+            onValueChange={(value) =>
+              setSearchForm({ ...searchForm, fiscalYear: value })
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="年度を選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">未設定</SelectItem>
+              {fiscalYears.map((year) => (
+                <SelectItem key={year.id} value={year.id}>
+                  {year.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* 検索エリア */}
+      <Card className="mb-4">
+        <CardContent className="pt-4 pb-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              <div>
+                <Label htmlFor="month" className="text-sm">
+                  月
+                </Label>
+                <Select
+                  value={searchForm.month}
+                  onValueChange={(value) =>
+                    setSearchForm({ ...searchForm, month: value })
+                  }
+                  disabled={!isSearchValid}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="月を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((month) => (
+                      <SelectItem key={month.id} value={month.id}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="account" className="text-sm">
+                  勘定科目
+                </Label>
+                <div className="flex gap-0">
+                  <Select
+                    value={searchForm.account}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, account: value })
+                    }
+                    disabled={!isSearchValid}
+                  >
+                    <SelectTrigger className="h-9 rounded-r-none border-r-0 flex-1">
+                      <SelectValue placeholder="科目を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      {accountList.map((account) => (
+                        <SelectItem key={account.id} value={account.code}>
+                          {account.code}: {account.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={searchForm.side}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, side: value })
+                    }
+                    disabled={!isSearchValid}
+                  >
+                    <SelectTrigger className="h-9 w-24 rounded-l-none">
+                      <SelectValue placeholder="選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      <SelectItem value="debit">借方のみ</SelectItem>
+                      <SelectItem value="credit">貸方のみ</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="amount" className="text-sm">
+                  金額
+                </Label>
+                <div className="flex gap-0">
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder=""
+                    className="h-9 rounded-r-none border-r-0 flex-1"
+                    value={searchForm.amount}
+                    onChange={(e) =>
+                      setSearchForm({ ...searchForm, amount: e.target.value })
+                    }
+                    disabled={!isSearchValid}
+                  />
+                  <Select
+                    value={searchForm.amountCondition}
+                    onValueChange={(value) =>
+                      setSearchForm({ ...searchForm, amountCondition: value })
+                    }
+                    disabled={!isSearchValid}
+                  >
+                    <SelectTrigger className="h-9 w-24 rounded-l-none">
+                      <SelectValue placeholder="" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">未設定</SelectItem>
+                      <SelectItem value="gte">以上</SelectItem>
+                      <SelectItem value="lte">以下</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="description" className="text-sm">
+                  摘要
+                </Label>
+                <Input
+                  id="description"
+                  placeholder="摘要で検索"
+                  className="h-9"
+                  value={searchForm.description}
+                  onChange={(e) =>
+                    setSearchForm({
+                      ...searchForm,
+                      description: e.target.value,
+                    })
+                  }
+                  disabled={!isSearchValid}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="checked" className="text-sm">
+                  確認状態
+                </Label>
+                <Select
+                  value={searchForm.checked}
+                  onValueChange={(value) =>
+                    setSearchForm({ ...searchForm, checked: value })
+                  }
+                  disabled={!isSearchValid}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">未設定</SelectItem>
+                    <SelectItem value="unchecked">未確認</SelectItem>
+                    <SelectItem value="checked">確認済み</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" className="h-9">
+                クリア
+              </Button>
+              <Button
+                variant="outline"
+                className="h-9 border-red-500 text-red-500 hover:bg-red-50"
+                onClick={handleDeleteModeToggle}
+                disabled={!isSearchValid}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                削除モード
+              </Button>
+              {deleteMode && (
+                <Button
+                  variant="destructive"
+                  className="h-9"
+                  onClick={handleDelete}
+                  disabled={selectedIds.length === 0}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  選択項目を削除 ({selectedIds.length})
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 仕訳一覧エリア */}
+      <Card>
+        <CardContent className="pt-6">
+          {!isSearchValid ? (
+            /* 年度未設定時の専用表示 */
+            <div className="py-12 text-center">
+              <div className="text-gray-500 mb-4">
+                <AlertCircle className="h-12 w-12 mx-auto mb-2" />
+                <h3 className="text-lg font-medium">
+                  データを表示するには年度を設定してください
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 max-w-md mx-auto">
+                会計年度を選択すると、仕訳データの閲覧・入力が可能になります。検索条件も選択できます。
+              </p>
+            </div>
+          ) : (
+            /* 年度設定済み時の通常表示 */
+            <>
+              {/* フォーカス連動エラーサマリー */}
+              {showErrorSummary && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <span className="font-medium text-red-800">
+                      入力エラーがあります
+                    </span>
+                  </div>
+                  {focusedRowErrors.length > 0 && (
+                    <ul className="text-sm text-red-700 space-y-1">
+                      {focusedRowErrors.map((error, index) => (
+                        <li key={index}>
+                          • <span className="font-medium">{error.field}:</span>{' '}
+                          {error.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <colgroup>
+                    {deleteMode && <col className="w-12" />}
+                    <col className="w-44" />
+                    <col className="w-28" />
+                    <col className="w-36" />
+                    <col className="w-28" />
+                    <col className="w-28" />
+                    <col className="w-36" />
+                    <col className="w-28" />
+                    <col className="w-auto" />
+                    <col className="w-16" />
+                  </colgroup>
+                  <thead>
+                    <tr className="text-center text-sm">
+                      {deleteMode && (
+                        <th className="pb-2 font-medium w-12"></th>
+                      )}
+                      <th className="pb-2 font-medium">日付</th>
+                      <th className="pb-2 font-medium">借方科目</th>
+                      <th className="pb-2 font-medium">借方科目名</th>
+                      <th className="pb-2 font-medium">借方金額</th>
+                      <th className="pb-2 font-medium">貸方科目</th>
+                      <th className="pb-2 font-medium">貸方科目名</th>
+                      <th className="pb-2 font-medium">貸方金額</th>
+                      <th className="pb-2 font-medium">摘要</th>
+                      <th className="pb-2 font-medium">確認</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* 新規入力行 */}
+                    <NewJournalRow
+                      newRowData={newRowData}
+                      newRowErrors={existingRowErrors['new'] || {}}
+                      accountOptions={accountOptions}
+                      deleteMode={deleteMode}
+                      onFieldChange={handleNewRowFieldChange}
+                      onAccountSelect={handleAccountSelect}
+                      onKeyDown={handleNewRowKeyDown}
+                      onFocus={() => setFocusedRowId('new')}
+                      onBlur={() => handleExistingRowBlur('new')}
+                      getAccountName={getAccountName}
+                    />
+                    {journalList.map((entry, index) => (
+                      <ExistingJournalRow
+                        key={entry.id}
+                        entry={entry}
+                        index={index}
+                        deleteMode={deleteMode}
+                        accountOptions={accountOptions}
+                        onAccountSelect={handleExistingAccountSelect}
+                        onFieldChange={handleExistingFieldChange}
+                        onSubmit={handleExistingRowSubmit}
+                        fieldData={existingRowData[entry.id] || {}}
+                        getAccountName={getAccountName}
+                        isSelected={selectedIds.includes(entry.id)}
+                        onCheckboxChange={handleCheckboxChange}
+                        onJournalCheckedChange={handleJournalCheckedChange}
+                        onFocus={handleExistingRowFocus}
+                        onBlur={handleExistingRowBlur}
+                        errors={existingRowErrors[entry.id] || {}}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* ページネーション */}
+              <DataPagination
+                totalItems={journalListCount}
+                totalPages={Math.ceil(journalListCount / pageSize) || 1}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+})
+
+export default function JournalEntryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-600">データを読み込み中...</div>
+          </div>
+        </div>
+      }
+    >
+      <JournalEntryContent />
+    </Suspense>
+  )
+}
