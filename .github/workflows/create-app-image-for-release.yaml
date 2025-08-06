@@ -1,4 +1,4 @@
-name: Integration Tests
+name: create app image for release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  create-app-image:
+  create-app-image-for-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
