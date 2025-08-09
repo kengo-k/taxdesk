@@ -1,14 +1,11 @@
 'use client'
 
-import * as React from 'react'
 import { Suspense, useEffect, useMemo } from 'react'
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import {
-  Calculator,
-} from 'lucide-react'
+import { Calculator } from 'lucide-react'
 
 import { DonutChart } from '@/components/donut-chart'
 import { StackedBarChart } from '@/components/stacked-bar-chart'
@@ -267,7 +264,7 @@ function HomeContent() {
 
       <section className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">財務サマリー</h2>
+          <h2 className="text-lg font-bold">財務サマリ</h2>
         </div>
 
         <TaxEstimationCard
@@ -430,7 +427,6 @@ function TaxEstimationCard({
   )
 }
 
-
 function LoadingSpinner() {
   return (
     <div className="flex justify-center items-center h-[400px]">
@@ -467,7 +463,15 @@ function DonutChartContainer({
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-600">データを読み込み中...</div>
+          </div>
+        </div>
+      }
+    >
       <HomeContent />
     </Suspense>
   )
