@@ -1,13 +1,13 @@
-name: create app image for release
+name: create deploy image
 
 on:
   push:
-    branches: [release]
+    branches: [main]
     tags: ['*']
   workflow_dispatch:
 
 jobs:
-  create-app-image-for-release:
+  create-deploy-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
