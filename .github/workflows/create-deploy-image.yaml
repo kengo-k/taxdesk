@@ -16,4 +16,4 @@ jobs:
       - name: Run smart-docker-build action
         uses: kengo-k/smart-docker-build@v0.1.1
         with:
-          repository_token: ${{ secrets.GITHUB_TOKEN }}
+          repository_token: ${{ secrets.GHCR_TOKEN }}
