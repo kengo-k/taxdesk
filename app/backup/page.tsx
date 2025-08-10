@@ -11,6 +11,17 @@ import {
   Upload,
 } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -176,17 +187,56 @@ export default function BackupPage() {
   const handleRestore = async (backup: BackupHistory) => {
     setIsRestoring(true)
     try {
-      // 復元処理のシミュレーション
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      toast({
-        title: '復元が完了しました',
-        description: `バックアップ ${formatTimestamp(backup.timestamp)} からデータを復元しました。`,
+      const response = await fetch('/api/backup/restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ backupId: backup.id }),
       })
+
+      const data = await response.json()
+      console.log('Restore API response:', data)
+
+      if (data.success) {
+        toast({
+          title: '復元が完了しました',
+          description: `バックアップ ${formatTimestamp(backup.timestamp)} からデータを復元しました。`,
+        })
+        // 復元後にバックアップ一覧を再取得
+        const fetchBackups = async () => {
+          try {
+            const response = await fetch('/api/backup')
+            const data = await response.json()
+
+            if (data.success) {
+              const backups = data.backups.map((backup: any) => ({
+                id: backup.id,
+                timestamp: backup.timestamp,
+                migration: backup.migration,
+                comment: backup.comment || 'コメントなし',
+                sizeFormatted: backup.sizeFormatted || 'Unknown',
+                canRestore:
+                  backup.migration === currentMigration &&
+                  currentMigration !== '取得中...',
+              }))
+              setBackupHistory(backups)
+            }
+          } catch (error) {
+            console.error('Error refreshing backup list:', error)
+          }
+        }
+        await fetchBackups()
+      } else {
+        throw new Error(data.message || '復元に失敗しました')
+      }
     } catch (error) {
       toast({
         title: '復元に失敗しました',
         description:
-          '復元処理中にエラーが発生しました。もう一度お試しください。',
+          error instanceof Error
+            ? error.message
+            : '復元処理中にエラーが発生しました。',
         variant: 'destructive',
       })
     } finally {
@@ -353,29 +403,71 @@ export default function BackupPage() {
                             </span>
                           </td>
                           <td className="py-3 text-right">
-                            <Button
-                              variant={
-                                backup.canRestore ? 'outline' : 'outline'
-                              }
-                              size="sm"
-                              className={`ml-2 ${!backup.canRestore ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              onClick={() => handleRestore(backup)}
-                              disabled={isRestoring || !backup.canRestore}
-                              title={
-                                !backup.canRestore
-                                  ? 'マイグレーションが異なるため復元できません'
-                                  : ''
-                              }
-                            >
-                              {isRestoring ? (
-                                <RotateCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <Upload className="h-4 w-4 mr-1" />
-                                  {backup.canRestore ? '復元' : '復元不可'}
-                                </>
-                              )}
-                            </Button>
+                            {backup.canRestore ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="ml-2"
+                                    disabled={isRestoring}
+                                  >
+                                    {isRestoring ? (
+                                      <RotateCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <Upload className="h-4 w-4 mr-1" />
+                                        復元
+                                      </>
+                                    )}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      データベース復元の確認
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      以下のバックアップからデータベースを復元します。現在のデータは完全に置き換えられます。
+                                      <br />
+                                      <br />
+                                      <strong>バックアップ:</strong>{' '}
+                                      {formatTimestamp(backup.timestamp)}
+                                      <br />
+                                      <strong>コメント:</strong>{' '}
+                                      {backup.comment}
+                                      <br />
+                                      <strong>マイグレーション:</strong>{' '}
+                                      {backup.migration}
+                                      <br />
+                                      <br />
+                                      この操作は元に戻せません。続行しますか？
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      キャンセル
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleRestore(backup)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      復元する
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="ml-2 opacity-50 cursor-not-allowed"
+                                disabled
+                                title="マイグレーションが異なるため復元できません"
+                              >
+                                復元不可
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))
