@@ -519,8 +519,31 @@ async function restoreFromS3(timestamp) {
 
     console.log('Starting database restore...')
 
-    // Sort tables to handle dependencies (rough approach)
-    const sortedTables = [...tables].sort()
+    // Sort tables to handle foreign key dependencies
+    const tableOrder = [
+      'kamoku_bunrui_masters',
+      'kamoku_masters',
+      'nendo_masters',
+      'saimoku_masters',
+      'journals',
+      'backups',
+    ]
+
+    const sortedTables = []
+
+    // Add tables in dependency order
+    for (const table of tableOrder) {
+      if (tables.includes(table)) {
+        sortedTables.push(table)
+      }
+    }
+
+    // Add any remaining tables that aren't in the dependency list
+    for (const table of tables) {
+      if (!sortedTables.includes(table)) {
+        sortedTables.push(table)
+      }
+    }
 
     // Clear existing data and restore tables
     for (const table of sortedTables) {
@@ -586,10 +609,32 @@ async function restoreFromLocal(directory) {
 
     console.log(`Found ${files.length} CSV files to restore`)
 
-    // Sort files to handle dependencies
-    const sortedFiles = files.sort((a, b) =>
-      a.tableName.localeCompare(b.tableName),
-    )
+    // Sort files to handle foreign key dependencies
+    const tableOrder = [
+      'kamoku_bunrui_masters',
+      'kamoku_masters',
+      'nendo_masters',
+      'saimoku_masters',
+      'journals',
+      'backups',
+    ]
+
+    const sortedFiles = []
+
+    // Add files in dependency order
+    for (const table of tableOrder) {
+      const file = files.find((f) => f.tableName === table)
+      if (file) {
+        sortedFiles.push(file)
+      }
+    }
+
+    // Add any remaining files that aren't in the dependency list
+    for (const file of files) {
+      if (!sortedFiles.find((f) => f.tableName === file.tableName)) {
+        sortedFiles.push(file)
+      }
+    }
 
     // Clear existing data and restore tables
     for (const file of sortedFiles) {
