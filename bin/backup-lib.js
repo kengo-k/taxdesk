@@ -250,6 +250,21 @@ function matchWildcard(str, pattern) {
 }
 
 /**
+ * Format bytes to human readable format
+ * @param {number} bytes - Number of bytes
+ * @returns {string} - Formatted size string
+ */
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 B'
+
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+/**
  * Downloads a file from S3 to local filesystem
  * @param {string} bucket - S3 bucket name
  * @param {string} key - S3 object key
@@ -375,8 +390,8 @@ async function listBackups(limit = 10) {
       .reverse()
 
     console.log(`Recent backups in environment '${targetEnv}':\n`)
-    console.log('ID | Timestamp | Migration | Comment')
-    console.log('-'.repeat(100))
+    console.log('ID | Timestamp | Migration | Comment | Size')
+    console.log('-'.repeat(120))
 
     const backupList = []
 
@@ -397,24 +412,55 @@ async function listBackups(limit = 10) {
         const comment = metadata.comment || 'No comment'
         const migrationName = metadata.migrationInfo?.migrationName || 'Unknown'
 
-        console.log(`${i + 1}. | ${backup} | ${migrationName} | ${comment}`)
+        // Get backup folder size by listing all objects in the backup folder
+        let totalSize = 0
+        try {
+          const listObjectsCommand = new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: `${prefix}${backup}/`,
+          })
+          const objectsData = await s3Client.send(listObjectsCommand)
+
+          if (objectsData.Contents) {
+            totalSize = objectsData.Contents.reduce(
+              (sum, obj) => sum + (obj.Size || 0),
+              0,
+            )
+          }
+        } catch (sizeError) {
+          console.warn(
+            `Could not get size for backup ${backup}:`,
+            sizeError.message,
+          )
+        }
+
+        const sizeFormatted = formatBytes(totalSize)
+        console.log(
+          `${i + 1}. | ${backup} | ${migrationName} | ${comment} | ${sizeFormatted}`,
+        )
 
         backupList.push({
           id: backup,
           timestamp: backup,
           migration: migrationName,
           comment,
+          size: totalSize,
+          sizeFormatted,
           metadata,
         })
       } catch (error) {
         // If metadata can't be retrieved, show backup without comment
-        console.log(`${i + 1}. | ${backup} | Unknown | No metadata available`)
+        console.log(
+          `${i + 1}. | ${backup} | Unknown | No metadata available | Unknown size`,
+        )
 
         backupList.push({
           id: backup,
           timestamp: backup,
           migration: 'Unknown',
           comment: 'No metadata available',
+          size: 0,
+          sizeFormatted: 'Unknown',
           metadata: null,
         })
       }

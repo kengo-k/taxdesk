@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // バックアップライブラリからコア機能をimport
-const { getBackupStatus, listBackups } = require('../../../bin/backup-lib.js')
+const { createBackup, listBackups } = require('../../../bin/backup-lib.js')
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,23 +10,31 @@ export async function POST(request: NextRequest) {
 
     console.log('バックアップAPI呼び出し:', { comment })
 
-    // バックアップスクリプトの関数を呼び出し
-    const scriptResult = getBackupStatus()
-    console.log('バックアップスクリプトの結果:', scriptResult)
+    if (!comment || !comment.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'バックアップコメントは必須です',
+        },
+        { status: 400 },
+      )
+    }
 
-    // 疎通確認用のモック処理（2秒待機）
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // 実際のバックアップ作成を実行
+    const result = await createBackup(comment.trim())
+    console.log('バックアップ作成結果:', result)
 
     return NextResponse.json({
       success: true,
-      message: 'バックアップが正常に作成されました（スクリプト連携テスト）',
-      scriptResult, // スクリプトからの結果を含める
+      message: 'バックアップが正常に作成されました',
       backup: {
-        id: `backup_${Date.now()}`,
-        comment: comment || 'Web UI backup',
+        id: result.timestamp,
+        comment: result.comment,
         created_at: new Date().toISOString(),
-        size: '1.2MB',
-        status: 'completed',
+        timestamp: result.timestamp,
+        migration: result.migrationInfo?.migrationName || 'Unknown',
+        tables: result.tables,
+        locations: result.locations,
       },
     })
   } catch (error) {
@@ -56,6 +64,8 @@ export async function GET() {
       timestamp: backup.timestamp,
       migration: backup.migration,
       comment: backup.comment,
+      size: backup.size || 0,
+      sizeFormatted: backup.sizeFormatted || 'Unknown',
       created_at:
         backup.metadata?.createdAt ||
         `${backup.timestamp.slice(0, 4)}-${backup.timestamp.slice(4, 6)}-${backup.timestamp.slice(6, 8)}T${backup.timestamp.slice(8, 10)}:${backup.timestamp.slice(10, 12)}:${backup.timestamp.slice(12, 14)}Z`,

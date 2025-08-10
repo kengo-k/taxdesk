@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/use-toast'
 
 // バックアップ履歴の型定義
@@ -27,6 +28,7 @@ interface BackupHistory {
   timestamp: string
   migration: string
   comment: string
+  sizeFormatted: string
   canRestore: boolean
 }
 
@@ -34,6 +36,7 @@ export default function BackupPage() {
   // バックアップ状態
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
+  const [backupComment, setBackupComment] = useState('')
 
   // 現在適用中のマイグレーション
   const [currentMigration, setCurrentMigration] = useState<string>('取得中...')
@@ -78,6 +81,7 @@ export default function BackupPage() {
             timestamp: backup.timestamp,
             migration: backup.migration,
             comment: backup.comment || 'コメントなし',
+            sizeFormatted: backup.sizeFormatted || 'Unknown',
             canRestore:
               backup.migration === currentMigration &&
               currentMigration !== '取得中...',
@@ -98,19 +102,69 @@ export default function BackupPage() {
 
   // 手動バックアップの実行
   const handleManualBackup = async () => {
+    // コメントの必須チェック
+    if (!backupComment.trim()) {
+      toast({
+        title: 'コメントが必要です',
+        description: 'バックアップコメントを入力してください。',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setIsBackingUp(true)
     try {
-      // バックアップ処理のシミュレーション
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      toast({
-        title: 'バックアップが完了しました',
-        description: `${new Date().toLocaleString('ja-JP')}にバックアップを作成しました。`,
+      const response = await fetch('/api/backup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment: backupComment.trim() }),
       })
+
+      const data = await response.json()
+      console.log('Backup creation API response:', data)
+
+      if (data.success) {
+        toast({
+          title: 'バックアップが完了しました',
+          description: `${new Date().toLocaleString('ja-JP')}にバックアップを作成しました。`,
+        })
+        setBackupComment('')
+        // バックアップ一覧を再取得
+        const fetchBackups = async () => {
+          try {
+            const response = await fetch('/api/backup')
+            const data = await response.json()
+
+            if (data.success) {
+              const backups = data.backups.map((backup: any) => ({
+                id: backup.id,
+                timestamp: backup.timestamp,
+                migration: backup.migration,
+                comment: backup.comment || 'コメントなし',
+                sizeFormatted: backup.sizeFormatted || 'Unknown',
+                canRestore:
+                  backup.migration === currentMigration &&
+                  currentMigration !== '取得中...',
+              }))
+              setBackupHistory(backups)
+            }
+          } catch (error) {
+            console.error('Error refreshing backup list:', error)
+          }
+        }
+        await fetchBackups()
+      } else {
+        throw new Error(data.message || 'バックアップに失敗しました')
+      }
     } catch (error) {
       toast({
         title: 'バックアップに失敗しました',
         description:
-          'バックアップ処理中にエラーが発生しました。もう一度お試しください。',
+          error instanceof Error
+            ? error.message
+            : 'バックアップ処理中にエラーが発生しました。',
         variant: 'destructive',
       })
     } finally {
@@ -182,29 +236,45 @@ export default function BackupPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 mb-4">
                     すべてのデータをクラウドストレージにバックアップします。処理には数分かかる場合があります。
                   </p>
                 </div>
-                <Button
-                  onClick={handleManualBackup}
-                  disabled={isBackingUp}
-                  className="ml-4"
-                >
-                  {isBackingUp ? (
-                    <>
-                      <RotateCw className="mr-2 h-4 w-4 animate-spin" />
-                      バックアップ中...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      今すぐバックアップ
-                    </>
-                  )}
-                </Button>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="backup-comment"
+                    className="text-sm font-medium"
+                  >
+                    バックアップコメント <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="backup-comment"
+                    placeholder="例: 月次バックアップ、機能追加前のバックアップ"
+                    value={backupComment}
+                    onChange={(e) => setBackupComment(e.target.value)}
+                    disabled={isBackingUp}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleManualBackup}
+                    disabled={isBackingUp || !backupComment.trim()}
+                  >
+                    {isBackingUp ? (
+                      <>
+                        <RotateCw className="mr-2 h-4 w-4 animate-spin" />
+                        バックアップ中...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 h-4 w-4" />
+                        今すぐバックアップ
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -235,6 +305,7 @@ export default function BackupPage() {
                       <th className="pb-2 font-medium">バックアップ時刻</th>
                       <th className="pb-2 font-medium">マイグレーション</th>
                       <th className="pb-2 font-medium">コメント</th>
+                      <th className="pb-2 font-medium">サイズ</th>
                       <th className="pb-2 font-medium text-right">操作</th>
                     </tr>
                   </thead>
@@ -242,7 +313,7 @@ export default function BackupPage() {
                     {isLoadingBackups ? (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={5}
                           className="py-8 text-center text-gray-500"
                         >
                           バックアップ一覧を読み込み中...
@@ -251,7 +322,7 @@ export default function BackupPage() {
                     ) : backupHistory.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={4}
+                          colSpan={5}
                           className="py-8 text-center text-gray-500"
                         >
                           バックアップが見つかりませんでした
@@ -274,6 +345,11 @@ export default function BackupPage() {
                           <td className="py-3">
                             <span className="text-sm text-gray-600">
                               {backup.comment}
+                            </span>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm text-gray-500">
+                              {backup.sizeFormatted}
                             </span>
                           </td>
                           <td className="py-3 text-right">
