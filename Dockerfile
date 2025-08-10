@@ -1,3 +1,6 @@
+# imageTagsOnBranchPushed: null
+# imageTagsOnPullRequest: null
+
 # Build stage
 FROM node:21.7.3-bullseye AS builder
 
