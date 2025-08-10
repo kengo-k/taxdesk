@@ -26,6 +26,7 @@ interface BackupHistory {
   id: string
   timestamp: string
   migration: string
+  comment: string
   canRestore: boolean
 }
 
@@ -59,33 +60,41 @@ export default function BackupPage() {
     fetchMigrationVersion()
   }, [])
 
-  // モックデータ - バックアップ履歴
-  const backupHistory: BackupHistory[] = [
-    {
-      id: '20241228120000',
-      timestamp: '20241228120000',
-      migration: 'add_journals_table',
-      canRestore: true,
-    },
-    {
-      id: '20241227230000',
-      timestamp: '20241227230000',
-      migration: 'add_consumption_tax_mappings',
-      canRestore: true,
-    },
-    {
-      id: '20241220150000',
-      timestamp: '20241220150000',
-      migration: 'add_account_masters',
-      canRestore: false,
-    },
-    {
-      id: '20241215100000',
-      timestamp: '20241215100000',
-      migration: 'create_initial_schema',
-      canRestore: false,
-    },
-  ]
+  // バックアップ履歴データ
+  const [backupHistory, setBackupHistory] = useState<BackupHistory[]>([])
+  const [isLoadingBackups, setIsLoadingBackups] = useState(true)
+
+  // バックアップ一覧を取得
+  useEffect(() => {
+    const fetchBackups = async () => {
+      try {
+        const response = await fetch('/api/backup')
+        const data = await response.json()
+        console.log('Backup list API response:', data)
+
+        if (data.success) {
+          const backups = data.backups.map((backup: any) => ({
+            id: backup.id,
+            timestamp: backup.timestamp,
+            migration: backup.migration,
+            comment: backup.comment || 'コメントなし',
+            canRestore:
+              backup.migration === currentMigration &&
+              currentMigration !== '取得中...',
+          }))
+          setBackupHistory(backups)
+        } else {
+          console.error('Failed to fetch backup list:', data.message)
+        }
+      } catch (error) {
+        console.error('Error fetching backup list:', error)
+      } finally {
+        setIsLoadingBackups(false)
+      }
+    }
+
+    fetchBackups()
+  }, [currentMigration])
 
   // 手動バックアップの実行
   const handleManualBackup = async () => {
@@ -155,9 +164,7 @@ export default function BackupPage() {
             </h2>
             <div className="text-sm text-gray-600">
               現在のマイグレーション:
-              <code className="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                {currentMigration}
-              </code>
+              <code className="ml-2 px-2 py-1 text-xs">{currentMigration}</code>
             </div>
           </div>
         </div>
@@ -227,48 +234,76 @@ export default function BackupPage() {
                     <tr className="text-left text-sm border-b">
                       <th className="pb-2 font-medium">バックアップ時刻</th>
                       <th className="pb-2 font-medium">マイグレーション</th>
+                      <th className="pb-2 font-medium">コメント</th>
                       <th className="pb-2 font-medium text-right">操作</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {backupHistory.map((backup) => (
-                      <tr key={backup.id} className="border-b">
-                        <td className="py-3">
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            {formatTimestamp(backup.timestamp)}
-                          </div>
-                        </td>
-                        <td className="py-3">
-                          <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                            {backup.migration}
-                          </code>
-                        </td>
-                        <td className="py-3 text-right">
-                          <Button
-                            variant={backup.canRestore ? 'outline' : 'outline'}
-                            size="sm"
-                            className={`ml-2 ${!backup.canRestore ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() => handleRestore(backup)}
-                            disabled={isRestoring || !backup.canRestore}
-                            title={
-                              !backup.canRestore
-                                ? 'マイグレーションが異なるため復元できません'
-                                : ''
-                            }
-                          >
-                            {isRestoring ? (
-                              <RotateCw className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Upload className="h-4 w-4 mr-1" />
-                                {backup.canRestore ? '復元' : '復元不可'}
-                              </>
-                            )}
-                          </Button>
+                    {isLoadingBackups ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="py-8 text-center text-gray-500"
+                        >
+                          バックアップ一覧を読み込み中...
                         </td>
                       </tr>
-                    ))}
+                    ) : backupHistory.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="py-8 text-center text-gray-500"
+                        >
+                          バックアップが見つかりませんでした
+                        </td>
+                      </tr>
+                    ) : (
+                      backupHistory.map((backup) => (
+                        <tr key={backup.id} className="border-b">
+                          <td className="py-3">
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                              {formatTimestamp(backup.timestamp)}
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <code className="text-sm px-2 py-1">
+                              {backup.migration}
+                            </code>
+                          </td>
+                          <td className="py-3">
+                            <span className="text-sm text-gray-600">
+                              {backup.comment}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right">
+                            <Button
+                              variant={
+                                backup.canRestore ? 'outline' : 'outline'
+                              }
+                              size="sm"
+                              className={`ml-2 ${!backup.canRestore ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              onClick={() => handleRestore(backup)}
+                              disabled={isRestoring || !backup.canRestore}
+                              title={
+                                !backup.canRestore
+                                  ? 'マイグレーションが異なるため復元できません'
+                                  : ''
+                              }
+                            >
+                              {isRestoring ? (
+                                <RotateCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4 mr-1" />
+                                  {backup.canRestore ? '復元' : '復元不可'}
+                                </>
+                              )}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

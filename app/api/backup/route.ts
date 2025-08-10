@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // バックアップライブラリからコア機能をimport
-const { getBackupStatus } = require('../../../bin/backup-lib.js')
+const { getBackupStatus, listBackups } = require('../../../bin/backup-lib.js')
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,29 +46,25 @@ export async function GET() {
   try {
     console.log('バックアップ一覧API呼び出し')
 
-    const scriptResult = getBackupStatus()
-    console.log('バックアップスクリプトの結果:', scriptResult)
-    // 疎通確認用のモック一覧
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // 実際のバックアップ一覧を取得
+    const backupList = await listBackups(10)
+    console.log('バックアップ一覧取得結果:', backupList)
+
+    // バックアップデータをUI用の形式に変換
+    const backups = backupList.map((backup: any) => ({
+      id: backup.id,
+      timestamp: backup.timestamp,
+      migration: backup.migration,
+      comment: backup.comment,
+      created_at:
+        backup.metadata?.createdAt ||
+        `${backup.timestamp.slice(0, 4)}-${backup.timestamp.slice(4, 6)}-${backup.timestamp.slice(6, 8)}T${backup.timestamp.slice(8, 10)}:${backup.timestamp.slice(10, 12)}:${backup.timestamp.slice(12, 14)}Z`,
+      status: 'completed',
+    }))
 
     return NextResponse.json({
       success: true,
-      backups: [
-        {
-          id: 'backup_20241228_001',
-          comment: 'テストバックアップ1',
-          created_at: '2024-12-28T10:00:00Z',
-          size: '1.2MB',
-          status: 'completed',
-        },
-        {
-          id: 'backup_20241227_001',
-          comment: 'テストバックアップ2',
-          created_at: '2024-12-27T10:00:00Z',
-          size: '1.1MB',
-          status: 'completed',
-        },
-      ],
+      backups,
     })
   } catch (error) {
     console.error('バックアップ一覧APIエラー:', error)
