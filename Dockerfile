@@ -39,8 +39,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/schema.prisma ./schema.prisma
 
 USER nextjs
 
-EXPOSE 3000
-
-ENV PORT=3000
-
 CMD ["npm", "start"]
