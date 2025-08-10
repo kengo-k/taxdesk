@@ -4,10 +4,13 @@ import Link from 'next/link'
 
 import { LogOut } from 'lucide-react'
 
+import { EnvironmentBadge } from '@/components/ui/environment-badge'
+
 export function Header() {
   return (
     <header className="border-b bg-white">
-      <div className="container mx-auto h-[73px] px-4 flex justify-end items-center">
+      <div className="container mx-auto h-[73px] px-4 flex justify-between items-center">
+        <EnvironmentBadge />
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm">2024年度</span>
