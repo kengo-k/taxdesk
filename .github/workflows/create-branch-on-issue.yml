@@ -2,14 +2,14 @@ name: Create branch on issue labeled
 
 on:
   issues:
-    types: [labeled]
+    types: [opened]
 
 jobs:
   create-branch:
     runs-on: ubuntu-latest
     steps:
       - name: Create branch for issue
-        uses: peterjgrainger/action-create-branch@v3
+        uses: peterjgrainger/action-create-branch@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
