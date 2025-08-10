@@ -1,3 +1,4 @@
+# imageTagsOnTagPushed: ["{tag}", "latest"]
 # imageTagsOnBranchPushed: null
 # imageTagsOnPullRequest: null
 
