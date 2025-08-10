@@ -1,20 +1,19 @@
 'use client'
 
 import { getEnvironment } from '@/lib/utils/environment'
+import { APP_VERSION } from '@/lib/version'
 
 export function EnvironmentBadge() {
   const environment = getEnvironment()
 
-  // 本番環境の場合
   if (environment === 'production') {
     return (
-      <div className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-red-600 text-white">
-        Production
+      <div className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-pink-200 text-pink-800">
+        Production - {APP_VERSION}
       </div>
     )
   }
 
-  // ローカル環境の場合
   return (
     <div className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium bg-blue-200 text-blue-800">
       Local
