@@ -2,10 +2,12 @@
 
 import * as React from 'react'
 import { Suspense, useEffect, useState } from 'react'
+
 import { useRouter, useSearchParams } from 'next/navigation'
 
-import { Wallet } from 'lucide-react'
+import { Check, Wallet } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -23,14 +25,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  fetchFiscalYears,
+  selectFiscalYears,
+} from '@/lib/redux/features/masterSlice'
+import {
   PayrollSummary,
   fetchPayrollSummary,
   selectPayrollSummary,
 } from '@/lib/redux/features/payrollSlice'
-import {
-  fetchFiscalYears,
-  selectFiscalYears,
-} from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 
 interface PayrollData {
@@ -41,6 +43,7 @@ interface PayrollData {
   socialInsurance: number
   expenseReimbursement: number
   totalPayment: number
+  isPaid?: boolean
 }
 
 function formatCurrency(amount: number): string {
@@ -164,7 +167,22 @@ function PayrollSummaryCard({ data }: { data: PayrollData[] }) {
   )
 }
 
-function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
+function PayrollTable({
+  summaries,
+  paymentStatuses,
+  loadingPayments,
+  journalCheckStatuses,
+  onMarkAsPaid,
+}: {
+  summaries: PayrollSummary[]
+  paymentStatuses: Record<number, boolean>
+  loadingPayments: Record<number, boolean>
+  journalCheckStatuses: Record<
+    number,
+    { allChecked: boolean; checkedCount: number; totalCount: number }
+  >
+  onMarkAsPaid: (month: number) => void
+}) {
   const sortedSummaries = summaries
     .map((summary) => ({
       ...summary,
@@ -190,15 +208,25 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
               <TableHead className="text-right">差引額</TableHead>
               <TableHead className="text-right">加算額</TableHead>
               <TableHead className="text-right">振込総額</TableHead>
+              <TableHead className="text-center">支払い状況</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedSummaries.map((summary, summaryIndex) => {
-              const totalDeduction = summary.payroll_deduction.reduce((sum, item) => sum + item.amount, 0)
-              const totalAddition = summary.payroll_addition.reduce((sum, item) => sum + item.amount, 0)
-              
+              const totalDeduction = summary.payroll_deduction.reduce(
+                (sum, item) => sum + item.amount,
+                0,
+              )
+              const totalAddition = summary.payroll_addition.reduce(
+                (sum, item) => sum + item.amount,
+                0,
+              )
+
               return (
-                <TableRow key={summary.month} className={summaryIndex % 2 === 0 ? "bg-white" : "bg-gray-25"}>
+                <TableRow
+                  key={summary.month}
+                  className={summaryIndex % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
+                >
                   <TableCell className="py-4 align-top">
                     {summary.monthName}
                   </TableCell>
@@ -218,9 +246,14 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
                       )}
                       <div className="space-y-1.5">
                         {summary.payroll_deduction.map((item, index) => (
-                          <div key={index} className="text-gray-600 leading-relaxed text-xs">
-                            <span className="font-medium">{item.name}:</span>{" "}
-                            <span className="font-mono">{formatCurrency(item.amount)}</span>
+                          <div
+                            key={index}
+                            className="text-gray-600 leading-relaxed text-xs"
+                          >
+                            <span className="font-medium">{item.name}:</span>{' '}
+                            <span className="font-mono">
+                              {formatCurrency(item.amount)}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -237,9 +270,14 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
                       )}
                       <div className="space-y-1.5">
                         {summary.payroll_addition.map((item, index) => (
-                          <div key={index} className="text-gray-600 leading-relaxed text-xs">
-                            <span className="font-medium">{item.name}:</span>{" "}
-                            <span className="font-mono">{formatCurrency(item.amount)}</span>
+                          <div
+                            key={index}
+                            className="text-gray-600 leading-relaxed text-xs"
+                          >
+                            <span className="font-medium">{item.name}:</span>{' '}
+                            <span className="font-mono">
+                              {formatCurrency(item.amount)}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -249,6 +287,17 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
                     <span className="font-mono">
                       {formatCurrency(summary.net_payment)}
                     </span>
+                  </TableCell>
+                  <TableCell className="text-center py-4 align-top">
+                    <PaymentStatusCell
+                      month={summary.monthNum}
+                      isPaid={paymentStatuses[summary.monthNum] || false}
+                      isLoading={loadingPayments[summary.monthNum] || false}
+                      journalCheckStatus={
+                        journalCheckStatuses[summary.monthNum]
+                      }
+                      onMarkAsPaid={() => onMarkAsPaid(summary.monthNum)}
+                    />
                   </TableCell>
                 </TableRow>
               )
@@ -260,15 +309,231 @@ function PayrollTable({ summaries }: { summaries: PayrollSummary[] }) {
   )
 }
 
+function PaymentStatusCell({
+  month,
+  isPaid,
+  isLoading,
+  journalCheckStatus,
+  onMarkAsPaid,
+}: {
+  month: number
+  isPaid: boolean
+  isLoading: boolean
+  journalCheckStatus?: {
+    allChecked: boolean
+    checkedCount: number
+    totalCount: number
+  }
+  onMarkAsPaid: () => void
+}) {
+  const canMarkAsPaid = journalCheckStatus?.allChecked || false
+
+  if (isPaid) {
+    return (
+      <div className="text-center">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={true}
+          className="text-xs px-3 py-1 opacity-50 cursor-not-allowed"
+        >
+          支払い完了
+        </Button>
+        <div className="flex items-center justify-center gap-1 text-green-600 mt-1">
+          <Check className="h-4 w-4" />
+          <span className="text-xs">
+            支払い済み{' '}
+            {journalCheckStatus
+              ? `(${journalCheckStatus.totalCount}/${journalCheckStatus.totalCount})`
+              : ''}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  if (!canMarkAsPaid && journalCheckStatus) {
+    return (
+      <div className="text-center">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={true}
+          className="text-xs px-3 py-1 opacity-50 cursor-not-allowed"
+          title="仕訳の確認が完了していません"
+        >
+          支払い完了
+        </Button>
+        <div className="text-xs text-red-500 mt-1">
+          チェック未完了 ({journalCheckStatus.checkedCount}/
+          {journalCheckStatus.totalCount})
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="text-center">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={onMarkAsPaid}
+        disabled={isLoading}
+        className="text-xs px-3 py-1"
+      >
+        {isLoading ? '処理中...' : '支払い完了'}
+      </Button>
+    </div>
+  )
+}
+
 function PayrollContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fiscalYearParam = searchParams.get('fiscal_year')
-  
+
   const [selectedYear, setSelectedYear] = useState(fiscalYearParam || '2024')
   const dispatch = useAppDispatch()
   const { summaries, loading, error } = useAppSelector(selectPayrollSummary)
-  const { data: fiscalYears, loading: fiscalYearsLoading } = useAppSelector(selectFiscalYears)
+  const { data: fiscalYears, loading: fiscalYearsLoading } =
+    useAppSelector(selectFiscalYears)
+
+  const [paymentStatuses, setPaymentStatuses] = useState<
+    Record<number, boolean>
+  >({})
+  const [loadingPayments, setLoadingPayments] = useState<
+    Record<number, boolean>
+  >({})
+  const [journalCheckStatuses, setJournalCheckStatuses] = useState<
+    Record<
+      number,
+      { allChecked: boolean; checkedCount: number; totalCount: number }
+    >
+  >({})
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+
+  // 支払い状況データを取得
+  const fetchPaymentStatuses = async (fiscalYear: string) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${fiscalYear}/payroll/payments`,
+      )
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to fetch payment statuses')
+      }
+
+      const statusMap: Record<number, boolean> = {}
+      result.data.forEach((status: { month: number; isPaid: boolean }) => {
+        statusMap[status.month] = status.isPaid
+      })
+
+      setPaymentStatuses(statusMap)
+    } catch (error) {
+      console.error('Error fetching payment statuses:', error)
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load payment statuses',
+      )
+    }
+  }
+
+  // 全ての月の仕訳確認状況を取得
+  const fetchJournalCheckStatuses = async (fiscalYear: string) => {
+    try {
+      const response = await fetch(
+        `/api/fiscal-years/${fiscalYear}/journals/check-status`,
+      )
+      const result = await response.json()
+
+      if (!result.success) {
+        throw new Error(
+          result.message || 'Failed to fetch journal check statuses',
+        )
+      }
+
+      const checkStatusMap: Record<
+        number,
+        { allChecked: boolean; checkedCount: number; totalCount: number }
+      > = {}
+      result.data.forEach(
+        (status: {
+          month: number
+          allChecked: boolean
+          checkedCount: number
+          totalCount: number
+        }) => {
+          checkStatusMap[status.month] = {
+            allChecked: status.allChecked,
+            checkedCount: status.checkedCount,
+            totalCount: status.totalCount,
+          }
+        },
+      )
+
+      setJournalCheckStatuses(checkStatusMap)
+    } catch (error) {
+      console.error('Error fetching journal check statuses:', error)
+      // エラー時は全てfalseとしてボタンを無効化
+      setJournalCheckStatuses({})
+    }
+  }
+
+  const handleMarkAsPaid = async (month: number) => {
+    setLoadingPayments((prev) => ({ ...prev, [month]: true }))
+    setPaymentError(null)
+
+    try {
+      // 支払い完了をマーク
+      const response = await fetch(
+        `/api/fiscal-years/${selectedYear}/payroll/mark-as-paid`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ month }),
+        },
+      )
+
+      const result = await response.json()
+
+      if (!result.success) {
+        if (result.details && result.details.length > 0) {
+          const errorDetail = result.details[0]
+          if (errorDetail.code === 'UNCHECKED_JOURNALS_EXIST') {
+            alert(`エラー: ${errorDetail.message}`)
+            return
+          }
+          if (errorDetail.code === 'ALREADY_PAID') {
+            alert(`エラー: ${errorDetail.message}`)
+            return
+          }
+        }
+        throw new Error(result.message || 'Failed to mark as paid')
+      }
+
+      // ローカル状態を更新
+      setPaymentStatuses((prev) => ({
+        ...prev,
+        [month]: true,
+      }))
+
+      alert(`${month}月の給与を支払い完了としてマークしました。`)
+    } catch (error) {
+      console.error('Error marking as paid:', error)
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : '支払い完了の更新に失敗しました'
+      setPaymentError(errorMessage)
+      alert(`エラーが発生しました: ${errorMessage}`)
+    } finally {
+      setLoadingPayments((prev) => ({ ...prev, [month]: false }))
+    }
+  }
 
   const payrollData = React.useMemo(() => {
     if (!summaries || !Array.isArray(summaries)) {
@@ -290,7 +555,14 @@ function PayrollContent() {
 
   useEffect(() => {
     dispatch(fetchPayrollSummary(selectedYear))
+    fetchPaymentStatuses(selectedYear)
   }, [dispatch, selectedYear])
+
+  useEffect(() => {
+    if (summaries && summaries.length > 0) {
+      fetchJournalCheckStatuses(selectedYear)
+    }
+  }, [summaries, selectedYear])
 
   if (loading) {
     return (
@@ -341,9 +613,22 @@ function PayrollContent() {
 
       <PayrollSummaryCard data={payrollData} />
 
+      {paymentError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <p className="font-medium">支払い状況の取得エラー:</p>
+          <p className="text-sm">{paymentError}</p>
+        </div>
+      )}
+
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">月別給与明細</h2>
-        <PayrollTable summaries={summaries || []} />
+        <PayrollTable
+          summaries={summaries || []}
+          paymentStatuses={paymentStatuses}
+          loadingPayments={loadingPayments}
+          journalCheckStatuses={journalCheckStatuses}
+          onMarkAsPaid={handleMarkAsPaid}
+        />
       </div>
     </div>
   )
@@ -351,7 +636,15 @@ function PayrollContent() {
 
 export default function PayrollPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-6"><div className="flex justify-center items-center h-64"><div className="text-gray-600">データを読み込み中...</div></div></div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-gray-600">データを読み込み中...</div>
+          </div>
+        </div>
+      }
+    >
       <PayrollContent />
     </Suspense>
   )
