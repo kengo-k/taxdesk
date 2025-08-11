@@ -41,6 +41,7 @@ interface TransactionTableProps {
   onToggleRowSelection: (id: string) => void
   onUpdateTransaction: (transaction: UpdateLedgerRequest) => void
   onCreateTransaction: (transaction: CreateLedgerRequest) => void
+  paymentStatuses?: Record<number, boolean>
 }
 
 // 編集中のトランザクションデータの型
@@ -59,6 +60,7 @@ export function TransactionTable({
   onToggleRowSelection,
   onUpdateTransaction,
   onCreateTransaction,
+  paymentStatuses = {},
 }: TransactionTableProps) {
   // Reduxディスパッチを取得
   const dispatch = useAppDispatch()
@@ -950,6 +952,7 @@ export function TransactionTable({
                     registerInputRef={registerInputRef}
                     onToggleRowSelection={onToggleRowSelection}
                     onCheckedChange={handleCheckedChange}
+                    paymentStatuses={paymentStatuses}
                   />
                 )
               })

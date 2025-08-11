@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 
+import { ApiError, ApiErrorType } from '@/lib/backend/api-error'
 import {
   Connection,
   RouteContext,
@@ -10,6 +11,7 @@ import { countJournals } from '@/lib/backend/services/journal/count-journals'
 import { createJournal } from '@/lib/backend/services/journal/create-journal'
 import { deleteJournals } from '@/lib/backend/services/journal/delete-journals'
 import { listJournals } from '@/lib/backend/services/journal/list-journals'
+import { checkPaymentStatusByDate } from '@/lib/backend/services/payroll/check-payment-status-by-date'
 
 export function listJournalsHandler(
   conn: Connection,
@@ -69,6 +71,25 @@ export function createJournalHandler(
       description: requestData.description || requestData.note || '',
     }
 
+    // 支払い済み期間かチェック
+    const paymentStatus = await checkPaymentStatusByDate(
+      tx,
+      nendo,
+      createJournalData.date,
+    )
+    if (paymentStatus.isPaid) {
+      throw new ApiError(
+        `${paymentStatus.month}月は既に給与支払いが完了しているため、仕訳の追加はできません`,
+        ApiErrorType.VALIDATION,
+        [
+          {
+            code: 'PAYROLL_PERIOD_LOCKED',
+            message: `${paymentStatus.month}月は既に給与支払いが完了しているため、仕訳の追加はできません`,
+          },
+        ],
+      )
+    }
+
     await createJournal(tx, createJournalData)
 
     return { success: true, message: '仕訳が正常に登録されました' }
@@ -82,6 +103,42 @@ export function deleteJournalsHandler(
   return withTransaction(conn, async (tx) => {
     const { year: nendo } = await ctx.params
     const requestData = await req.json()
+
+    // 削除対象の仕訳の日付を取得してバリデーション
+    const journalsToDelete = await tx.journals.findMany({
+      where: {
+        nendo: nendo,
+        id: {
+          in: requestData.ids,
+        },
+        deleted: '0',
+      },
+      select: {
+        date: true,
+      },
+    })
+
+    // 支払い済み期間かチェック
+    const dates = journalsToDelete.map((j) => j.date)
+    const paymentStatuses = await Promise.all(
+      dates.map((date) => checkPaymentStatusByDate(tx, nendo, date)),
+    )
+
+    const paidStatuses = paymentStatuses.filter((status) => status.isPaid)
+    if (paidStatuses.length > 0) {
+      const months = [...new Set(paidStatuses.map((s) => s.month))]
+      throw new ApiError(
+        `${months.join(', ')}月は既に給与支払いが完了しているため、仕訳の削除はできません`,
+        ApiErrorType.VALIDATION,
+        [
+          {
+            code: 'PAYROLL_PERIOD_LOCKED',
+            message: `${months.join(', ')}月は既に給与支払いが完了しているため、仕訳の削除はできません`,
+          },
+        ],
+      )
+    }
+
     const deletedCount = await deleteJournals(tx, {
       fiscal_year: nendo,
       ids: requestData.ids,
