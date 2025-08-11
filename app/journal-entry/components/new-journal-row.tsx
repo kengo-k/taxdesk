@@ -11,6 +11,8 @@ interface NewJournalRowProps {
   newRowErrors: Record<string, string>
   accountOptions: AutocompleteOption[]
   deleteMode: boolean
+  selectedMonth?: string | null
+  paymentStatuses?: Record<number, boolean>
   onFieldChange: (field: string, value: string | number) => void
   onAccountSelect: (
     field: 'karikata_cd' | 'kasikata_cd',
@@ -27,6 +29,8 @@ export const NewJournalRow = memo(function NewJournalRow({
   newRowErrors,
   accountOptions,
   deleteMode,
+  selectedMonth = null,
+  paymentStatuses = {},
   onFieldChange,
   onAccountSelect,
   onKeyDown,
@@ -34,6 +38,11 @@ export const NewJournalRow = memo(function NewJournalRow({
   onBlur,
   getAccountName,
 }: NewJournalRowProps) {
+  // 検索条件の月が支払い済みかチェック
+  const isMonthLocked = Boolean(
+    selectedMonth && paymentStatuses[parseInt(selectedMonth)],
+  )
+
   // ローカルstate
   const [localDate, setLocalDate] = useState(newRowData.date || '')
   const [localKarikataCode, setLocalKarikataCode] = useState(
@@ -127,6 +136,7 @@ export const NewJournalRow = memo(function NewJournalRow({
               onKeyDown={onKeyDown}
               onFocus={onFocus}
               onBlur={onBlur}
+              disabled={isMonthLocked}
               className={`h-8 text-sm ${newRowErrors.date ? 'border-red-500' : ''}`}
             />
           </div>
@@ -157,6 +167,7 @@ export const NewJournalRow = memo(function NewJournalRow({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
+          disabled={isMonthLocked}
           className={`h-8 text-sm ${newRowErrors.karikata_cd ? 'border-red-500' : ''}`}
         />
       </td>
@@ -183,6 +194,7 @@ export const NewJournalRow = memo(function NewJournalRow({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
+          disabled={isMonthLocked}
           className={`h-8 text-sm text-right ${newRowErrors.karikata_value ? 'border-red-500' : ''}`}
         />
       </td>
@@ -202,6 +214,7 @@ export const NewJournalRow = memo(function NewJournalRow({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
+          disabled={isMonthLocked}
           className={`h-8 text-sm ${newRowErrors.kasikata_cd ? 'border-red-500' : ''}`}
         />
       </td>
@@ -228,6 +241,7 @@ export const NewJournalRow = memo(function NewJournalRow({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
+          disabled={isMonthLocked}
           className={`h-8 text-sm text-right ${newRowErrors.kasikata_value ? 'border-red-500' : ''}`}
         />
       </td>
@@ -244,6 +258,7 @@ export const NewJournalRow = memo(function NewJournalRow({
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur}
+          disabled={isMonthLocked}
           className={`h-8 text-sm ${newRowErrors.note ? 'border-red-500' : ''}`}
         />
       </td>

@@ -62,6 +62,9 @@ export function TransactionTable({
   onCreateTransaction,
   paymentStatuses = {},
 }: TransactionTableProps) {
+  // 検索条件の月が支払い済みかチェック
+  const isMonthLocked = Boolean(month && paymentStatuses[parseInt(month)])
+
   // Reduxディスパッチを取得
   const dispatch = useAppDispatch()
   // ローカルステート
@@ -695,6 +698,7 @@ export function TransactionTable({
                               onBlur={() => handleNewFieldBlur('date')}
                               ref={(el) => registerNewRowRef('date', el)}
                               placeholder="YYYYMMDD"
+                              disabled={isMonthLocked}
                               className={`h-8 text-sm ${
                                 hasNewFieldError('date')
                                   ? 'border-red-500 pl-8'
@@ -744,6 +748,7 @@ export function TransactionTable({
                             onBlur={() => handleNewFieldBlur('other_cd')}
                             ref={(el) => registerNewRowRef('other_cd', el)}
                             placeholder="コード"
+                            disabled={isMonthLocked}
                             className={`h-8 text-sm ${
                               hasNewFieldError('other_cd')
                                 ? 'border-red-500 pl-8'
@@ -805,6 +810,7 @@ export function TransactionTable({
                               registerNewRowRef('karikata_value', el)
                             }
                             placeholder="借方金額"
+                            disabled={isMonthLocked}
                             className={`h-8 text-sm text-right ${
                               hasNewFieldError('karikata_value')
                                 ? 'border-red-500 pl-8'
@@ -857,6 +863,7 @@ export function TransactionTable({
                               registerNewRowRef('kasikata_value', el)
                             }
                             placeholder="貸方金額"
+                            disabled={isMonthLocked}
                             className={`h-8 text-sm text-right ${
                               hasNewFieldError('kasikata_value')
                                 ? 'border-red-500 pl-8'
@@ -897,6 +904,7 @@ export function TransactionTable({
                             ref={(el) => registerNewRowRef('note', el)}
                             name="note"
                             placeholder="摘要を入力"
+                            disabled={isMonthLocked}
                             className={`h-8 text-sm ${
                               hasNewFieldError('note')
                                 ? 'border-red-500 pl-8'
