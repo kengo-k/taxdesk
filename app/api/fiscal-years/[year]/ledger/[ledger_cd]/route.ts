@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 
+import { ApiError, ApiErrorType } from '@/lib/backend/api-error'
 import {
   Connection,
   RouteContext,
@@ -10,6 +11,7 @@ import { countLedgers } from '@/lib/backend/services/ledger/count-ledgers'
 import { createLedger } from '@/lib/backend/services/ledger/create-ledger'
 import { listLedgers } from '@/lib/backend/services/ledger/list-ledgers'
 import { updateLedger } from '@/lib/backend/services/ledger/update-ledger'
+import { checkPaymentStatusByDate } from '@/lib/backend/services/payroll/check-payment-status-by-date'
 
 export function listLedgersHandler(
   conn: Connection,
@@ -71,6 +73,25 @@ export function createLedgerHandler(
       checked: '0',
     }
 
+    // 支払い済み期間かチェック
+    const paymentStatus = await checkPaymentStatusByDate(
+      tx,
+      nendo,
+      createLedgerData.date,
+    )
+    if (paymentStatus.isPaid) {
+      throw new ApiError(
+        `${paymentStatus.month}月は既に給与支払いが完了しているため、取引の追加はできません`,
+        ApiErrorType.VALIDATION,
+        [
+          {
+            code: 'PAYROLL_PERIOD_LOCKED',
+            message: `${paymentStatus.month}月は既に給与支払いが完了しているため、取引の追加はできません`,
+          },
+        ],
+      )
+    }
+
     await createLedger(tx, createLedgerData)
 
     return { success: true, message: '取引が正常に登録されました' }
@@ -86,7 +107,7 @@ export function updateLedgerHandler(
     const requestData = await req.json()
 
     // リクエストデータとURLパラメータを結合
-    const createLedgerData = {
+    const updateLedgerData = {
       id: requestData.id,
       nendo, // URLパスから取得した年度
       ledger_cd, // URLパスから取得した元帳科目コード
@@ -100,9 +121,59 @@ export function updateLedgerHandler(
       checked: '0',
     }
 
-    await updateLedger(tx, createLedgerData)
+    // 支払い済み期間かチェック (新しい日付に対して)
+    const paymentStatus = await checkPaymentStatusByDate(
+      tx,
+      nendo,
+      updateLedgerData.date,
+    )
+    if (paymentStatus.isPaid) {
+      throw new ApiError(
+        `${paymentStatus.month}月は既に給与支払いが完了しているため、取引の更新はできません`,
+        ApiErrorType.VALIDATION,
+        [
+          {
+            code: 'PAYROLL_PERIOD_LOCKED',
+            message: `${paymentStatus.month}月は既に給与支払いが完了しているため、取引の更新はできません`,
+          },
+        ],
+      )
+    }
 
-    return { success: true, message: '取引が正常に登録されました' }
+    // 既存の取引の日付もチェック
+    const existingLedger = await tx.journals.findFirst({
+      where: {
+        id: updateLedgerData.id,
+        nendo: nendo,
+      },
+      select: {
+        date: true,
+      },
+    })
+
+    if (existingLedger) {
+      const existingPaymentStatus = await checkPaymentStatusByDate(
+        tx,
+        nendo,
+        existingLedger.date,
+      )
+      if (existingPaymentStatus.isPaid) {
+        throw new ApiError(
+          `${existingPaymentStatus.month}月は既に給与支払いが完了しているため、取引の更新はできません`,
+          ApiErrorType.VALIDATION,
+          [
+            {
+              code: 'PAYROLL_PERIOD_LOCKED',
+              message: `${existingPaymentStatus.month}月は既に給与支払いが完了しているため、取引の更新はできません`,
+            },
+          ],
+        )
+      }
+    }
+
+    await updateLedger(tx, updateLedgerData)
+
+    return { success: true, message: '取引が正常に更新されました' }
   })
 }
 

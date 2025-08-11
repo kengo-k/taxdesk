@@ -33,6 +33,7 @@ import {
   selectFiscalYears,
 } from '@/lib/redux/features/masterSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { fetchPaymentStatuses } from '@/lib/utils/payroll-lock-utils'
 
 export default function LedgerPage() {
   const router = useRouter()
@@ -91,6 +92,9 @@ export default function LedgerPage() {
   const [deleteMode, setDeleteMode] = useState(false)
   const [selectedRows, setSelectedRows] = useState<string[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [paymentStatuses, setPaymentStatuses] = useState<
+    Record<number, boolean>
+  >({})
 
   // 年度一覧がストアにない場合は取得する
   useEffect(() => {
@@ -98,6 +102,18 @@ export default function LedgerPage() {
       dispatch(fetchFiscalYears())
     }
   }, [fiscalYears.length, fiscalYearsLoading])
+
+  // 支払い状況を取得
+  useEffect(() => {
+    if (fiscalYear && fiscalYear !== 'none') {
+      fetchPaymentStatuses(fiscalYear)
+        .then((statuses) => setPaymentStatuses(statuses))
+        .catch((error) => {
+          console.error('Failed to fetch payment statuses:', error)
+          setPaymentStatuses({})
+        })
+    }
+  }, [fiscalYear])
 
   useEffect(() => {
     updateUrlParams()
@@ -612,6 +628,7 @@ export default function LedgerPage() {
                       onToggleRowSelection={toggleRowSelection}
                       onUpdateTransaction={handleUpdateTransaction}
                       onCreateTransaction={handleCreateTransaction}
+                      paymentStatuses={paymentStatuses}
                     />
 
                     {/* ページネーション */}

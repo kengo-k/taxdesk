@@ -15,6 +15,7 @@ import {
   getDayOfWeekKanji,
   isWeekend,
 } from '@/lib/client/utils/formatting'
+import { isPaymentLocked } from '@/lib/utils/payroll-lock-utils'
 
 interface TransactionRowProps {
   transaction: LedgerListItem
@@ -34,6 +35,7 @@ interface TransactionRowProps {
   ) => void
   onToggleRowSelection: (id: string) => void
   onCheckedChange: (id: string, checked: boolean) => void
+  paymentStatuses?: Record<number, boolean>
 }
 
 // カスタム比較関数を定義
@@ -104,8 +106,13 @@ export const TransactionRow = memo(function TransactionRow({
   registerInputRef,
   onToggleRowSelection,
   onCheckedChange,
+  paymentStatuses = {},
 }: TransactionRowProps) {
   const id = transaction.journal_id.toString()
+
+  // 日付と支払いロック状況を取得
+  const date = transaction.date
+  const isLocked = date ? isPaymentLocked(date, paymentStatuses) : false
 
   return (
     <tr
@@ -376,7 +383,14 @@ export const TransactionRow = memo(function TransactionRow({
           checked={editedTransaction.checked === '1'}
           onCheckedChange={(checked: boolean) => onCheckedChange(id, checked)}
           aria-label={`取引 ${id} の確認`}
-          disabled={!isCurrentFiscalYear}
+          disabled={!isCurrentFiscalYear || isLocked}
+          title={
+            isLocked
+              ? '支払い済み期間のため変更できません'
+              : !isCurrentFiscalYear
+                ? '当年度以外は変更できません'
+                : undefined
+          }
         />
       </td>
     </tr>

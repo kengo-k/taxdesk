@@ -45,6 +45,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getFieldDisplayName } from '@/lib/schemas/common-validation'
 import { validateJournalRow } from '@/lib/schemas/journal-validation'
+import { fetchPaymentStatuses } from '@/lib/utils/payroll-lock-utils'
 
 import { ExistingJournalRow } from './components/existing-journal-row'
 import { NewJournalRow } from './components/new-journal-row'
@@ -77,6 +78,9 @@ const JournalEntryContent = memo(function JournalEntryContent() {
   })
 
   const [deleteMode, setDeleteMode] = useState(false)
+  const [paymentStatuses, setPaymentStatuses] = useState<
+    Record<number, boolean>
+  >({})
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -667,6 +671,18 @@ const JournalEntryContent = memo(function JournalEntryContent() {
     }
   }, [dispatch, searchForm.fiscalYear])
 
+  // 支払い状況を取得
+  useEffect(() => {
+    if (searchForm.fiscalYear && searchForm.fiscalYear !== 'none') {
+      fetchPaymentStatuses(searchForm.fiscalYear)
+        .then((statuses) => setPaymentStatuses(statuses))
+        .catch((error) => {
+          console.error('Failed to fetch payment statuses:', error)
+          setPaymentStatuses({})
+        })
+    }
+  }, [searchForm.fiscalYear])
+
   // 年度未設定時の処理
   useEffect(() => {
     if (!isSearchValid) {
@@ -1036,6 +1052,8 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                       newRowErrors={existingRowErrors['new'] || {}}
                       accountOptions={accountOptions}
                       deleteMode={deleteMode}
+                      selectedMonth={searchForm.month}
+                      paymentStatuses={paymentStatuses}
                       onFieldChange={handleNewRowFieldChange}
                       onAccountSelect={handleAccountSelect}
                       onKeyDown={handleNewRowKeyDown}
@@ -1061,6 +1079,7 @@ const JournalEntryContent = memo(function JournalEntryContent() {
                         onFocus={handleExistingRowFocus}
                         onBlur={handleExistingRowBlur}
                         errors={existingRowErrors[entry.id] || {}}
+                        paymentStatuses={paymentStatuses}
                       />
                     ))}
                   </tbody>

@@ -10,6 +10,7 @@ import {
   getDayOfWeekKanji,
   isWeekend,
 } from '@/lib/client/utils/formatting'
+import { isPaymentLocked } from '@/lib/utils/payroll-lock-utils'
 
 interface ExistingJournalRowProps {
   entry: any
@@ -35,6 +36,7 @@ interface ExistingJournalRowProps {
   onFocus?: (entryId: string) => void
   onBlur?: (entryId: string) => void
   errors?: Record<string, string>
+  paymentStatuses?: Record<number, boolean>
 }
 
 export const ExistingJournalRow = memo(function ExistingJournalRow({
@@ -53,6 +55,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
   onFocus,
   onBlur,
   errors = {},
+  paymentStatuses = {},
 }: ExistingJournalRowProps) {
   // フィールドの現在値を取得（一時データを優先）
   const getFieldValue = (fieldName: string, originalValue: any) => {
@@ -79,6 +82,11 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
     getFieldValue('note', entry.note || '') || '',
   )
   const [localChecked, setLocalChecked] = useState(entry.checked === '1')
+
+  // 支払い済み期間かチェック
+  const isLocked = entry.date
+    ? isPaymentLocked(entry.date, paymentStatuses)
+    : false
 
   // propsの値が変更されたときにローカルstateを同期
   useEffect(() => {
@@ -422,7 +430,10 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
         <Checkbox
           className="h-4 w-4"
           checked={localChecked}
+          disabled={isLocked}
           onCheckedChange={async (checked: boolean) => {
+            if (isLocked) return
+
             const previousChecked = localChecked
             setLocalChecked(checked)
             try {
@@ -433,6 +444,7 @@ export const ExistingJournalRow = memo(function ExistingJournalRow({
             }
           }}
           aria-label={`取引 ${entry.id} の確認`}
+          title={isLocked ? '支払い済み期間のため変更できません' : undefined}
         />
       </td>
     </tr>
