@@ -98,6 +98,7 @@ model nendo_masters {
 
   // Relations
   journals              journals[]
+  payroll_payments      payroll_payments[]
 }
 
 model saimoku_masters {
@@ -129,4 +130,18 @@ model backups {
   note               String?
   created_at         DateTime @db.Timestamp(6)
   updated_at         DateTime @db.Timestamp(6)
+}
+
+model payroll_payments {
+  id                 Int      @id @default(autoincrement())
+  fiscal_year        String   @db.VarChar(4)
+  month              Int
+  is_paid            Boolean  @default(false)
+  created_at         DateTime @db.Timestamp(6) @default(now())
+
+  // Foreign key reference
+  nendo_master       nendo_masters @relation(fields: [fiscal_year], references: [nendo])
+
+  // Unique constraint to prevent duplicate entries for the same fiscal year and month
+  @@unique([fiscal_year, month])
 }
