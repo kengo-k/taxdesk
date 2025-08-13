@@ -270,14 +270,48 @@ function PayrollTable({
                       )}
                       <div className="space-y-1.5">
                         {summary.payroll_addition.map((item, index) => (
-                          <div
-                            key={index}
-                            className="text-gray-600 leading-relaxed text-xs"
-                          >
-                            <span className="font-medium">{item.name}:</span>{' '}
-                            <span className="font-mono">
-                              {formatCurrency(item.amount)}
-                            </span>
+                          <div key={index}>
+                            <div className="text-gray-600 leading-relaxed text-xs">
+                              <span className="font-medium">{item.name}:</span>{' '}
+                              <span className="font-mono">
+                                {formatCurrency(item.amount)}
+                              </span>
+                            </div>
+                            {item.details && item.details.length > 0 && (
+                              <div>
+                                <div className="text-gray-400 text-[10px] ml-2">
+                                  (明細)
+                                </div>
+                                <div className="ml-4 space-y-0.5">
+                                  {item.details.map((detail, detailIndex) => (
+                                    <div
+                                      key={detailIndex}
+                                      className="text-gray-400 text-[10px]"
+                                    >
+                                      <span className="font-medium">
+                                        {detail.name}:
+                                      </span>{' '}
+                                      <span className="font-mono text-xs">
+                                        {formatCurrency(detail.amount)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  <div className="text-gray-400 text-[10px] mt-1">
+                                    (小計)
+                                  </div>
+                                  <div className="text-gray-400 text-[10px]">
+                                    <span className="font-mono text-xs">
+                                      {formatCurrency(
+                                        item.details.reduce(
+                                          (sum, detail) => sum + detail.amount,
+                                          0,
+                                        ),
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -290,7 +324,6 @@ function PayrollTable({
                   </TableCell>
                   <TableCell className="text-center py-4 align-top">
                     <PaymentStatusCell
-                      month={summary.monthNum}
                       isPaid={paymentStatuses[summary.monthNum] || false}
                       isLoading={loadingPayments[summary.monthNum] || false}
                       journalCheckStatus={
@@ -310,13 +343,11 @@ function PayrollTable({
 }
 
 function PaymentStatusCell({
-  month,
   isPaid,
   isLoading,
   journalCheckStatus,
   onMarkAsPaid,
 }: {
-  month: number
   isPaid: boolean
   isLoading: boolean
   journalCheckStatus?: {

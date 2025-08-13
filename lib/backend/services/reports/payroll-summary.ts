@@ -4,6 +4,7 @@ interface PayrollItem {
   code: string
   name: string
   amount: number
+  details?: PayrollItem[]
 }
 
 interface PayrollSummary {
@@ -24,6 +25,39 @@ interface PayrollDetailRow {
   payroll_type: string
   kari_saimoku_name: string
   kasi_saimoku_name: string
+}
+
+async function getExpenseAdvanceDetails(
+  conn: Connection,
+  fiscalYear: string,
+  month: string,
+): Promise<PayrollItem[]> {
+  const expenseDetails = await conn.$queryRaw<
+    {
+      karikata_cd: string
+      kari_saimoku_name: string
+      amount: number
+    }[]
+  >`
+    select j.karikata_cd,
+           kari_s.saimoku_full_name as kari_saimoku_name,
+           sum(j.karikata_value) as amount
+    from journals j
+             join saimoku_masters kari_s on j.karikata_cd = kari_s.saimoku_cd
+             join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
+    where j.nendo = ${fiscalYear}
+      and j.deleted = '0'
+      and kasi_s.custom_fields ->> 'category' = 'payroll_addition'
+      and substring(j.date, 1, 6) = ${month}
+      and (kari_s.custom_fields ->> 'category' != 'fiscal_carryover' or kari_s.custom_fields ->> 'category' is null)
+    group by j.karikata_cd, kari_s.saimoku_full_name
+    order by j.karikata_cd`
+
+  return expenseDetails.map((detail) => ({
+    code: detail.karikata_cd,
+    name: detail.kari_saimoku_name,
+    amount: Number(detail.amount),
+  }))
 }
 
 export async function getPayrollSummary(
@@ -100,14 +134,14 @@ export async function getPayrollSummary(
     for (const row of rows) {
       const kariCustomFields = JSON.parse(row.kari_custom_fields || '{}')
       const isFiscalCarryover = kariCustomFields.category === 'fiscal_carryover'
-      
+
       if (isFiscalCarryover) {
         continue
       }
 
       if (row.payroll_type === 'payroll_base') {
         const kariCustomFields = JSON.parse(row.kari_custom_fields || '{}')
-        
+
         // 年末調整の場合（借方がpayroll_deduction、貸方がpayroll_base）
         if (kariCustomFields.category === 'payroll_deduction') {
           // 年末調整還付分として加算項目に分類
@@ -160,10 +194,30 @@ export async function getPayrollSummary(
     result.push({
       month,
       payroll_base,
-      payroll_deduction: Array.from(deductionMap.values()).sort((a, b) => a.code.localeCompare(b.code)),
-      payroll_addition: Array.from(additionMap.values()).sort((a, b) => a.code.localeCompare(b.code)),
+      payroll_deduction: Array.from(deductionMap.values()).sort((a, b) =>
+        a.code.localeCompare(b.code),
+      ),
+      payroll_addition: Array.from(additionMap.values()).sort((a, b) =>
+        a.code.localeCompare(b.code),
+      ),
       net_payment,
     })
+  }
+
+  // 立替金の詳細を取得して追加
+  for (const summary of result) {
+    for (const additionItem of summary.payroll_addition) {
+      if (additionItem.code === 'B13') {
+        const expenseDetails = await getExpenseAdvanceDetails(
+          conn,
+          fiscalYear,
+          summary.month,
+        )
+        if (expenseDetails.length > 0) {
+          additionItem.details = expenseDetails
+        }
+      }
+    }
   }
 
   return result.sort((a, b) => a.month.localeCompare(b.month))
