@@ -6,6 +6,7 @@ export interface PayrollItem {
   code: string
   name: string
   amount: number
+  details?: PayrollItem[]
 }
 
 export interface PayrollSummary {
@@ -32,12 +33,14 @@ export const fetchPayrollSummary = createAsyncThunk<
   PayrollSummary[] | { data: PayrollSummary[] },
   string
 >('payroll/fetchPayrollSummary', async (fiscalYear: string) => {
-  const response = await fetch(`/api/fiscal-years/${fiscalYear}/reports/payroll-summary`)
-  
+  const response = await fetch(
+    `/api/fiscal-years/${fiscalYear}/reports/payroll-summary`,
+  )
+
   if (!response.ok) {
     throw new Error('給与データの取得に失敗しました')
   }
-  
+
   return response.json()
 })
 
@@ -59,7 +62,9 @@ export const payrollSlice = createSlice({
       })
       .addCase(fetchPayrollSummary.fulfilled, (state, action) => {
         state.loading = false
-        state.summaries = Array.isArray(action.payload) ? action.payload : (action.payload as { data: PayrollSummary[] }).data || []
+        state.summaries = Array.isArray(action.payload)
+          ? action.payload
+          : (action.payload as { data: PayrollSummary[] }).data || []
       })
       .addCase(fetchPayrollSummary.rejected, (state, action) => {
         state.loading = false
