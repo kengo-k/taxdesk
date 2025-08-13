@@ -47,7 +47,7 @@ async function getExpenseAdvanceDetails(
              join saimoku_masters kasi_s on j.kasikata_cd = kasi_s.saimoku_cd
     where j.nendo = ${fiscalYear}
       and j.deleted = '0'
-      and j.kasikata_cd = 'B13'
+      and kasi_s.custom_fields ->> 'category' = 'payroll_addition'
       and substring(j.date, 1, 6) = ${month}
       and (kari_s.custom_fields ->> 'category' != 'fiscal_carryover' or kari_s.custom_fields ->> 'category' is null)
     group by j.karikata_cd, kari_s.saimoku_full_name

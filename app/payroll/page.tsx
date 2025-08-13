@@ -296,6 +296,19 @@ function PayrollTable({
                                       </span>
                                     </div>
                                   ))}
+                                  <div className="text-gray-400 text-[10px] mt-1">
+                                    (小計)
+                                  </div>
+                                  <div className="text-gray-400 text-[10px]">
+                                    <span className="font-mono text-xs">
+                                      {formatCurrency(
+                                        item.details.reduce(
+                                          (sum, detail) => sum + detail.amount,
+                                          0,
+                                        ),
+                                      )}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             )}
