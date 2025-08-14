@@ -1,3 +1,4 @@
+import { ApiError, ApiErrorType } from '@/lib/backend/api-error'
 import { Connection } from '@/lib/types'
 
 // 対象内訳レベル
@@ -81,7 +82,10 @@ export async function calculateBreakdown(
       where: { kamoku_bunrui_cd: request.kamokuBunruiCd },
     })
     if (!kamokuBunrui) {
-      throw new Error(`Kamoku bunrui not found: ${request.kamokuBunruiCd}`)
+      throw new ApiError(
+        '指定された条件でデータを取得できませんでした',
+        ApiErrorType.NOT_FOUND,
+      )
     }
 
     const kamokuBunruiType = kamokuBunrui.kamoku_bunrui_type
@@ -700,7 +704,10 @@ async function getKariaktaBreakdown(
       input.kamokuBunruiCd,
     )
   } else {
-    throw new Error('Invalid breakdown level or time unit')
+    throw new ApiError(
+      '不正な集計レベルまたは時間単位です',
+      ApiErrorType.VALIDATION,
+    )
   }
 }
 
@@ -758,6 +765,9 @@ async function getKasikataBreakdown(
       input.kamokuBunruiCd,
     )
   } else {
-    throw new Error('Invalid breakdown level or time unit')
+    throw new ApiError(
+      '不正な集計レベルまたは時間単位です',
+      ApiErrorType.VALIDATION,
+    )
   }
 }
