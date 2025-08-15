@@ -1,48 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// バックアップライブラリからリストア機能をimport
+import { ApiError, ApiErrorType } from '@/lib/backend/api-error'
+import {
+  Connection,
+  RouteContext,
+  createApiRoute,
+} from '@/lib/backend/api-transaction'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { restoreFromS3 } = require('../../../../bin/backup-lib.js')
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { backupId } = body
+export async function restoreBackupHandler(
+  _conn: Connection,
+  { req }: { req: NextRequest; ctx: RouteContext },
+) {
+  const body = await req.json()
+  const { backupId } = body
 
-    console.log('バックアップリストアAPI呼び出し:', { backupId })
+  console.log('バックアップリストアAPI呼び出し:', { backupId })
 
-    if (!backupId || !backupId.trim()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'バックアップIDは必須です',
-        },
-        { status: 400 },
-      )
-    }
-
-    // 実際のリストア処理を実行
-    const result = await restoreFromS3(backupId.trim())
-    console.log('リストア実行結果:', result)
-
-    return NextResponse.json({
-      success: true,
-      message: 'データベースの復元が完了しました',
-      restore: {
-        backupId: result.timestamp,
-        tablesRestored: result.tablesRestored,
-        timestamp: result.timestamp,
-        metadata: result.metadata,
-      },
-    })
-  } catch (error) {
-    console.error('バックアップリストアAPIエラー:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'データベースの復元に失敗しました',
-        error: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 },
-    )
+  if (!backupId || !backupId.trim()) {
+    throw new ApiError('バックアップIDは必須です', ApiErrorType.VALIDATION)
   }
+
+  const result = await restoreFromS3(backupId.trim())
+  console.log('リストア実行結果:', result)
+
+  return NextResponse.json({
+    success: true,
+    message: 'データベースの復元が完了しました',
+    restore: {
+      backupId: result.timestamp,
+      tablesRestored: result.tablesRestored,
+      timestamp: result.timestamp,
+      metadata: result.metadata,
+    },
+  })
 }
+
+export const POST = createApiRoute(restoreBackupHandler)
