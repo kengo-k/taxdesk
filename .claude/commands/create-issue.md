@@ -19,7 +19,7 @@ GitHub issueを対話的に作成します。
    4. type:feat - New feature or request
    5. type:setup - Configuration, environment setup, and deployment settings
 
-   適用したいラベル番号を入力してください（例: 1）:
+   Issueの種別を入力してください（例: 1）:
    ```
 
 2. **ラベル番号入力**: ユーザーが番号を入力して1つのtypeラベルを指定（無効な番号の場合は再度入力を求める）
