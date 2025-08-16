@@ -6,10 +6,10 @@
 
 プロジェクト固有の詳細情報は以下のドキュメントを参照してください：
 
-- **プロジェクト概要**: @docs/project-overview.md
-- **技術スタック**: @docs/tech-stack.md
-- **コーディング標準 (Backend)**: @docs/coding-standards-backend.md
-- **コーディング標準 (Frontend)**: @docs/coding-standards-frontend.md
+- **プロジェクト概要**: このプロジェクトが何をするものかについて @docs/project-overview.md
+- **技術スタック**: このプロジェクトが採用する技術スタックについて @docs/tech-stack.md
+- **コーディング標準 (Backend)**: バックエンド実装時に従うべきコーディング標準 @docs/coding-standards-backend.md
+- **コーディング標準 (Frontend)**: フロントエンド実装時に従うべきコーディング標準 @docs/coding-standards-frontend.md
 
 ## 開発ワークフロー
 
